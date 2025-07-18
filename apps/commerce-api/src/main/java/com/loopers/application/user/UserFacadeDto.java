@@ -29,6 +29,23 @@ public class UserFacadeDto {
         }
     }
 
+    public record MyInfoCriteria(
+            Long id,
+            String memberId,
+            String email,
+            String birthDate,
+            Gender gender
+    ) {
+        public static MyInfoCriteria from(User user) {
+            return new MyInfoCriteria(
+                    user.getId(),
+                    user.getMemberId(),
+                    user.getEmail(),
+                    user.getBirthDate(),
+                    Gender.valueOf(user.getGender().name())
+            );
+        }
+    }
 
     public enum Gender {
         MALE, FEMALE

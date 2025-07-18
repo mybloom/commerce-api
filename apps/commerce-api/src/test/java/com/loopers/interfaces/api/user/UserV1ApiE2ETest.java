@@ -106,5 +106,69 @@ public class UserV1ApiE2ETest {
         }
     }
 
+    @DisplayName("GET /api/v1/users/me")
+    @Nested
+    class Retrieve {
+        private static final String ENDPOINT = "/api/v1/users/me";
+
+        @DisplayName("내 정보 조회에 성공할 경우, 해당하는 유저 정보를 응답으로 반환한다.")
+        @Test
+        void returnUserInfo_whenRetrieveMyInfo() {
+            // arrange
+            User user = userJpaRepository.save(
+                    new User("tester", "tester@test.com", "2000-01-01", Gender.MALE)
+            );
+
+            ParameterizedTypeReference<ApiResponse<UserV1Dto.UserResponse>> responseType =
+                    new ParameterizedTypeReference<>() {
+                    };
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-USER-ID", user.getId().toString());
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+
+            // act
+            ResponseEntity<ApiResponse<UserV1Dto.UserResponse>> response =
+                    testRestTemplate.exchange(ENDPOINT, HttpMethod.GET, httpEntity, responseType);
+
+            // assert
+            assertAll(
+                    () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
+                    () -> assertThat(response.getBody().meta().result()).isEqualTo(ApiResponse.Metadata.Result.SUCCESS),
+                    () -> assertThat(response.getBody().data()).isNotNull(),
+                    () -> assertThat(response.getBody().data().id()).isEqualTo(user.getId()),
+                    () -> assertThat(response.getBody().data().memberId()).isEqualTo(user.getMemberId())
+            );
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 ID 번호(PK값)로 조회할 경우, 404 Not Found 응답을 반환한다.")
+        void returnNotFound_whenUserIdDoseNotExist() {
+            // arrange
+            Long nonExistUserId = 999L;
+
+            ParameterizedTypeReference<ApiResponse<UserV1Dto.UserResponse>> responseType = new ParameterizedTypeReference<>() {
+            };
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-USER-ID", nonExistUserId.toString());
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+
+            // act
+            ResponseEntity<ApiResponse<UserV1Dto.UserResponse>> response = testRestTemplate.exchange(
+                    ENDPOINT,
+                    HttpMethod.GET,
+                    httpEntity,
+                    responseType
+            );
+
+            // assert
+            assertAll(
+                    () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND),
+                    () -> assertThat(response.getBody().meta().result()).isEqualTo(ApiResponse.Metadata.Result.FAIL)
+            );
+        }
+    }
+
 }
 

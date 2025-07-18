@@ -88,4 +88,43 @@ public class UserServiceIntegrationTest {
         }
     }
 
+    @DisplayName("회원 정보 조회 시,")
+    @Nested
+    class Retrieve {
+
+        @DisplayName("해당 ID 의 회원이 존재할 경우, 회원 정보가 반환된다.")
+        @Test
+        void returnUserInfo_whenUserExists() {
+            //arrange
+            String memberId = "test";
+            String email = "test@example.com";
+            String birthDate = "2000-01-01";
+            Gender gender = Gender.MALE;
+            User expectedUser = userJpaRepository.save(
+                    new User(memberId, email, birthDate, gender)
+            );
+
+            //act
+            User actualUser = userService.retrieveById(expectedUser.getId()).orElse(null);
+
+            //assert
+            assertAll(
+                    () -> assertThat(actualUser.getId()).isEqualTo(expectedUser.getId()),
+                    () -> assertThat(actualUser.getMemberId()).isEqualTo(memberId),
+                    () -> assertThat(actualUser.getEmail()).isEqualTo(email),
+                    () -> assertThat(actualUser.getBirthDate()).isEqualTo(birthDate)
+            );
+        }
+
+        @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, 비어있는 Optional이 반환된다.")
+        @Test
+        void returnNull_whenUserDoesNotExist() {
+            //act
+            Optional<User> user = userService.retrieveById(1L);
+
+            //assert
+            assertThat(user).isEmpty();
+        }
+    }
+
 }
