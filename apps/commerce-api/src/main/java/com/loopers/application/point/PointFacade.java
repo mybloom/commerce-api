@@ -24,4 +24,10 @@ public class PointFacade {
         return new PointFacadeDto.ChargeResult(balance);
     }
 
+    public PointFacadeDto.RetrieveResult retrieve(final Long userId) {
+        Point point = pointService.retrieve(userId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        return new PointFacadeDto.RetrieveResult(point.getAmount());
+    }
 }

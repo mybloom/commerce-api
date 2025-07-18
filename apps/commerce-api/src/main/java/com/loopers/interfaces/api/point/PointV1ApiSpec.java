@@ -9,6 +9,23 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Point V1 API", description = "Point management operations")
 public interface PointV1ApiSpec {
+    @Operation(
+            summary = "내 포인트 조회",
+            description = "헤더 X-User-Id 로 식별된 사용자의 포인트를 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
+    ApiResponse<PointV1Dto.PointResponse> retrieve(
+            @Parameter(
+                    name = "X-USER-ID",
+                    required = true,
+                    in = ParameterIn.HEADER,
+                    description = "사용자 식별자 (헤더)"
+            )
+            Long userId
+    );
 
     @Operation(
             summary = "포인트 충전",

@@ -123,4 +123,57 @@ class PointV1ApiE2ETest {
         }
     }
 
+    @DisplayName("GET /api/v1/points")
+    @Nested
+    class retrieve {
+
+        private static final String ENDPOINT = "/api/v1/points";
+
+        @DisplayName("포인트 조회에 성공할 경우, 보유 포인트를 응답으로 반환한다.")
+        @Test
+        void returnPointBalance_whenRetrieveIsSuccessful() {
+            //arrange
+            Long balance = pointJpaRepository.findByUserId(user.getId()).get().getAmount();
+
+            ParameterizedTypeReference<ApiResponse<PointV1Dto.PointResponse>> responseType = new ParameterizedTypeReference<>() {
+            };
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-USER-ID", user.getId().toString());
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+
+            // act
+            ResponseEntity<ApiResponse<PointV1Dto.PointResponse>> response =
+                    testRestTemplate.exchange(ENDPOINT, HttpMethod.GET, httpEntity, responseType);
+
+            // assert
+            assertAll(
+                    () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
+                    () -> assertThat(response.getBody().meta().result()).isEqualTo(ApiResponse.Metadata.Result.SUCCESS),
+                    () -> assertThat(response.getBody().data()).isNotNull(),
+                    () -> assertThat(response.getBody().data().amount()).isEqualTo(balance)
+            );
+        }
+
+        @Test
+        @DisplayName("X-USER-ID 헤더가 없을 경우, 400 Bad Request 응답을 반환한다.")
+        void returnsBadRequest_whenHeaderIsMissing() {
+            // arrange
+            ParameterizedTypeReference<ApiResponse<PointV1Dto.PointResponse>> responseType = new ParameterizedTypeReference<>() {
+            };
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+
+            // act
+            ResponseEntity<ApiResponse<PointV1Dto.PointResponse>> response =
+                    testRestTemplate.exchange(ENDPOINT, HttpMethod.GET, httpEntity, responseType);
+
+            // assert
+            assertAll(
+                    () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST),
+                    () -> assertThat(response.getBody().meta().result()).isEqualTo(ApiResponse.Metadata.Result.FAIL)
+            );
+        }
+    }
 }

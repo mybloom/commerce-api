@@ -14,6 +14,14 @@ public class PointV1ApiController implements PointV1ApiSpec {
 
     private final PointFacade pointFacade;
 
+    @GetMapping
+    @Override
+    public ApiResponse<PointV1Dto.PointResponse> retrieve(@RequestHeader(name = "X-USER-ID", required = true) Long userId) {
+        PointFacadeDto.RetrieveResult retrieveResult = pointFacade.retrieve(userId);
+        return ApiResponse.success(
+                new PointV1Dto.PointResponse(retrieveResult.amount())
+        );
+    }
 
     @PostMapping
     @Override

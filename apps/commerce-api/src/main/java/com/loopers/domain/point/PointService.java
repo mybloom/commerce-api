@@ -31,4 +31,8 @@ public class PointService {
         return balance;
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Point> retrieve(final Long userId) {
+        return pointRepository.findByUserId(userId);
+    }
 }
