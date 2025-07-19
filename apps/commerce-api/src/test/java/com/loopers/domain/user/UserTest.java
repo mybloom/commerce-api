@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class UserTest {
@@ -107,6 +108,19 @@ public class UserTest {
 
             // assert
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("모든 파라미터가 유효하면, User 객체 생성에 성공한다.")
+        @Test
+        void returnUser_whenAllParameterIsValid() {
+            assertDoesNotThrow(() ->
+                    new User(
+                            validMemberId,
+                            validEmail,
+                            validBirthDate,
+                            validGender
+                    )
+            );
         }
     }
 }
