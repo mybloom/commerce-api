@@ -4,6 +4,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -88,6 +89,23 @@ public class UserTest {
             });
 
             //assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("성별이 null 이면, User 객체 생성에 실패하고 Bad Request 예외가 발생한다.")
+        @Test
+        void throwBadRequestException_whenGenderIsInvalidFormat() {
+            // act
+            CoreException exception = assertThrows(CoreException.class, () ->
+                    new User(
+                            validMemberId,
+                            validEmail,
+                            validBirthDate,
+                            null
+                    )
+            );
+
+            // assert
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }

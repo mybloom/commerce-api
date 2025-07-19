@@ -35,12 +35,20 @@ public class User {
         validateMemberId(memberId);
         validateEmail(email);
         validateBirthDate(birthDate);
+        validateGender(gender);
 
         this.memberId = memberId;
         this.email = email;
         this.birthDate = birthDate;
         this.gender = gender;
     }
+
+    private void validateGender(Gender gender) {
+        if (gender == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "성별은 필수 입니다.");
+        }
+    }
+
     private void validateMemberId(String memberId) {
         if (memberId == null || !memberId.matches(PATTERN_USER_ID)) {
             throw new CoreException(ErrorType.BAD_REQUEST, "ID는 영문 및 숫자 10자 이내여야 합니다.");
