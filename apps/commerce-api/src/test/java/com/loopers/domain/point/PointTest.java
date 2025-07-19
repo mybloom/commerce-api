@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PointTest {
+    private static final Long validUserId = 1L;
 
     @DisplayName("포인트를 충전할 때, ")
     @Nested
@@ -22,14 +23,13 @@ public class PointTest {
                 0L,
                 -1L
         })
-        void throwsBadRequestException_whenAmountIsZeroOrNegative(Long amount) {
+        void throwsBadRequestException_whenAmountIsZeroOrNegative(Long invalidAmount) {
             //arrange
-            Long userId = 1L;
-            Point point = new Point(userId);
+            Point point = new Point(validUserId);
 
             //act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                point.charge(amount);
+                point.charge(invalidAmount);
             });
 
             //assert
