@@ -29,7 +29,7 @@ public class PointTest {
 
             //act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                point.add(amount);
+                point.charge(amount);
             });
 
             //assert

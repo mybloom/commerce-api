@@ -25,7 +25,7 @@ public class PointService {
         final Point point = retrieve(userId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        final Long balance = point.add(amount);
+        final Long balance = point.charge(amount);
         pointRepository.updateAmountByUserId(userId, balance);
 
         return balance;
