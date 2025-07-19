@@ -18,9 +18,9 @@ public class PointTest {
 
         @DisplayName("0 이하의 정수로 포인트를 충전 시, Bad Request 예외가 발생한다.")
         @ParameterizedTest
-        @ValueSource(strings = {
-                "0",
-                "-1"
+        @ValueSource(longs = {
+                0L,
+                -1L
         })
         void throwsBadRequestException_whenAmountIsZeroOrNegative(Long amount) {
             //arrange
