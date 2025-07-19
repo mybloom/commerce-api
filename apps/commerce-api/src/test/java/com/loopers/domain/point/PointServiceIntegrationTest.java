@@ -75,14 +75,14 @@ public class PointServiceIntegrationTest {
             Long expectedBalance = 5000L;
 
             Point mockPoint = mock(Point.class);
-            when(mockPoint.getAmount()).thenReturn(expectedBalance);
+            when(mockPoint.balance()).thenReturn(expectedBalance);
             when(pointJpaRepository.findByUserId(userId)).thenReturn(Optional.of(mockPoint));
 
             // act
             Point actualPoint = pointService.retrieve(userId).orElse(null);
 
             // assert
-            assertThat(actualPoint.getAmount()).isEqualTo(expectedBalance);
+            assertThat(actualPoint.balance()).isEqualTo(expectedBalance);
             verify(pointJpaRepository, times(1)).findByUserId(userId);
         }
 
