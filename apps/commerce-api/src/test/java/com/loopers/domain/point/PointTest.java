@@ -14,6 +14,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class PointTest {
     private static final Long validUserId = 1L;
 
+    @DisplayName("포인트를 생성할 때, ")
+    @Nested
+    class Create {
+
+        @DisplayName("Point 객체 생성 시, 잔액은 0으로 초기화된다.")
+        @Test
+        void amountDefaultsToZero_whenCreated() {
+            // act
+            Point point = new Point(validUserId);
+
+            // assert
+            assertThat(point.balance()).isEqualTo(0L);
+        }
+    }
+
     @DisplayName("포인트를 충전할 때, ")
     @Nested
     class Charge {
