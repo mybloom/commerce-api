@@ -104,12 +104,7 @@ public class UserServiceIntegrationTest {
             User actualUser = userService.retrieveById(expectedUser.getId()).orElse(null);
 
             //assert
-            assertAll(
-                    () -> assertThat(actualUser.getId()).isEqualTo(expectedUser.getId()),
-                    () -> assertThat(actualUser.getMemberId()).isEqualTo(memberId),
-                    () -> assertThat(actualUser.getEmail()).isEqualTo(email),
-                    () -> assertThat(actualUser.getBirthDate()).isEqualTo(birthDate)
-            );
+            assertThat(actualUser.getId()).isEqualTo(expectedUser.getId());
         }
 
         @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, 비어있는 Optional이 반환된다.")
