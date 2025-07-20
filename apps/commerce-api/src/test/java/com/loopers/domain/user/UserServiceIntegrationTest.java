@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -60,7 +61,10 @@ public class UserServiceIntegrationTest {
             boolean afterSignUpExists = userJpaRepository.existsByMemberId(memberId);
             assertThat(afterSignUpExists).isTrue();
 
-            verify(userJpaRepository, times(1)).save(any(User.class));
+            // ArgumentCaptor 사용해 실제로 전달된 User 검증
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+            verify(userJpaRepository, times(1)).save(userCaptor.capture());
+            assertThat(userCaptor.getValue().getMemberId()).isEqualTo(memberId);
         }
 
         @Test
