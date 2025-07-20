@@ -26,6 +26,11 @@ public class Point {
         this.amount = INITIAL_POINT_AMOUNT;
     }
 
+    public Point(Long userId, Long amount) {
+        this.userId = userId;
+        this.amount = amount;
+    }
+
     //TODO: 반환타입 Long -> void 로 변경
     public Long charge(Long amount) {
         if (amount == null || amount < 1) {
