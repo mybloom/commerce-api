@@ -115,11 +115,16 @@ public class UserServiceIntegrationTest {
         @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, 비어있는 Optional이 반환된다.")
         @Test
         void returnNull_whenUserDoesNotExist() {
+            //arrange
+            Long nonexistentId = 1L;
+            boolean existsBeforeRetrieve = userJpaRepository.existsById(nonexistentId);
+            assertThat(existsBeforeRetrieve).isFalse();
+
             //act
-            Optional<User> user = userService.retrieveById(1L);
+            Optional<User> retrievedUser = userService.retrieveById(nonexistentId);
 
             //assert
-            assertThat(user).isEmpty();
+            assertThat(retrievedUser).isEmpty();
         }
     }
 
