@@ -36,6 +36,7 @@ public class Point {
         if (amount == null || amount < 1) {
             throw new CoreException(ErrorType.BAD_REQUEST, "충전 포인트는 1 이상이어야 합니다.");
         }
+        this.amount += amount;
     }
 
     public Long balance() {
