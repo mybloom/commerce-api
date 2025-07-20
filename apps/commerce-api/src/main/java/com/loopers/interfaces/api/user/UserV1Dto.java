@@ -14,8 +14,8 @@ public class UserV1Dto {
             @NotNull
             Gender gender
     ) {
-        public UserFacadeDto.SignUpCriteria toCriteria() {
-            return new UserFacadeDto.SignUpCriteria(
+        public UserFacadeDto.SignUpCommand toCommand() {
+            return new UserFacadeDto.SignUpCommand(
                     this.memberId,
                     this.email,
                     this.birthDate,

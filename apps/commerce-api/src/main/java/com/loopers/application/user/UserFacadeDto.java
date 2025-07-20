@@ -3,7 +3,7 @@ package com.loopers.application.user;
 import com.loopers.domain.user.User;
 
 public class UserFacadeDto {
-    public record SignUpCriteria(
+    public record SignUpCommand(
             String memberId,
             String email,
             String birthDate,
