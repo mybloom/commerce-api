@@ -63,6 +63,24 @@ public class PointServiceIntegrationTest {
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
             verify(pointJpaRepository, never()).save(any(Point.class));
         }
+
+        @DisplayName("존재하는 유저 ID로 충전하는 경우, 증가한 잔액을 저장하고 잔액을 반환한다.")
+        @Test
+        void successCharge() {
+            // arrange
+            User user = userJpaRepository.save(new User("testId", "test@test.com", "2000-01-01", Gender.MALE));
+            Point savedPoint = pointJpaRepository.save(new Point(user.getId()));
+            reset(pointJpaRepository);
+            Long initialBalance = savedPoint.balance();
+            Long chargeAmount = 1000L;
+
+            // act
+            Long actualAmount = pointService.charge(user.getId(), chargeAmount);
+
+            // assert
+            assertThat(actualAmount).isEqualTo(initialBalance + chargeAmount);
+            verify(pointJpaRepository, times(1)).save(any(Point.class));
+        }
     }
 
     @DisplayName("포인트 조회 시,")
