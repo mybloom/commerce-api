@@ -22,7 +22,7 @@ public class PointService {
 
     @Transactional
     public Long charge(final Long userId, final Long amount) {
-        final Point point = retrieve(userId)
+        final Point point = pointRepository.findByUserId(userId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         final Long balance = point.charge(amount);
