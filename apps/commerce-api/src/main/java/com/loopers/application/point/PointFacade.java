@@ -18,7 +18,9 @@ public class PointFacade {
 
     @Transactional
     public PointFacadeDto.ChargeResult charge(final Long userId, final PointV1Dto.ChargeRequest chargeRequest) {
-        userService.retrieveById(userId);
+        userService.retrieveById(userId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
         final Point point = pointService.charge(userId, chargeRequest.amount());
 
         return PointFacadeDto.ChargeResult.from(point);
