@@ -86,22 +86,21 @@ public class PointServiceIntegrationTest {
     @DisplayName("포인트 조회 시,")
     @Nested
     class retrieve {
+
         @DisplayName("해당 ID 의 회원이 존재할 경우, 보유 포인트가 반환된다.")
         @Test
         void returnsPointBalance_whenUserExists() {
             // arrange
             Long userId = 1L;
-            Long expectedBalance = 5000L;
-
-            Point mockPoint = mock(Point.class);
-            when(mockPoint.balance()).thenReturn(expectedBalance);
-            when(pointJpaRepository.findByUserId(userId)).thenReturn(Optional.of(mockPoint));
+            Long amount = 1000L;
+            Point point = new Point(userId, amount);
+            pointJpaRepository.save(point);
 
             // act
-            Point actualPoint = pointService.retrieve(userId).orElse(null);
+            Optional<Point> actualPoint = pointService.retrieve(userId);
 
             // assert
-            assertThat(actualPoint.balance()).isEqualTo(expectedBalance);
+            assertThat(actualPoint.get().balance()).isEqualTo(amount);
             verify(pointJpaRepository, times(1)).findByUserId(userId);
         }
 
