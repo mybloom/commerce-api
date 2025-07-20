@@ -98,13 +98,7 @@ public class UserServiceIntegrationTest {
         @Test
         void returnUserInfo_whenUserExists() {
             //arrange
-            String memberId = "test";
-            String email = "test@example.com";
-            String birthDate = "2000-01-01";
-            Gender gender = Gender.MALE;
-            User expectedUser = userJpaRepository.save(
-                    new User(memberId, email, birthDate, gender)
-            );
+            User expectedUser = userJpaRepository.save(new User(memberId, email, birthDate, gender));
 
             //act
             User actualUser = userService.retrieveById(expectedUser.getId()).orElse(null);
