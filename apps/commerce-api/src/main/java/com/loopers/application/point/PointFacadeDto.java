@@ -1,12 +1,14 @@
 package com.loopers.application.point;
 
+import com.loopers.domain.point.Point;
+
 public class PointFacadeDto {
 
     public record ChargeResult(
             Long amount
     ) {
-        public static ChargeResult of(Long amount) {
-            return new ChargeResult(amount);
+        public static ChargeResult from(Point point) {
+            return new ChargeResult(point.balance());
         }
     }
 

@@ -19,9 +19,9 @@ public class PointFacade {
     @Transactional
     public PointFacadeDto.ChargeResult charge(final Long userId, final PointV1Dto.ChargeRequest chargeRequest) {
         userService.retrieveById(userId);
-        final Long balance = pointService.charge(userId, chargeRequest.amount());
+        final Point point = pointService.charge(userId, chargeRequest.amount());
 
-        return new PointFacadeDto.ChargeResult(balance);
+        return PointFacadeDto.ChargeResult.from(point);
     }
 
     public PointFacadeDto.RetrieveResult retrieve(final Long userId) {

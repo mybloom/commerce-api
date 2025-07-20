@@ -75,10 +75,10 @@ public class PointServiceIntegrationTest {
             Long chargeAmount = 1000L;
 
             // act
-            Long actualAmount = pointService.charge(user.getId(), chargeAmount);
+            Point actualPoint = pointService.charge(user.getId(), chargeAmount);
 
             // assert
-            assertThat(actualAmount).isEqualTo(initialBalance + chargeAmount);
+            assertThat(actualPoint.balance()).isEqualTo(initialBalance + chargeAmount);
             verify(pointJpaRepository, times(1)).save(any(Point.class));
         }
     }

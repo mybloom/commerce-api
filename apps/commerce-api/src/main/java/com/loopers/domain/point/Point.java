@@ -32,13 +32,10 @@ public class Point {
         this.amount = amount;
     }
 
-    //TODO: 반환타입 Long -> void 로 변경
-    public Long charge(Long amount) {
+    public void charge(Long amount) {
         if (amount == null || amount < 1) {
             throw new CoreException(ErrorType.BAD_REQUEST, "충전 포인트는 1 이상이어야 합니다.");
         }
-
-        return this.amount += amount;
     }
 
     public Long balance() {
