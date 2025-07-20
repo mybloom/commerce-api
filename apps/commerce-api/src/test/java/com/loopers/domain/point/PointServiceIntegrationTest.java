@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.util.Optional;
 
@@ -28,7 +28,7 @@ public class PointServiceIntegrationTest {
     @Autowired
     private PointService pointService;
 
-    @MockitoBean
+    @MockitoSpyBean
     private PointJpaRepository pointJpaRepository;
 
     @Autowired
