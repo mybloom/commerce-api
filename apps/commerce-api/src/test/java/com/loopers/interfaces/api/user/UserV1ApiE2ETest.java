@@ -75,7 +75,7 @@ public class UserV1ApiE2ETest {
             assertAll(
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
                     () -> assertThat(response.getBody().data()).isNotNull(),
-                    () -> assertThat(response.getBody().data().memberId()).isEqualTo("tester")
+                    () -> assertThat(response.getBody().data().memberId()).isEqualTo(validMemberId)
             );
         }
 
