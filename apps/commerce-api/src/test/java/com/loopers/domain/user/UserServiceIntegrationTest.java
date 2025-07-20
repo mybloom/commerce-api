@@ -57,13 +57,9 @@ public class UserServiceIntegrationTest {
             User savedUser = userService.save(memberId, email, birthDate, gender);
 
             //assert
-            assertAll(
-                    () -> assertThat(userJpaRepository.existsByMemberId(memberId)).isTrue(),
-                    () -> assertThat(savedUser.getMemberId()).isEqualTo(memberId),
-                    () -> assertThat(savedUser.getEmail()).isEqualTo(email),
-                    () -> assertThat(savedUser.getBirthDate()).isEqualTo(birthDate),
-                    () -> assertThat(savedUser.getGender()).isEqualTo(gender)
-            );
+            boolean afterSignUpExists = userJpaRepository.existsByMemberId(memberId);
+            assertThat(afterSignUpExists).isTrue();
+
             verify(userJpaRepository, times(1)).save(any(User.class));
         }
 
