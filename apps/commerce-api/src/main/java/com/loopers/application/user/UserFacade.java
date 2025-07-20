@@ -8,6 +8,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Component
@@ -16,6 +17,7 @@ public class UserFacade {
     private final UserService userService;
     private final PointService pointService;
 
+    @Transactional
     public UserFacadeDto.SignUpResult signUp(final UserFacadeDto.SignUpCriteria signUpCriteria) {
         final User user = userService.save(
                 signUpCriteria.memberId(),
@@ -23,6 +25,7 @@ public class UserFacade {
                 signUpCriteria.birthDate(),
                 Gender.valueOf(signUpCriteria.gender().name())
         );
+
         // 초기 포인트 생성
         pointService.createInitialPoint(user.getId());
 
