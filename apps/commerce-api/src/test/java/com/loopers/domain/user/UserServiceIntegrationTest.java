@@ -17,9 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -68,13 +66,13 @@ public class UserServiceIntegrationTest {
         }
 
         @Test
-        @DisplayName("이미 가입된 ID로 회원가입 시도 시, 예외가 발생한다.")
+        @DisplayName("이미 가입된 MemberID로 회원가입 시도 시, 예외가 발생한다.")
         void throwsException_whenMemberIdAlreadyExists() {
             //arrange: 이미 존재하는 사용자 저장
             String duplicatedMemberId = "dupUser";
             userJpaRepository.save(new User(duplicatedMemberId, email, birthDate, gender));
 
-            boolean  beforeSignUpExists= userJpaRepository.existsByMemberId(duplicatedMemberId);
+            boolean beforeSignUpExists = userJpaRepository.existsByMemberId(duplicatedMemberId);
             assertThat(beforeSignUpExists).isTrue();
 
             reset(userJpaRepository); // reset spy 기록
@@ -94,7 +92,7 @@ public class UserServiceIntegrationTest {
     @Nested
     class Retrieve {
 
-        @DisplayName("해당 ID 의 회원이 존재할 경우, 회원 정보가 반환된다.")
+        @DisplayName("해당 ID의 회원이 존재할 경우, 회원 정보가 반환된다.")
         @Test
         void returnUserInfo_whenUserExists() {
             //arrange
