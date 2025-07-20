@@ -50,17 +50,18 @@ public class PointServiceIntegrationTest {
         @Test
         void throwsException_whenUserDoesNotExist() {
             // arrange
-            Long notExistUserId = 9999L;
-            Long chargeAmount = 1000L;
+            Long nonexistentUserId = 9999L;
+            boolean exists = userJpaRepository.existsById(nonexistentUserId);
+            assertThat(exists).isFalse();
 
             // act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                pointService.charge(notExistUserId, chargeAmount);
+                pointService.charge(nonexistentUserId, 1000L);
             });
 
             // assert
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
-            verify(pointJpaRepository, never()).save(org.mockito.Mockito.any());
+            verify(pointJpaRepository, never()).save(any(Point.class));
         }
     }
 
