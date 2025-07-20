@@ -50,10 +50,8 @@ public class UserServiceIntegrationTest {
         @DisplayName("회원 가입시 User 저장이 수행된다.")
         void savesUser_whenSignUpSucceeds() {
             //arrange
-            String memberId = "testuser";
-            String email = "test@test.com";
-            String birthDate = "2000-01-01";
-            Gender gender = Gender.MALE;
+            boolean beforeSignUpExists = userJpaRepository.existsByMemberId(memberId);
+            assertThat(beforeSignUpExists).isFalse();
 
             //act
             User savedUser = userService.save(memberId, email, birthDate, gender);
@@ -74,11 +72,11 @@ public class UserServiceIntegrationTest {
         void throwsException_whenMemberIdAlreadyExists() {
             //arrange: 이미 존재하는 사용자 저장
             String duplicatedMemberId = "dupUser";
-            String email = "dupUser@example.com";
-            String birthDate = "1990-01-01";
-            Gender gender = Gender.FEMALE;
-
             userJpaRepository.save(new User(duplicatedMemberId, email, birthDate, gender));
+
+            boolean  beforeSignUpExists= userJpaRepository.existsByMemberId(duplicatedMemberId);
+            assertThat(beforeSignUpExists).isTrue();
+
             reset(userJpaRepository); // reset spy 기록
 
             //act: 같은 ID로 회원가입 시도하면 예외 발생
