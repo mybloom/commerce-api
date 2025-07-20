@@ -23,6 +23,10 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class UserServiceIntegrationTest {
+    private static final String memberId = "testId";
+    private static final String email = "test@test.com";
+    private static final String birthDate = "2000-01-01";
+    private static final Gender gender = Gender.MALE;
 
     @Autowired
     private UserService userService;
