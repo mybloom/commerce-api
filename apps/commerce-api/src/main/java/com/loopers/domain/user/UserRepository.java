@@ -1,6 +1,5 @@
-package com.loopers.interfaces.api.user;
+package com.loopers.domain.user;
 
-import com.loopers.domain.user.User;
 
 import java.util.Optional;
 
