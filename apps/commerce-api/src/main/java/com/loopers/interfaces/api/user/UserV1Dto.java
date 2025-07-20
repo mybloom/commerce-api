@@ -8,8 +8,6 @@ public class UserV1Dto {
             @NotNull
             String memberId,
             @NotNull
-            String name,
-            @NotNull
             String email,
             @NotNull
             String birthDate,
