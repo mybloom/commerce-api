@@ -27,9 +27,4 @@ public class PointRepositoryImpl implements PointRepository {
     public Point save(Point point) {
         return pointJpaRepository.save(point);
     }
-
-    @Override
-    public int updateAmountByUserId(Long userId, Long amount) {
-        return pointJpaRepository.updateAmountByUserId(userId, amount);
-    }
 }

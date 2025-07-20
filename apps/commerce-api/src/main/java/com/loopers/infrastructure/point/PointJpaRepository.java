@@ -12,7 +12,4 @@ public interface PointJpaRepository extends JpaRepository<Point, Long> {
 
     Optional<Point> findByUserId(Long userId);
 
-    @Modifying
-    @Query("update Point p set p.amount = :amount where p.userId = :userId")
-    int updateAmountByUserId(@Param("userId") Long userId, @Param("amount") Long amount);
 }
