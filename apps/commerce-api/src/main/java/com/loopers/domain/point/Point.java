@@ -16,6 +16,7 @@ public class Point {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long amount;
 
     @Column(nullable = false, unique = true)

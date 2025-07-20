@@ -26,9 +26,14 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String memberId;
+
+    @Column(nullable = false)
     private String email;
+
+    @Column(nullable = false)
     private String birthDate;
 
+    @Enumerated(EnumType.STRING)
     private Gender gender;
 
     public User(String memberId, String email, String birthDate, Gender gender) {
