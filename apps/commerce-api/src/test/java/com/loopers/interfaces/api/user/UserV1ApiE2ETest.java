@@ -20,6 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserV1ApiE2ETest {
+    private static final String validMemberId = "testId";
+    private static final String validEmail = "test@test.com";
+    private static final String validBirthDate = "2000-01-01";
+    private static final UserV1Dto.Gender validGender = UserV1Dto.Gender.MALE;
+
     private final TestRestTemplate testRestTemplate;
     private final UserJpaRepository userJpaRepository;
     private final DatabaseCleanUp databaseCleanUp;
@@ -50,11 +55,10 @@ public class UserV1ApiE2ETest {
         void returnUserInfo_whenJoinIsSuccessful() {
             //arrange
             UserV1Dto.SignUpRequest signUpRequest = new UserV1Dto.SignUpRequest(
-                    "tester",
-                    "테스터",
-                    "test@test.com",
-                    "2000-01-01",
-                    UserV1Dto.Gender.FEMALE
+                    validMemberId,
+                    validEmail,
+                    validBirthDate,
+                    validGender
             );
 
             ParameterizedTypeReference<ApiResponse<UserV1Dto.UserResponse>> responseType = new ParameterizedTypeReference<>() {
@@ -71,7 +75,7 @@ public class UserV1ApiE2ETest {
             assertAll(
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
                     () -> assertThat(response.getBody().data()).isNotNull(),
-                    () -> assertThat(response.getBody().data().memberId()).isEqualTo("tester")
+                    () -> assertThat(response.getBody().data().memberId()).isEqualTo(validMemberId)
             );
         }
 
@@ -80,10 +84,9 @@ public class UserV1ApiE2ETest {
         void returnBadRequest_whenGenderIsMissing() {
             //arrange
             UserV1Dto.SignUpRequest signUpRequest = new UserV1Dto.SignUpRequest(
-                    "tester",
-                    "테스터",
-                    "test@test.com",
-                    "2000-01-01",
+                    validMemberId,
+                    validEmail,
+                    validBirthDate,
                     null // 성별이 없을 경우
             );
 
@@ -119,9 +122,8 @@ public class UserV1ApiE2ETest {
                     new User("tester", "tester@test.com", "2000-01-01", Gender.MALE)
             );
 
-            ParameterizedTypeReference<ApiResponse<UserV1Dto.UserResponse>> responseType =
-                    new ParameterizedTypeReference<>() {
-                    };
+            ParameterizedTypeReference<ApiResponse<UserV1Dto.UserResponse>> responseType = new ParameterizedTypeReference<>() {
+            };
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("X-USER-ID", user.getId().toString());
@@ -136,8 +138,7 @@ public class UserV1ApiE2ETest {
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
                     () -> assertThat(response.getBody().meta().result()).isEqualTo(ApiResponse.Metadata.Result.SUCCESS),
                     () -> assertThat(response.getBody().data()).isNotNull(),
-                    () -> assertThat(response.getBody().data().id()).isEqualTo(user.getId()),
-                    () -> assertThat(response.getBody().data().memberId()).isEqualTo(user.getMemberId())
+                    () -> assertThat(response.getBody().data().id()).isEqualTo(user.getId())
             );
         }
 

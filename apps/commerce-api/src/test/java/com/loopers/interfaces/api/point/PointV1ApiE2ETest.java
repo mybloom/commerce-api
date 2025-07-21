@@ -65,7 +65,7 @@ class PointV1ApiE2ETest {
         void returnTotalBalance_whenChargeIsSuccessful() {
             // arrange
             Long userId = user.getId();
-            Long initialAmount = pointJpaRepository.findByUserId(userId).get().getAmount();
+            Long initialBalance = pointJpaRepository.findByUserId(userId).get().balance();
             Long chargeAmount = 1000L;
             PointV1Dto.ChargeRequest chargeRequest = new PointV1Dto.ChargeRequest(chargeAmount);
 
@@ -89,7 +89,7 @@ class PointV1ApiE2ETest {
                     () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
                     () -> assertThat(response.getBody().meta().result()).isEqualTo(ApiResponse.Metadata.Result.SUCCESS),
                     () -> assertThat(response.getBody().data()).isNotNull(),
-                    () -> assertThat(response.getBody().data().amount()).isEqualTo(initialAmount + chargeAmount)
+                    () -> assertThat(response.getBody().data().amount()).isEqualTo(initialBalance + chargeAmount)
             );
         }
 
@@ -133,7 +133,7 @@ class PointV1ApiE2ETest {
         @Test
         void returnPointBalance_whenRetrieveIsSuccessful() {
             //arrange
-            Long balance = pointJpaRepository.findByUserId(user.getId()).get().getAmount();
+            Long balance = pointJpaRepository.findByUserId(user.getId()).get().balance();
 
             ParameterizedTypeReference<ApiResponse<PointV1Dto.PointResponse>> responseType = new ParameterizedTypeReference<>() {
             };

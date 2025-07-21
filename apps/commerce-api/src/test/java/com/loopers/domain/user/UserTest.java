@@ -4,13 +4,19 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class UserTest {
+    private static final String validMemberId = "testId";
+    private static final String validEmail = "test@test.com";
+    private static final String validBirthDate = "2000-01-01";
+    private static final Gender validGender = Gender.MALE;
 
     @DisplayName("사용자 모델을 생성할 때, ")
     @Nested
@@ -23,14 +29,14 @@ public class UserTest {
                 "한글",
                 "한글123"
         })
-        void throwsBadRequestException_whenIdIsNotAlphanumericOrTooLong(String memberId) {
+        void throwsBadRequestException_whenIdIsNotAlphanumericOrTooLong(String inValidMemberId) {
             //act
             CoreException exception = assertThrows(CoreException.class, () -> {
                 new User(
-                        memberId,
-                        "test@test.com",
-                        "2000-01-01",
-                        Gender.MALE
+                        inValidMemberId,
+                        validEmail,
+                        validBirthDate,
+                        validGender
                 );
             });
 
@@ -48,14 +54,14 @@ public class UserTest {
                 "user@com",             // .확장자 없음
                 "user@domain..com"      // 연속된 점
         })
-        void throwsBadRequestException_whenEmailIsInvalidFormat(String email) {
+        void throwsBadRequestException_whenEmailIsInvalidFormat(String invalidEmail) {
             //act
             CoreException exception = assertThrows(CoreException.class, () -> {
                 new User(
-                        "test",
-                        email,
-                        "2000-01-01",
-                        Gender.MALE
+                        validMemberId,
+                        invalidEmail,
+                        validBirthDate,
+                        validGender
                 );
             });
 
@@ -72,19 +78,49 @@ public class UserTest {
                 "1990-13-01", //월이 잘못됨
                 "abcd-ef-gh"  //형식이 잘못됨
         })
-        void throwsBadRequestException_whenBirthdateIsInvalidFormat(String birthDate) {
+        void throwsBadRequestException_whenBirthdateIsInvalidFormat(String invalidBirthDate) {
             //act
             CoreException exception = assertThrows(CoreException.class, () -> {
                 new User(
-                        "test",
-                        "test@test.com",
-                        birthDate,
-                        Gender.MALE
+                        validMemberId,
+                        validEmail,
+                        invalidBirthDate,
+                        validGender
                 );
             });
 
             //assert
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("성별이 null 이면, User 객체 생성에 실패하고 Bad Request 예외가 발생한다.")
+        @Test
+        void throwBadRequestException_whenGenderIsInvalidFormat() {
+            // act
+            CoreException exception = assertThrows(CoreException.class, () ->
+                    new User(
+                            validMemberId,
+                            validEmail,
+                            validBirthDate,
+                            null
+                    )
+            );
+
+            // assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("모든 파라미터가 유효하면, User 객체 생성에 성공한다.")
+        @Test
+        void returnUser_whenAllParameterIsValid() {
+            assertDoesNotThrow(() ->
+                    new User(
+                            validMemberId,
+                            validEmail,
+                            validBirthDate,
+                            validGender
+                    )
+            );
         }
     }
 }

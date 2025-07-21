@@ -17,7 +17,7 @@ public class UserV1ApiController implements UserV1ApiSpec {
     @PostMapping
     @Override
     public ApiResponse<UserV1Dto.UserResponse> signUp(@Valid @RequestBody UserV1Dto.SignUpRequest signUpRequest) {
-        UserFacadeDto.SignUpResult signUpResult = userFacade.signUp(signUpRequest.toCriteria());
+        UserFacadeDto.SignUpResult signUpResult = userFacade.signUp(signUpRequest.toCommand());
 
         return ApiResponse.success(
                 new UserV1Dto.UserResponse(

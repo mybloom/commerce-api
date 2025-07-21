@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.util.Optional;
 
@@ -28,7 +28,7 @@ public class PointServiceIntegrationTest {
     @Autowired
     private PointService pointService;
 
-    @MockitoBean
+    @MockitoSpyBean
     private PointJpaRepository pointJpaRepository;
 
     @Autowired
@@ -50,39 +50,57 @@ public class PointServiceIntegrationTest {
         @Test
         void throwsException_whenUserDoesNotExist() {
             // arrange
-            Long notExistUserId = 9999L;
-            Long chargeAmount = 1000L;
+            Long nonexistentUserId = 9999L;
+            boolean exists = userJpaRepository.existsById(nonexistentUserId);
+            assertThat(exists).isFalse();
 
             // act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                pointService.charge(notExistUserId, chargeAmount);
+                pointService.charge(nonexistentUserId, 1000L);
             });
 
             // assert
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
-            verify(pointJpaRepository, never()).save(org.mockito.Mockito.any());
+            verify(pointJpaRepository, never()).save(any(Point.class));
+        }
+
+        @DisplayName("존재하는 유저 ID로 충전하는 경우, 증가한 잔액을 저장하고 잔액을 반환한다.")
+        @Test
+        void successCharge() {
+            // arrange
+            User user = userJpaRepository.save(new User("testId", "test@test.com", "2000-01-01", Gender.MALE));
+            Point savedPoint = pointJpaRepository.save(new Point(user.getId()));
+            reset(pointJpaRepository);
+            Long initialBalance = savedPoint.balance();
+            Long chargeAmount = 1000L;
+
+            // act
+            Point actualPoint = pointService.charge(user.getId(), chargeAmount);
+
+            // assert
+            assertThat(actualPoint.balance()).isEqualTo(initialBalance + chargeAmount);
+            verify(pointJpaRepository, times(1)).save(any(Point.class));
         }
     }
 
     @DisplayName("포인트 조회 시,")
     @Nested
     class retrieve {
+
         @DisplayName("해당 ID 의 회원이 존재할 경우, 보유 포인트가 반환된다.")
         @Test
         void returnsPointBalance_whenUserExists() {
             // arrange
             Long userId = 1L;
-            Long expectedBalance = 5000L;
-
-            Point mockPoint = mock(Point.class);
-            when(mockPoint.getAmount()).thenReturn(expectedBalance);
-            when(pointJpaRepository.findByUserId(userId)).thenReturn(Optional.of(mockPoint));
+            Long amount = 1000L;
+            Point point = new Point(userId, amount);
+            pointJpaRepository.save(point);
 
             // act
-            Point actualPoint = pointService.retrieve(userId).orElse(null);
+            Optional<Point> actualPoint = pointService.retrieve(userId);
 
             // assert
-            assertThat(actualPoint.getAmount()).isEqualTo(expectedBalance);
+            assertThat(actualPoint.get().balance()).isEqualTo(amount);
             verify(pointJpaRepository, times(1)).findByUserId(userId);
         }
 

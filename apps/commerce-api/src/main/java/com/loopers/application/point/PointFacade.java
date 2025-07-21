@@ -18,16 +18,18 @@ public class PointFacade {
 
     @Transactional
     public PointFacadeDto.ChargeResult charge(final Long userId, final PointV1Dto.ChargeRequest chargeRequest) {
-        userService.retrieveById(userId);
-        final Long balance = pointService.charge(userId, chargeRequest.amount());
+        userService.retrieveById(userId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        return new PointFacadeDto.ChargeResult(balance);
+        final Point point = pointService.charge(userId, chargeRequest.amount());
+
+        return PointFacadeDto.ChargeResult.from(point);
     }
 
     public PointFacadeDto.RetrieveResult retrieve(final Long userId) {
         Point point = pointService.retrieve(userId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        return new PointFacadeDto.RetrieveResult(point.getAmount());
+        return new PointFacadeDto.RetrieveResult(point.balance());
     }
 }
