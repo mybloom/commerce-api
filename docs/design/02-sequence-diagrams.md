@@ -309,103 +309,122 @@ sequenceDiagram
 ---
 
 # 7 주문 등록
-
 ```mermaid
 sequenceDiagram
     participant USER as User
     participant CON as OrderController
-    participant ORDER as Order
-    participant PRODUCT as Product
-    participant POINT as Point
-    participant INVENTORY as Inventory
-    participant PAYMENT as Payment
+    participant FA as OrderFacade
+    participant OS as OrderService
+    participant OR as OrderRepository
+    participant PS as ProductService
+    participant PR as ProductRepository
+    participant PT as PointService
+    participant POR as PointRepository
+    participant IS as InventoryService
+    participant IR as InventoryRepository
+    participant PM as PaymentService
+    participant PAYR as PaymentRepository
 
     USER->>CON: 주문 요청(X-USER-ID, X-ORDER-REQUEST-ID, 주문아이템목록)
 
-    activate CON
     alt 사용자 인증 실패
         CON-->>USER: 401 Unauthorized
     end
 
-    CON->>ORDER: 멱등키 등록 및 주문 생성(orderRequestId, userId, orderNo)
-    activate ORDER
-    ORDER-->>CON: 성공 or 중복요청(duplicateRequest=true)
-    deactivate ORDER
+    CON->>FA: 주문 생성 요청(orderRequestId, userId, items)
 
-    alt 중복요청
+    FA->>OS: 멱등키 등록 요청(orderRequestId, userId, orderNo)
+    OS->>OR: insertOrder(PENDING) with orderRequestId
+    activate OR
+    OR-->>OS: 성공 or Unique제약 오류
+    deactivate OR
+
+    alt Unique 제약 오류(이미 주문됨)
+        OS-->>FA: 기존 주문 정보 반환(duplicateRequest=true)
+        FA-->>CON: 200 OK(기존 주문정보)
         CON-->>USER: 200 OK(duplicateRequest=true)
     end
 
-    ORDER-->>CON: PENDING 상태 주문 생성 완료
+    OS-->>FA: PENDING 상태 주문 생성 완료
 
-    CON->>PRODUCT: 상품 유효성 검증(items)
-    activate PRODUCT
-    PRODUCT-->>CON: 상품 존재 여부
-    deactivate PRODUCT
+    FA->>PS: 상품 유효성 검증(items)
+    PS->>PR: validateProducts(items)
+    activate PR
+    PR-->>PS: 상품 존재 정보
+    deactivate PR
 
     alt 상품 없음
-        CON->>ORDER: 주문 상태 FAILED로 업데이트
-        activate ORDER
-        ORDER-->>CON: 404 Not Found
-        deactivate ORDER
-        CON-->>USER: 404 Not Found
+        PS-->>FA: 실패(404)
+        FA->>OS: 주문 상태 FAILED로 업데이트
+        OS->>OR: updateProductStatus(FAILED)
+        activate OR
+        OR-->>OS: 완료
+        deactivate OR
+        FA-->>CON: 404 Not Found
     end
 
-    PRODUCT-->>CON: 상품 검증 성공
+    PS-->>FA: 성공
 
-    CON->>POINT: 포인트 검증(userId, 총금액)
-    activate POINT
-    POINT-->>CON: 포인트 충분/부족
-    deactivate POINT
+    FA->>PT: 포인트 검증(userId, 총금액)
+    PT-->>FA: 포인트 충분/부족
 
     alt 보유 포인트 부족
-        CON->>ORDER: 주문 상태 FAILED로 업데이트
-        activate ORDER
-        ORDER-->>CON: 409 Conflict
-        deactivate ORDER
-        CON-->>USER: 409 Conflict
+        FA->>OS: 주문 상태 FAILED로 업데이트
+        OS->>OR: updateProductStatus(FAILED)
+        activate OR
+        OR-->>OS: 완료
+        deactivate OR
+        FA-->>CON: 409 Conflict
     end
 
-    POINT-->>CON: 포인트 충분
+    PT-->>FA: 보유 포인트 충분
 
-    CON->>INVENTORY: 재고 차감 요청(items)
-    activate INVENTORY
-    INVENTORY-->>CON: 재고 차감 성공/실패
-    deactivate INVENTORY
+    FA->>IS: 재고 차감 요청(items)
+    IS-->>IR: decreaseInventory()
+    activate IR
+    IR-->>IS: 재고차감 실패 or 성공
+    deactivate IR
 
     alt 재고 차감 실패
-        CON->>PRODUCT: 상품 상태 일시품절 처리
-        activate PRODUCT
-        PRODUCT-->>CON: 409 Conflict
-        deactivate PRODUCT
-        CON-->>USER: 409 Conflict
+        IS-->>FA: 재고 차감 실패 응답
+        FA-->>PS: 상품 상태 일시품절 처리
+        PS-->>PR: updateStatus(SOLDOUT)
+        activate PR
+        PR-->>PS: 완료
+        deactivate PR
+        PR-->>FA: 일시품절 처리 완료
+        FA-->>CON: 409Conflict
     end
 
-    INVENTORY-->>CON: 재고 차감 성공
+    IS-->>FA: 재고 차감 성공 응답
 
-    CON->>POINT: 포인트 결제 요청(orderId, 금액)
-    activate POINT
-    POINT-->>CON: 포인트 차감 성공/실패
-    deactivate POINT
+    FA->>PT: 포인트 결제 요청(orderId, 금액)
+    PT->>POR: 포인트 차감(userId, 금액)
+    activate POR
+    POR-->>PT: 포인트 차감 실패 or 성공
+        alt 포인트 차감 실패
+            PT-->>FA: 409 Conflict
+        end
+    deactivate POR
+    PT-->>FA: 결제 성공
 
-    alt 포인트 차감 실패
-        CON-->>USER: 409 Conflict
-    end
+    FA-->>PM: 결제 정보 저장
+    PM-->>PAYR: insertPayment()
+    activate PAYR
+    PAYR-->>PM: 완료
+    deactivate PAYR
+    
+    PM-->>FA: 결제 정보 저장 성공
 
-    POINT-->>CON: 포인트 결제 성공
+    FA->>OS: 주문 상태 PAID로 업데이트
+    OS->>OR: updateStatus(PAID)
+    activate OR
+    OR-->>OS: 완료
+    deactivate OR
 
-    CON->>PAYMENT: 결제 정보 저장
-    activate PAYMENT
-    PAYMENT-->>CON: 결제 정보 저장 성공
-    deactivate PAYMENT
-
-    CON->>ORDER: 주문 상태 PAID로 업데이트
-    activate ORDER
-    ORDER-->>CON: 완료
-    deactivate ORDER
-
+    FA-->>CON: 201 Created(주문정보)
     CON-->>USER: 201 Created(주문정보)
-    deactivate CON
+
 ```
 
 ---
