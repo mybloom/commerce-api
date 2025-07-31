@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 @Configuration
-class QueryDslConfig {
+public class QueryDslConfig {
 
     @Primary
     @Bean
