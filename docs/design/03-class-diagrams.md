@@ -198,3 +198,95 @@ class LikePagingCondition {
 }
 
 ```
+
+---
+
+1. 상품/브랜드 조회
+```mermaid
+classDiagram
+%% =========================
+%% BrandAggregate
+%% =========================
+class Brand {
+    - Long brandId
+    - String name
+    - String description
+    - BrandStatus status
+    + getName(): String
+    + getDescription(): String
+    + getStatus(): BrandStatus
+}
+
+class BrandStatus {
+    <<enumeration>>
+    ACTIVE
+    INACTIVE
+}
+
+Brand "1" --> "*" Product : brandId 참조 >
+
+%% =========================
+%% ProductAggregate
+%% =========================
+class Product {
+    - Long productId
+    - String name
+    - Money price
+    - ProductStatus status
+    - int likeCount
+    - Date createdAt
+    - int stockQuantity
+    - Long brandId
+    + viewInfo(): String
+    + isListViewAvailable(): boolean
+    + isDetailViewAvailable(): boolean
+    + isSaleAvailable(int qty): boolean
+}
+
+class ProductStatus {
+    <<enumeration>>
+    AVAILABLE
+    OUT_OF_STOCK
+    DISCONTINUED
+}
+
+%% =========================
+%% 공통 VO
+%% =========================
+class Money {
+    <<value object>>
+    - int amount
+    + add(Money other): Money
+    + subtract(Money other): Money
+    + isGreaterThan(Money other): boolean
+}
+
+%% =========================
+%% 필터링 및 페이징 조건 VO
+%% =========================
+class PagingCondition {
+    <<value object>>
+    - int page
+    - int size
+    + getOffset(): int
+    + isValid(): boolean
+}
+
+class SortCondition {
+    <<value object>>
+    - String sortField
+    - boolean ascending
+    + isAscending(): boolean
+    + isValid(): boolean
+}
+
+class ProductSearchCondition {
+    <<value object>>
+    - Long brandId
+    - String status
+    - PagingCondition paging
+    - SortCondition sort
+    + isValid(): boolean
+}
+
+```
