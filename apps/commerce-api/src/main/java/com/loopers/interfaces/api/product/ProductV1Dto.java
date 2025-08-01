@@ -2,8 +2,8 @@ package com.loopers.interfaces.api.product;
 
 import com.loopers.application.common.PagingCondition;
 import com.loopers.application.product.ProductQueryResult.ListViewResult;
-import com.loopers.application.product.ProductQueryResult.Pagination;
 import com.loopers.domain.product.ProductSortType;
+import com.loopers.support.paging.Pagination;
 import jakarta.annotation.Nullable;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
