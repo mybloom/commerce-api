@@ -39,5 +39,25 @@ public class LikeResult {
         }
     }
 
+    public record LikeListResult(
+        List<LikeDetailResult> contents,
+        Pagination pagination
+    ) {
+    }
 
+    public record LikeDetailResult(
+        Long productId,
+        String productName,
+        Long price,
+        String brandName
+    ) {
+        public static LikeDetailResult from(Product product, Brand brand) {
+            return new LikeDetailResult(
+                product.getId(),
+                product.getName(),
+                product.getPrice().getAmount(),
+                brand.getName()
+            );
+        }
+    }
 }

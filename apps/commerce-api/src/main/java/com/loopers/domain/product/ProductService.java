@@ -1,5 +1,6 @@
 package com.loopers.domain.product;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,5 +34,9 @@ public class ProductService {
     public void decreaseLikeCount(final Product product) {
         product.decreaseLikeCount();
         productRepository.save(product);
+    }
+
+    public List<Product> getProducts(List<Long> productIds) {
+        return productRepository.findAllById(productIds);
     }
 }

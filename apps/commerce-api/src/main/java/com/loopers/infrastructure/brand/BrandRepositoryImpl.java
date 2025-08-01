@@ -2,6 +2,7 @@ package com.loopers.infrastructure.brand;
 
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandRepository;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -25,5 +26,10 @@ public class BrandRepositoryImpl implements BrandRepository {
     @Override
     public boolean existsById(Long brandId) {
         return brandJpaRepository.existsById(brandId);
+    }
+
+    @Override
+    public List<Brand> findAllById(List<Long> brandIds) {
+        return brandJpaRepository.findAllById(brandIds);
     }
 }

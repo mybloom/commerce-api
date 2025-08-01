@@ -44,7 +44,7 @@ public class ProductUseCase {
     }
 
     private ListViewResult retrieveListByBrand(final Long brandId, final Pageable pageable) {
-        final Optional<Brand> brand = brandService.retrieveListByBrand(brandId);
+        final Optional<Brand> brand = brandService.retrieveById(brandId);
 
         if (brand.isEmpty()) {
             log.error("Brand with ID {} does not exist", brandId);

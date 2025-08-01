@@ -10,9 +10,13 @@ import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 
+import java.time.ZonedDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,7 +29,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "product")
 @Entity
-public class Product extends BaseEntity {
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String name;
 
@@ -45,6 +53,10 @@ public class Product extends BaseEntity {
     @Column(nullable = false, name = "brand_id")
     private Long brandId;
 
+    private ZonedDateTime createdAt;
+    private ZonedDateTime updatedAt;
+    private ZonedDateTime deletedAt;
+
     public static Product from(
         String name,
         Long price,
@@ -55,6 +67,27 @@ public class Product extends BaseEntity {
         Long brandId
     ) {
         return Product.builder()
+            .name(name)
+            .price(Money.from(price))
+            .status(status)
+            .likeCount(LikeCount.from(likeCount))
+            .stockQuantity(stockQuantity)
+            .saleStartDate(saleStartDate)
+            .brandId(brandId)
+            .build();
+    }
+
+    public static Product testInstance(
+        String name,
+        Long price,
+        ProductStatus status,
+        int likeCount,
+        Long stockQuantity,
+        LocalDate saleStartDate,
+        Long brandId
+    ) {
+        return Product.builder()
+            .id(0L)
             .name(name)
             .price(Money.from(price))
             .status(status)

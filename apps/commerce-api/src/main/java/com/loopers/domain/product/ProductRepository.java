@@ -15,4 +15,6 @@ public interface ProductRepository {
     boolean existsListViewableByBrandId(Long brandId);
 
     List<Product> findAll();
+
+    List<Product> findAllById(List<Long> productIds);
 }
