@@ -25,9 +25,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @SpringBootTest
 @Import(MySqlTestContainersConfig.class)
-class ProductQueryUseCaseIntegrationTest {
+class ProductUseCaseIntegrationTest {
 
-    private final ProductQueryUseCase sut;
+    private final ProductUseCase sut;
     private final DatabaseCleanUp databaseCleanUp;
 
     @MockitoSpyBean
@@ -36,11 +36,11 @@ class ProductQueryUseCaseIntegrationTest {
     private BrandRepository brandRepository;
 
     @Autowired
-    public ProductQueryUseCaseIntegrationTest(
-            ProductQueryUseCase productQueryUseCase,
+    public ProductUseCaseIntegrationTest(
+            ProductUseCase productUseCase,
             DatabaseCleanUp databaseCleanUp
     ) {
-        this.sut = productQueryUseCase;
+        this.sut = productUseCase;
         this.databaseCleanUp = databaseCleanUp;
     }
 

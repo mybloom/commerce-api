@@ -1,7 +1,7 @@
 package com.loopers.interfaces.api.product;
 
 import com.loopers.application.product.ProductQueryResult.ListViewResult;
-import com.loopers.application.product.ProductQueryUseCase;
+import com.loopers.application.product.ProductUseCase;
 import com.loopers.interfaces.api.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.Optional;
@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ProductV1Controller {
 
-    private final ProductQueryUseCase productQueryUseCase;
+    private final ProductUseCase productUseCase;
 
     @GetMapping
     public ApiResponse<ProductV1Dto.ListViewResponse> retrieveListView(
         @Valid @ModelAttribute ProductV1Dto.ListViewRequest request
     ) {
-        ListViewResult listViewResult = productQueryUseCase.findList(
+        ListViewResult listViewResult = productUseCase.findList(
             Optional.ofNullable(request.brandId()),
             Optional.ofNullable(request.sortCondition()),
             Optional.ofNullable(request.pagingCondition())

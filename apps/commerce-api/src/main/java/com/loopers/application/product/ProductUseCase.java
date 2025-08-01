@@ -3,12 +3,12 @@ package com.loopers.application.product;
 import com.loopers.support.paging.PageableFactory;
 import com.loopers.application.common.PagingCondition;
 import com.loopers.application.product.ProductQueryResult.ListViewResult;
-import com.loopers.application.product.ProductQueryResult.Pagination;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductListProjection;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.product.ProductSortType;
+import com.loopers.support.paging.Pagination;
 import com.loopers.support.paging.PagingPolicy;
 import java.util.Collections;
 import java.util.Optional;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class ProductQueryUseCase {
+public class ProductUseCase {
 
     private final BrandService brandService;
     private final ProductService productService;

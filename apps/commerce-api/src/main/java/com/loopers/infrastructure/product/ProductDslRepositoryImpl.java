@@ -43,6 +43,7 @@ public class ProductDslRepositoryImpl implements ProductDslRepository {
                 product.price,
                 product.likeCount,
                 product.status,
+                product.saleStartDate,
                 product.createdAt,
                 brand.id,
                 brand.name

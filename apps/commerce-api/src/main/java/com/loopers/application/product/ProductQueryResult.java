@@ -2,6 +2,7 @@ package com.loopers.application.product;
 
 
 import com.loopers.domain.product.ProductListProjection;
+import com.loopers.support.paging.Pagination;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -39,22 +40,5 @@ public class ProductQueryResult {
         ZonedDateTime createdAt
     ) {
 
-    }
-
-    public record Pagination(
-        long totalCount,
-        int page,
-        int size,
-        boolean hasNext
-    ) {
-
-        public Pagination(long totalCount, int page, int size) {
-            this(totalCount, page, size, calculateHasNext(totalCount, page, size));
-        }
-
-        private static boolean calculateHasNext(long totalCount, int page, int size) {
-            long offset = page * size;
-            return offset + size < totalCount;
-        }
     }
 }
