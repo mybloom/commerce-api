@@ -5,8 +5,6 @@ import com.loopers.domain.commonvo.LikeCount;
 import com.loopers.domain.commonvo.LikeCountConverter;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.commonvo.MoneyConverter;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -14,7 +12,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -67,4 +65,11 @@ public class Product extends BaseEntity {
             .build();
     }
 
+    public void increaseLikeCount() {
+        this.likeCount = likeCount.increase();
+    }
+
+    public void decreaseLikeCount() {
+        this.likeCount = likeCount.decrease();
+    }
 }
