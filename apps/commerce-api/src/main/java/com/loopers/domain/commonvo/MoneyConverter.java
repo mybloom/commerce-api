@@ -14,6 +14,6 @@ public class MoneyConverter implements AttributeConverter<Money, Long> {
 
     @Override
     public Money convertToEntityAttribute(Long dbData) {
-        return dbData != null ? new Money(dbData) : null;
+        return dbData != null ? Money.of(dbData) : null;
     }
 }

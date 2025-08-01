@@ -1,6 +1,5 @@
 package com.loopers.domain.product;
 
-import com.loopers.domain.BaseEntity;
 import com.loopers.domain.commonvo.LikeCount;
 import com.loopers.domain.commonvo.LikeCountConverter;
 import com.loopers.domain.commonvo.Money;
@@ -68,7 +67,7 @@ public class Product {
     ) {
         return Product.builder()
             .name(name)
-            .price(Money.from(price))
+            .price(Money.of(price))
             .status(status)
             .likeCount(LikeCount.from(likeCount))
             .stockQuantity(stockQuantity)
@@ -89,7 +88,7 @@ public class Product {
         return Product.builder()
             .id(0L)
             .name(name)
-            .price(Money.from(price))
+            .price(Money.of(price))
             .status(status)
             .likeCount(LikeCount.from(likeCount))
             .stockQuantity(stockQuantity)
