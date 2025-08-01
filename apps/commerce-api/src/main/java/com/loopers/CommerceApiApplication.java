@@ -1,13 +1,16 @@
 package com.loopers;
 
+import com.loopers.config.jpa.QueryDslConfig;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import java.util.TimeZone;
+import org.springframework.context.annotation.Import;
 
 @ConfigurationPropertiesScan
 @SpringBootApplication
+@Import(QueryDslConfig.class)
 public class CommerceApiApplication {
 
     @PostConstruct
