@@ -190,5 +190,23 @@ class LikeServiceIntegrationTest {
         }
     }
 
+    @DisplayName("좋아요 기록을 조회할 때,")
+    @Nested
+    class retrieveHistories {
 
+        @Test
+        @DisplayName("좋아요 기록이 없으면, 빈 페이지를 반환한다.")
+        void returnsEmptyPage_whenNoLikeHistories() {
+            // Act
+            Page<LikeHistory> result = sut.retrieveHistories(userId, Pageable.unpaged());
+
+            // Assert
+            assertAll(
+                () -> assertThat(result).isNotNull(),
+                () -> assertThat(result.getContent()).isEmpty(),
+                () -> assertThat(result.getTotalElements()).isEqualTo(0)
+            );
+        }
+
+    }
 }
