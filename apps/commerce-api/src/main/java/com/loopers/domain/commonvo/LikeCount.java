@@ -24,11 +24,11 @@ public class LikeCount implements Comparable<LikeCount> {
         return new LikeCount(0);
     }
 
-    public LikeCount increment() {
+    public LikeCount increase() {
         return new LikeCount(this.value + 1);
     }
 
-    public LikeCount decrement() {
+    public LikeCount decrease() {
         if (this.value == 0) {
             return this;
         }
