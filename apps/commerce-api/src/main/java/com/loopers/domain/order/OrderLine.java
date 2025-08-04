@@ -2,13 +2,8 @@ package com.loopers.domain.order;
 
 import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.commonvo.Quantity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.ZonedDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,9 +23,15 @@ public class OrderLine {
 
     @Embedded
     @Column(name = "quantity", insertable = false, updatable = false)
+    @AttributeOverrides({
+            @AttributeOverride(name = "amount", column = @Column(name = "quantity_amount"))
+    })
     private Quantity quantity;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "amount", column = @Column(name = "discount_amount"))
+    })
     private Money price;
 
     private ZonedDateTime createdAt;
