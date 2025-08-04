@@ -1,0 +1,117 @@
+package com.loopers.domain.order;
+
+import com.loopers.domain.commonvo.Money;
+import com.loopers.domain.commonvo.Quantity;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
+
+import static com.loopers.domain.order.OrderStatus.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+class OrderTest {
+
+    private static final Long USER_ID = 1L;
+    private static final Long PRODUCT_ID = 100L;
+    private static final Long PAYMENT_ID = 500L;
+    private static final Money PRODUCT_PRICE = Money.of(3000L);
+    private static final Quantity QUANTITY = Quantity.of(2);
+    private static final Money EXPECTED_TOTAL = Money.of(6000L);
+    private static final Money PAYMENT_AMOUNT = Money.of(6000L);
+    private static final String ORDER_REQUEST_ID = UUID.randomUUID().toString();
+
+    @DisplayName("주문 객체 생성 시")
+    @Nested
+    class Create {
+
+        @Test
+        @DisplayName("처음 주문을 생성하면, 상태는 PENDING이고 기본값들이 설정된다")
+        void createOrder_successfully() {
+            // Act
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+
+            // Assert
+            assertThat(order).isNotNull();
+            assertThat(order.getUserId()).isEqualTo(USER_ID);
+            assertThat(order.getStatus()).isEqualTo(PENDING);
+            assertThat(order.getOrderRequestId()).isEqualTo(ORDER_REQUEST_ID);
+            assertThat(order.getCreatedAt()).isNotNull();
+            assertThat(order.getOrderLines()).isEmpty();
+        }
+    }
+
+    @DisplayName("주문 상품 추가 시,")
+    @Nested
+    class AddProduct {
+
+        @Test
+        @DisplayName("상품과 수량을 추가하면, orderLines에 반영된다")
+        void addProductToOrder() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+
+            // Act
+            order.addProduct(PRODUCT_ID, QUANTITY, PRODUCT_PRICE);
+
+            // Assert
+            assertThat(order.getOrderLines()).hasSize(1);
+            assertThat(order.getOrderLines().get(0).getProductId()).isEqualTo(PRODUCT_ID);
+            assertThat(order.getOrderLines().get(0).getQuantity()).isEqualTo(QUANTITY);
+            assertThat(order.getOrderLines().get(0).getPrice()).isEqualTo(PRODUCT_PRICE);
+        }
+    }
+
+    @DisplayName("주문 금액 계산 시,")
+    @Nested
+    class CalculateTotal {
+
+        @Test
+        @DisplayName("상품들이 추가된 후 calculateTotal()을 호출하면 총합이 계산된다")
+        void calculateTotalAmount() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+            order.addProduct(PRODUCT_ID, QUANTITY, PRODUCT_PRICE); // 2 * 3000 = 6000
+
+            // Act
+            order.calculateTotal();
+
+            // Assert
+            assertThat(order.getTotalAmount()).isEqualTo(EXPECTED_TOTAL);
+        }
+    }
+
+    @DisplayName("결제 상태 변경 시,")
+    @Nested
+    class Status {
+
+        @Test
+        @DisplayName("결제 정상 처리가 되면, 상태는 PAID로 변경되고 결제 ID와 금액이 설정된다")
+        void markAsPaid() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+
+            // Act
+            order.markPaid(PAYMENT_ID, PAYMENT_AMOUNT);
+
+            // Assert
+            assertThat(order.getStatus()).isEqualTo(PAID);
+            assertThat(order.getPaymentId()).isEqualTo(PAYMENT_ID);
+            assertThat(order.getPaymentAmount()).isEqualTo(PAYMENT_AMOUNT);
+        }
+
+        @Test
+        @DisplayName("결제가 오류가 나면, 주문 상태는 FAILED로 설정된다")
+        void markAsFailed() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+
+            // Act
+            order.markFailed();
+
+            // Assert
+            assertThat(order.getStatus()).isEqualTo(FAILED);
+        }
+    }
+}
