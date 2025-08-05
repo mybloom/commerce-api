@@ -1,7 +1,8 @@
 package com.loopers.domain.order;
 
 import com.loopers.domain.commonvo.Money;
-import com.loopers.domain.commonvo.Quantity;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,16 +16,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+
+import lombok.*;
 
 @Table(name = "orders")
 @Entity
 @Getter
+@Builder(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
 
@@ -38,7 +41,12 @@ public class Order {
     private OrderStatus status;
 
     @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "total_amount"))
     private Money totalAmount;
+
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "discount_amount"))
+    private Money discountAmount;
 
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "payment_amount"))
@@ -50,6 +58,7 @@ public class Order {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "order_id")
+    @Builder.Default
     private List<OrderLine> orderLines = new ArrayList<>();
 
     private ZonedDateTime createdAt;
@@ -57,22 +66,34 @@ public class Order {
     private ZonedDateTime deletedAt;
 
     public static Order create(Long userId, String orderRequestId) {
-        Order order = new Order();
-        order.userId = userId;
-        order.status = OrderStatus.PENDING;
-        order.orderRequestId = orderRequestId;
-        order.createdAt = ZonedDateTime.now();
-        return order;
+        return Order.builder()
+                .userId(userId)
+                .status(OrderStatus.PENDING)
+                .orderRequestId(orderRequestId)
+                .createdAt(ZonedDateTime.now())
+                .build();
     }
 
-    public void addProduct(Long productId, Quantity quantity, Money price) {
-        this.orderLines.add(new OrderLine(productId, quantity, price));
+    public void addOrderLine(List<OrderLine> orderLines) {
+        if(orderLines.isEmpty()){
+            throw new CoreException(ErrorType.BAD_REQUEST, "주문 상품이 없습니다.");
+        }
+        this.orderLines = orderLines;
     }
 
-    public void calculateTotal() {
+    public Money calculateOrderAmount() {
+        if(orderLines.isEmpty()){
+            throw new CoreException(ErrorType.CONFLICT, "주문 상품이 없습니다.");
+        }
+
         this.totalAmount = orderLines.stream()
-            .map(OrderLine::getSubTotal)
-            .reduce(Money.ZERO, Money::add);
+                .map(OrderLine::getSubTotal)
+                .reduce(Money.ZERO, Money::add);
+        return totalAmount;
+    }
+
+    public void failValidation() {
+        this.status = OrderStatus.VALIDATION_FAILED;
     }
 
     public void markPaid(Long paymentId, Money paymentAmount) {
@@ -82,6 +103,11 @@ public class Order {
     }
 
     public void markFailed() {
-        this.status = OrderStatus.FAILED;
+        this.status = OrderStatus.PAID_FAILED;
+    }
+
+    public void applyDiscount(Money discountAmount) {
+        this.discountAmount = discountAmount;
+        this.paymentAmount = this.totalAmount.subtract(discountAmount);
     }
 }

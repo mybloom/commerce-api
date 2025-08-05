@@ -7,4 +7,6 @@ public interface OrderRepository {
     Optional<Order> findByOrderRequestId(String orderRequestId);
 
     Order save(Order order);
+
+    Optional<Order> findById(Long id);
 }

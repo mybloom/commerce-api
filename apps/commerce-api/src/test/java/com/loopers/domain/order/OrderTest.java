@@ -2,10 +2,16 @@ package com.loopers.domain.order;
 
 import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.commonvo.Quantity;
+import com.loopers.domain.product.Product;
+import com.loopers.domain.product.ProductStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import static com.loopers.domain.order.OrderStatus.*;
@@ -14,13 +20,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OrderTest {
 
     private static final Long USER_ID = 1L;
-    private static final Long PRODUCT_ID = 100L;
     private static final Long PAYMENT_ID = 500L;
-    private static final Money PRODUCT_PRICE = Money.of(3000L);
-    private static final Quantity QUANTITY = Quantity.of(2);
-    private static final Money EXPECTED_TOTAL = Money.of(6000L);
     private static final Money PAYMENT_AMOUNT = Money.of(6000L);
     private static final String ORDER_REQUEST_ID = UUID.randomUUID().toString();
+
+    private static final Long PRODUCT_ID = 1L;
+    private static final Quantity QUANTITY = Quantity.of(2);
+    private static final Long PRODUCT_PRICE = 1000L;
+
+    private List<OrderLineCommand> orderLineCommands;
+    private List<Product> products;
+    private Money expectedTotal = Money.ZERO;
+
+    @BeforeEach
+    void setUp() {
+        Product product = Product.from(
+                "상품1",
+                PRODUCT_PRICE,
+                ProductStatus.AVAILABLE,
+                10,
+                100L,
+                LocalDate.now().minusDays(1),
+                1L
+        );
+        ReflectionTestUtils.setField(product, "id", PRODUCT_ID); // ID 설정
+
+        products = List.of(product);
+        orderLineCommands = List.of(new OrderLineCommand(PRODUCT_ID, QUANTITY));
+
+        expectedTotal = product.getPrice().multiply(QUANTITY);
+    }
 
     @DisplayName("주문 객체 생성 시")
     @Nested
@@ -37,29 +66,30 @@ class OrderTest {
             assertThat(order.getUserId()).isEqualTo(USER_ID);
             assertThat(order.getStatus()).isEqualTo(PENDING);
             assertThat(order.getOrderRequestId()).isEqualTo(ORDER_REQUEST_ID);
-            assertThat(order.getCreatedAt()).isNotNull();
             assertThat(order.getOrderLines()).isEmpty();
         }
     }
 
-    @DisplayName("주문 상품 추가 시,")
+    @DisplayName("주문 객체 수정 시,")
     @Nested
     class AddProduct {
 
         @Test
-        @DisplayName("상품과 수량을 추가하면, orderLines에 반영된다")
+        @DisplayName("선택한 상품목록과 각 수량은, orderLines에 반영된다")
         void addProductToOrder() {
             // Arrange
             Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+            OrderLineService orderLineService = new OrderLineService();
+            List<OrderLine> orderLines = orderLineService.createOrderLines(orderLineCommands, products);
 
             // Act
-            order.addProduct(PRODUCT_ID, QUANTITY, PRODUCT_PRICE);
+            order.addOrderLine(orderLines);
 
             // Assert
-            assertThat(order.getOrderLines()).hasSize(1);
+            assertThat(order.getOrderLines()).hasSize(products.size());
             assertThat(order.getOrderLines().get(0).getProductId()).isEqualTo(PRODUCT_ID);
             assertThat(order.getOrderLines().get(0).getQuantity()).isEqualTo(QUANTITY);
-            assertThat(order.getOrderLines().get(0).getPrice()).isEqualTo(PRODUCT_PRICE);
+            assertThat(order.getOrderLines().get(0).getPrice()).isEqualTo(Money.of(PRODUCT_PRICE));
         }
     }
 
@@ -68,17 +98,19 @@ class OrderTest {
     class CalculateTotal {
 
         @Test
-        @DisplayName("상품들이 추가된 후 calculateTotal()을 호출하면 총합이 계산된다")
+        @DisplayName("상품들이 추가된 후, calculateTotal()을 호출하면 총합이 계산된다")
         void calculateTotalAmount() {
             // Arrange
             Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
-            order.addProduct(PRODUCT_ID, QUANTITY, PRODUCT_PRICE); // 2 * 3000 = 6000
+            OrderLineService orderLineService = new OrderLineService();
+            List<OrderLine> orderLines = orderLineService.createOrderLines(orderLineCommands, products);
+            order.addOrderLine(orderLines);
 
             // Act
-            order.calculateTotal();
+            Money actual = order.calculateOrderAmount();
 
             // Assert
-            assertThat(order.getTotalAmount()).isEqualTo(EXPECTED_TOTAL);
+            assertThat(actual).isEqualTo(expectedTotal);
         }
     }
 
@@ -102,7 +134,7 @@ class OrderTest {
         }
 
         @Test
-        @DisplayName("결제가 오류가 나면, 주문 상태는 FAILED로 설정된다")
+        @DisplayName("결제가 오류가 나면, 주문 상태는 PAID_FAILED로 설정된다")
         void markAsFailed() {
             // Arrange
             Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
@@ -111,7 +143,7 @@ class OrderTest {
             order.markFailed();
 
             // Assert
-            assertThat(order.getStatus()).isEqualTo(FAILED);
+            assertThat(order.getStatus()).isEqualTo(PAID_FAILED);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.loopers.domain.point;
 
+import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.User;
 import com.loopers.infrastructure.point.PointJpaRepository;
@@ -72,16 +73,16 @@ public class PointServiceIntegrationTest {
         void successCharge() {
             // arrange
             User user = userJpaRepository.save(new User("testId", "test@test.com", "2000-01-01", Gender.MALE));
-            Point savedPoint = pointJpaRepository.save(new Point(user.getId()));
+            Point savedPoint = pointJpaRepository.save(Point.createInitial(user.getId()));
             reset(pointJpaRepository);
-            Long initialBalance = savedPoint.balance();
+            Long initialBalance = savedPoint.balance().getAmount();
             Long chargeAmount = 1000L;
 
             // act
             Point actualPoint = pointService.charge(user.getId(), chargeAmount);
 
             // assert
-            assertThat(actualPoint.balance()).isEqualTo(initialBalance + chargeAmount);
+            assertThat(actualPoint.balance().getAmount()).isEqualTo(initialBalance + chargeAmount);
             verify(pointJpaRepository, times(1)).save(any(Point.class));
         }
     }
@@ -95,8 +96,8 @@ public class PointServiceIntegrationTest {
         void returnsPointBalance_whenUserExists() {
             // arrange
             Long userId = 1L;
-            Long amount = 1000L;
-            Point point = new Point(userId, amount);
+            Money amount = Money.of(1000L);
+            Point point = Point.create(userId, amount);
             pointJpaRepository.save(point);
 
             // act

@@ -46,7 +46,7 @@ class PointV1ApiE2ETest {
     @BeforeEach
     void setUp() {
         user = userJpaRepository.save(new User("test", "test@test.com", "2000-01-01", Gender.MALE));
-        pointJpaRepository.save(new Point(user.getId()));
+        pointJpaRepository.save(Point.createInitial(user.getId()));
     }
 
     @AfterEach
@@ -65,7 +65,7 @@ class PointV1ApiE2ETest {
         void returnTotalBalance_whenChargeIsSuccessful() {
             // arrange
             Long userId = user.getId();
-            Long initialBalance = pointJpaRepository.findByUserId(userId).get().balance();
+            Long initialBalance = pointJpaRepository.findByUserId(userId).get().balance().getAmount();
             Long chargeAmount = 1000L;
             PointV1Dto.ChargeRequest chargeRequest = new PointV1Dto.ChargeRequest(chargeAmount);
 
@@ -133,7 +133,7 @@ class PointV1ApiE2ETest {
         @Test
         void returnPointBalance_whenRetrieveIsSuccessful() {
             //arrange
-            Long balance = pointJpaRepository.findByUserId(user.getId()).get().balance();
+            Long balance = pointJpaRepository.findByUserId(user.getId()).get().balance().getAmount();
 
             ParameterizedTypeReference<ApiResponse<PointV1Dto.PointResponse>> responseType = new ParameterizedTypeReference<>() {
             };

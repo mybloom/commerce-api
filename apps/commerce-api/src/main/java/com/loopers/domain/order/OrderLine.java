@@ -5,6 +5,7 @@ import com.loopers.domain.commonvo.Quantity;
 import jakarta.persistence.*;
 
 import java.time.ZonedDateTime;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,10 @@ public class OrderLine {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private Order order;
 
     private Long productId;
 
@@ -38,14 +43,18 @@ public class OrderLine {
     private ZonedDateTime updatedAt;
     private ZonedDateTime deletedAt;
 
-    public OrderLine(Long productId, Quantity quantity, Money price) {
+    private OrderLine(Long productId, Quantity quantity, Money price){
         this.productId = productId;
         this.quantity = quantity;
         this.price = price;
     }
 
+    public static OrderLine create(Long productId, Quantity quantity, Money price) {
+        return new OrderLine(productId, quantity, price);
+    }
+
     public Money getSubTotal() {
-        return price.multiply(quantity.getAmount());
+        return price.multiply(quantity);
     }
 
 }

@@ -18,11 +18,19 @@ public class OrderResult {
             );
         }
 
-        public static OrderRequestResult newlyCreated(Order createdOrder) {
+        public static OrderRequestResult from(Order createdOrder) {
             return new OrderRequestResult(
                 false,
                 createdOrder.getId(),
                 createdOrder.getStatus()
+            );
+        }
+
+        public static OrderRequestResult failValidation(Order order) {
+            return new OrderRequestResult(
+                    false,
+                    order.getId(),
+                    order.getStatus()
             );
         }
     }

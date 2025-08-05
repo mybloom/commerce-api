@@ -1,5 +1,6 @@
 package com.loopers.domain.point;
 
+import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.DisplayName;
@@ -22,10 +23,10 @@ public class PointTest {
         @Test
         void amountDefaultsToZero_whenCreated() {
             // act
-            Point point = new Point(validUserId);
+            Point point = Point.createInitial(validUserId);
 
             // assert
-            assertThat(point.balance()).isEqualTo(0L);
+            assertThat(point.balance().getAmount()).isEqualTo(0L);
         }
     }
 
@@ -41,11 +42,11 @@ public class PointTest {
         })
         void throwsBadRequestException_whenAmountIsZeroOrNegative(Long invalidAmount) {
             //arrange
-            Point point = new Point(validUserId);
+            Point point = Point.createInitial(validUserId);
 
             //act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                point.charge(invalidAmount);
+                point.charge(Money.of(invalidAmount));
             });
 
             //assert
@@ -56,15 +57,15 @@ public class PointTest {
         @Test
         void chargePoint_whenAmountIsPositive() {
             // arrange
-            Point point = new Point(validUserId);
-            Long initialBalance = point.balance();
+            Point point = Point.createInitial(validUserId);
+            Long initialBalance = point.balance().getAmount();
 
             // act
             long chargeAmount = 1000L;
-            point.charge(chargeAmount);
+            point.charge(Money.of(chargeAmount));
 
             // assert
-            assertThat(point.balance()).isEqualTo(initialBalance + chargeAmount);
+            assertThat(point.balance().getAmount()).isEqualTo(initialBalance + chargeAmount);
         }
     }
 

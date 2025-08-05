@@ -3,17 +3,19 @@ package com.loopers.domain.commonvo;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.Objects;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Money {
     public static final Money ZERO = new Money(0L);
 
     private final Long amount;
-
-    private Money(Long amount) {
-        this.amount = amount;
-    }
 
     public static Money of(Long amount) {
         if (amount < 0) {
@@ -34,12 +36,16 @@ public class Money {
         return new Money(result);
     }
 
-    public Money multiply(int multiplier) {
-        return new Money(this.amount * multiplier);
+    public Money multiply(Quantity quantity) {
+        return new Money(this.amount * quantity.getAmount());
     }
 
-    public boolean isGreaterThan(Money other) {
-        return this.amount > other.amount;
+    public boolean isLessThan(Money other) {
+        return this.amount < other.amount;
+    }
+
+    public boolean isLessThanOne() {
+        return this.amount < 1;
     }
 
     @Override

@@ -1,12 +1,18 @@
 package com.loopers.domain.product;
 
+import java.util.Collections;
 import java.util.List;
+
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
@@ -38,5 +44,19 @@ public class ProductService {
 
     public List<Product> getProducts(List<Long> productIds) {
         return productRepository.findAllById(productIds);
+    }
+
+    public List<Product> findAllValidProducts(Set<Long> productIds) {
+        final List<Product> products = productRepository.findAllById(productIds.stream().toList());
+        final Set<Long> foundIds = products.stream().map(Product::getId).collect(Collectors.toSet());
+
+        if (!foundIds.containsAll(productIds)) {
+            return Collections.emptyList();
+        }
+        return products;
+    }
+
+    public void calculateTotal() {
+
     }
 }
