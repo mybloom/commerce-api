@@ -84,10 +84,10 @@ class OrderUseCaseIntegrationTest {
             );
 
             // act
-            OrderResult.OrderRequestResult result = sut.placeOrder(USER_ID, ORDER_REQUEST_ID, items);
+            OrderResult.OrderRequestResult result = sut.order(USER_ID, ORDER_REQUEST_ID, items);
 
             // assert
-            Order order = orderRepository.findById(result.orderId()).orElseThrow();
+            Order order = orderRepository.findByIdWithOrderLines(result.orderId()).orElseThrow();
             List<OrderLine> orderLines = order.getOrderLines();
 
             assertAll(

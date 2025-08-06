@@ -1,8 +1,8 @@
 package com.loopers.domain.product;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
+import com.loopers.domain.commonvo.Quantity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -56,7 +55,31 @@ public class ProductService {
         return products;
     }
 
-    public void calculateTotal() {
+    public void deductStock(List<ProductCommand.CheckStock> checkStocksCommand) {
+        Map<Long, Quantity> quantityByProductId = checkStocksCommand.stream()
+                .collect(Collectors.toMap(
+                        ProductCommand.CheckStock::productId,
+                        ProductCommand.CheckStock::quantity
+                ));
 
+        List<Product> products = productRepository.findAllById(quantityByProductId.keySet().stream().toList());
+
+        Map<Long, Product> productMapByProductId = products.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        quantityByProductId.forEach((productId, quantity) -> {
+            Product product = productMapByProductId.get(productId);
+            if (product == null) {
+                throw new CoreException(ErrorType.NOT_FOUND, "상품 없음: " + productId);
+            }
+
+            try {
+                product.deductStock(quantity);
+            } catch (CoreException e) {
+                // TODO: 재고 부족 시 상품 상태 일시품절 처리 (비동기)
+                throw new CoreException(ErrorType.CONFLICT, "재고 부족: " + productId);
+            }
+        });
     }
+
 }

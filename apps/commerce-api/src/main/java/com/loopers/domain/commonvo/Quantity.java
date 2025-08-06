@@ -20,8 +20,8 @@ public class Quantity {
     }
 
     public static Quantity of(int amount) {
-        if (amount <= 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "수량은 0보다 커야 합니다.");
+        if (amount < 1) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "수량은 1 이상이어야 합니다.");
         }
 
         return new Quantity(amount);
@@ -33,14 +33,19 @@ public class Quantity {
 
     public Quantity subtract(Quantity other) {
         int result = this.amount - other.amount;
-        if (result <= 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "수량은 0보다 커야 합니다.");
+        if (isPositive(result)) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "수량은 0 이상이어야 합니다.");
         }
+
         return new Quantity(result);
     }
 
-    public boolean isPositive() {
-        return this.amount > 0;
+    public boolean isPositive(int value) {
+        return value > 0;
+    }
+
+    public boolean isGreaterThanOrEqual(Quantity other) {
+        return this.amount >= other.amount;
     }
 
     @Override

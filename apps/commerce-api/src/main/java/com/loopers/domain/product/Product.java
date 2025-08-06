@@ -1,9 +1,8 @@
 package com.loopers.domain.product;
 
-import com.loopers.domain.commonvo.LikeCount;
-import com.loopers.domain.commonvo.LikeCountConverter;
-import com.loopers.domain.commonvo.Money;
-import com.loopers.domain.commonvo.MoneyConverter;
+import com.loopers.domain.commonvo.*;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -45,7 +44,7 @@ public class Product {
     @Convert(converter = LikeCountConverter.class)
     private LikeCount likeCount;
 
-    private Long stockQuantity; //TODO: Inventory에서 관리여부를 고민
+    private Quantity stockQuantity; //TODO: Inventory에서 관리여부를 고민
 
     private LocalDate saleStartDate;
 
@@ -61,7 +60,7 @@ public class Product {
         Long price,
         ProductStatus status,
         int likeCount,
-        Long stockQuantity,
+        Quantity stockQuantity,
         LocalDate saleStartDate,
         Long brandId
     ) {
@@ -81,7 +80,7 @@ public class Product {
         Long price,
         ProductStatus status,
         int likeCount,
-        Long stockQuantity,
+        Quantity stockQuantity,
         LocalDate saleStartDate,
         Long brandId
     ) {
@@ -104,4 +103,12 @@ public class Product {
     public void decreaseLikeCount() {
         this.likeCount = likeCount.decrease();
     }
+
+    public void deductStock(Quantity quantity) {
+        if (this.stockQuantity.isGreaterThanOrEqual(quantity)) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "재고가 부족합니다.");
+        }
+        this.stockQuantity = this.stockQuantity.subtract(quantity);
+    }
+
 }

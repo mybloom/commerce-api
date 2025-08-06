@@ -1,6 +1,8 @@
 package com.loopers.domain.order;
 
 import com.loopers.domain.commonvo.Money;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,12 +13,12 @@ import java.util.List;
 public class OrderService {
     private final OrderRepository orderRepository;
 
-    public OrderQuery.ResolvedOrderQuery resolveOrderByRequestId(Long userId, String orderRequestId) {
+    public OrderQuery.CreatedOrder createOrderByRequestId(Long userId, String orderRequestId) {
         return orderRepository.findByOrderRequestId(orderRequestId)
-                .map(OrderQuery.ResolvedOrderQuery::existing)
+                .map(OrderQuery.CreatedOrder::existing)
                 .orElseGet(() -> {
                     Order createdOrder = orderRepository.save(Order.create(userId, orderRequestId));
-                    return OrderQuery.ResolvedOrderQuery.created(createdOrder);
+                    return OrderQuery.CreatedOrder.created(createdOrder);
                 });
     }
 
@@ -41,5 +43,15 @@ public class OrderService {
     public Money calculatePaymentAmount(Order order) {
         order.applyDiscount(Money.ZERO);
         return order.getPaymentAmount();
+    }
+
+    public Order getUserOrder(Long userId, Long orderId) {
+        return orderRepository.findByIdWithOrderLines(orderId)
+                .filter(order -> order.getUserId().equals(userId))
+                .orElseThrow(() -> new CoreException(ErrorType.FORBIDDEN, "해당 사용자의 주문이 아닙니다."));
+    }
+
+    public void checkOrderLines(Order order) {
+        //상품번호, 수량 전달.
     }
 }

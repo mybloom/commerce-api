@@ -1,16 +1,22 @@
 package com.loopers.domain.order;
 
 public class OrderQuery {
-    public record ResolvedOrderQuery(
+    public record CreatedOrder(
             Order order,
             boolean isNewlyCreated
     ) {
-        public static ResolvedOrderQuery existing(Order order) {
-            return new ResolvedOrderQuery(order, false);
+        public static CreatedOrder existing(Order order) {
+            return new CreatedOrder(order, false);
         }
 
-        public static ResolvedOrderQuery created(Order order) {
-            return new ResolvedOrderQuery(order, true);
+        public static CreatedOrder created(Order order) {
+            return new CreatedOrder(order, true);
         }
+    }
+
+    public record RetrieveOrder(
+
+    ){
+
     }
 }

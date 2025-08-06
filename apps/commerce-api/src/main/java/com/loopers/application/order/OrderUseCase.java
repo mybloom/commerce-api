@@ -24,10 +24,10 @@ public class OrderUseCase {
     private final OrderLineService orderLineService = new OrderLineService();
 
     @Transactional
-    public OrderResult.OrderRequestResult placeOrder(
+    public OrderResult.OrderRequestResult order(
             final Long userId, String orderRequestId, final List<OrderInfo.ItemInfo> items) {
         // 1. 멱등키 등록 요청(주문 생성 요청) - 기존 주문 존재 할 경우 기존 주문 정보 전달
-        final OrderQuery.ResolvedOrderQuery resolvedOrderQuery = orderService.resolveOrderByRequestId(userId, orderRequestId);
+        final OrderQuery.CreatedOrder resolvedOrderQuery = orderService.createOrderByRequestId(userId, orderRequestId);
 
         final Order order = resolvedOrderQuery.order();
         if (!resolvedOrderQuery.isNewlyCreated()) {
