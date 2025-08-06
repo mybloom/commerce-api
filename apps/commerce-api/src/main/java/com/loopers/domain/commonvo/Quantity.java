@@ -33,7 +33,7 @@ public class Quantity {
 
     public Quantity subtract(Quantity other) {
         int result = this.amount - other.amount;
-        if (isPositive(result)) {
+        if (!isPositive(result)) {
             throw new CoreException(ErrorType.BAD_REQUEST, "수량은 0 이상이어야 합니다.");
         }
 
@@ -44,8 +44,8 @@ public class Quantity {
         return value > 0;
     }
 
-    public boolean isGreaterThanOrEqual(Quantity other) {
-        return this.amount >= other.amount;
+    public boolean isGreaterThan(Quantity other) {
+        return this.amount > other.amount;
     }
 
     @Override

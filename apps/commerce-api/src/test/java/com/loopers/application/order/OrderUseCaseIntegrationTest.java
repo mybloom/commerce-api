@@ -5,6 +5,7 @@ import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.brand.BrandStatus;
 import com.loopers.domain.commonvo.Money;
+import com.loopers.domain.commonvo.Quantity;
 import com.loopers.domain.order.*;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.point.Point;
@@ -54,8 +55,8 @@ class OrderUseCaseIntegrationTest {
     void setUp() {
         Brand brand = brandRepository.save(Brand.from("나이키", "글로벌 브랜드", BrandStatus.ACTIVE));
 
-        Product product1 = Product.from("상품1", 1000L, ProductStatus.AVAILABLE, 0, 10L, LocalDate.now().minusDays(1), brand.getId());
-        Product product2 = Product.from("상품2", 2000L, ProductStatus.AVAILABLE, 0, 10L, LocalDate.now().minusDays(1), brand.getId());
+        Product product1 = Product.from("상품1", 1000L, ProductStatus.AVAILABLE, 0, Quantity.of(10), LocalDate.now().minusDays(1), brand.getId());
+        Product product2 = Product.from("상품2", 2000L, ProductStatus.AVAILABLE, 0, Quantity.of(10), LocalDate.now().minusDays(1), brand.getId());
 
         productRepository.save(product1);
         productRepository.save(product2);

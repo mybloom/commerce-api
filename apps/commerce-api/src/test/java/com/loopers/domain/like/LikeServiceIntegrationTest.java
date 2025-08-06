@@ -3,6 +3,7 @@ package com.loopers.domain.like;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.brand.BrandStatus;
+import com.loopers.domain.commonvo.Quantity;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductStatus;
@@ -79,7 +80,7 @@ class LikeServiceIntegrationTest {
                     1000L,
                     ProductStatus.AVAILABLE,
                     0,
-                    100L,
+                    Quantity.of(100),
                     LocalDate.now(),
                     brand.getId()
                 )
@@ -150,7 +151,7 @@ class LikeServiceIntegrationTest {
                     1000L,
                     ProductStatus.AVAILABLE,
                     0,
-                    100L,
+                    Quantity.of(100),
                     LocalDate.now(),
                     brand.getId()
                 )
@@ -251,7 +252,7 @@ class LikeServiceIntegrationTest {
                     1000L + i,
                     ProductStatus.AVAILABLE,
                     0,
-                    100L,
+                    Quantity.of(100),
                     LocalDate.now().minusDays(i),
                     brandId
                 );

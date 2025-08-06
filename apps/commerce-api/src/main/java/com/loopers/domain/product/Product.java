@@ -105,10 +105,14 @@ public class Product {
     }
 
     public void deductStock(Quantity quantity) {
-        if (this.stockQuantity.isGreaterThanOrEqual(quantity)) {
+        if (quantity.isGreaterThan(this.stockQuantity)) {
             throw new CoreException(ErrorType.BAD_REQUEST, "재고가 부족합니다.");
         }
         this.stockQuantity = this.stockQuantity.subtract(quantity);
+    }
+
+    public void markSoldOut() {
+        this.status = ProductStatus.OUT_OF_STOCK;
     }
 
 }

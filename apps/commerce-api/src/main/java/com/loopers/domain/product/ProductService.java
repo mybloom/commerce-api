@@ -2,15 +2,14 @@ package com.loopers.domain.product;
 
 import java.util.*;
 
-import com.loopers.domain.commonvo.Quantity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -42,11 +41,11 @@ public class ProductService {
     }
 
     public List<Product> getProducts(List<Long> productIds) {
-        return productRepository.findAllById(productIds);
+        return productRepository.findAllByIds(productIds);
     }
 
     public List<Product> findAllValidProducts(Set<Long> productIds) {
-        final List<Product> products = productRepository.findAllById(productIds.stream().toList());
+        final List<Product> products = productRepository.findAllByIds(productIds.stream().toList());
         final Set<Long> foundIds = products.stream().map(Product::getId).collect(Collectors.toSet());
 
         if (!foundIds.containsAll(productIds)) {
@@ -55,31 +54,24 @@ public class ProductService {
         return products;
     }
 
-    public void deductStock(List<ProductCommand.CheckStock> checkStocksCommand) {
-        Map<Long, Quantity> quantityByProductId = checkStocksCommand.stream()
-                .collect(Collectors.toMap(
-                        ProductCommand.CheckStock::productId,
-                        ProductCommand.CheckStock::quantity
-                ));
+    public void deductStock(List<ProductCommand.CheckStock> commands) {
+        Set<Long> productIds = commands.stream().map(ProductCommand.CheckStock::productId).collect(Collectors.toSet());
+        List<Product> products = productRepository.findAllByIds(productIds.stream().toList());
 
-        List<Product> products = productRepository.findAllById(quantityByProductId.keySet().stream().toList());
-
-        Map<Long, Product> productMapByProductId = products.stream()
-                .collect(Collectors.toMap(Product::getId, Function.identity()));
-
-        quantityByProductId.forEach((productId, quantity) -> {
-            Product product = productMapByProductId.get(productId);
-            if (product == null) {
-                throw new CoreException(ErrorType.NOT_FOUND, "상품 없음: " + productId);
-            }
+        for (ProductCommand.CheckStock command : commands) {
+            Product product = products.stream()
+                    .filter(p -> p.getId().equals(command.productId()))
+                    .findFirst()
+                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품 없음: " + command.productId()));
 
             try {
-                product.deductStock(quantity);
+                product.deductStock(command.quantity());
             } catch (CoreException e) {
                 // TODO: 재고 부족 시 상품 상태 일시품절 처리 (비동기)
-                throw new CoreException(ErrorType.CONFLICT, "재고 부족: " + productId);
+                product.markSoldOut();
+                throw new CoreException(ErrorType.CONFLICT, "재고 부족: " + command.productId());
             }
-        });
+        }
     }
 
 }

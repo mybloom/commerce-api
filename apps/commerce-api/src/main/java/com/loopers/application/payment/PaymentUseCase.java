@@ -35,7 +35,7 @@ public class PaymentUseCase {
                 .collect(Collectors.toList());
 
         //1. 재고 차감 요청
-        //todo: 재고 부족 시 상품 상태 일시품절 처리 (비동기)
+        //todo: 재고 부족 시 상품 상태 일시품절 처리 (비동기로 변경)
         productService.deductStock(checkStocksCommand);
 
         //2. 포인트 결제 요청(포인트 차감)

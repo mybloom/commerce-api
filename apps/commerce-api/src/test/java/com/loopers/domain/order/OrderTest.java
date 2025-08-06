@@ -39,7 +39,7 @@ class OrderTest {
                 PRODUCT_PRICE,
                 ProductStatus.AVAILABLE,
                 10,
-                100L,
+                Quantity.of(100),
                 LocalDate.now().minusDays(1),
                 1L
         );
