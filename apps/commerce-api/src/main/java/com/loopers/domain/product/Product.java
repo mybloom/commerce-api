@@ -12,9 +12,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
 import java.time.LocalDate;
 
 import java.time.ZonedDateTime;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -56,44 +58,44 @@ public class Product {
     private ZonedDateTime deletedAt;
 
     public static Product from(
-        String name,
-        Long price,
-        ProductStatus status,
-        int likeCount,
-        Quantity stockQuantity,
-        LocalDate saleStartDate,
-        Long brandId
+            String name,
+            Long price,
+            ProductStatus status,
+            int likeCount,
+            Quantity stockQuantity,
+            LocalDate saleStartDate,
+            Long brandId
     ) {
         return Product.builder()
-            .name(name)
-            .price(Money.of(price))
-            .status(status)
-            .likeCount(LikeCount.from(likeCount))
-            .stockQuantity(stockQuantity)
-            .saleStartDate(saleStartDate)
-            .brandId(brandId)
-            .build();
+                .name(name)
+                .price(Money.of(price))
+                .status(status)
+                .likeCount(LikeCount.from(likeCount))
+                .stockQuantity(stockQuantity)
+                .saleStartDate(saleStartDate)
+                .brandId(brandId)
+                .build();
     }
 
     public static Product testInstance(
-        String name,
-        Long price,
-        ProductStatus status,
-        int likeCount,
-        Quantity stockQuantity,
-        LocalDate saleStartDate,
-        Long brandId
+            String name,
+            Long price,
+            ProductStatus status,
+            int likeCount,
+            Quantity stockQuantity,
+            LocalDate saleStartDate,
+            Long brandId
     ) {
         return Product.builder()
-            .id(0L)
-            .name(name)
-            .price(Money.of(price))
-            .status(status)
-            .likeCount(LikeCount.from(likeCount))
-            .stockQuantity(stockQuantity)
-            .saleStartDate(saleStartDate)
-            .brandId(brandId)
-            .build();
+                .id(0L)
+                .name(name)
+                .price(Money.of(price))
+                .status(status)
+                .likeCount(LikeCount.from(likeCount))
+                .stockQuantity(stockQuantity)
+                .saleStartDate(saleStartDate)
+                .brandId(brandId)
+                .build();
     }
 
     public void increaseLikeCount() {
@@ -108,7 +110,12 @@ public class Product {
         if (quantity.isGreaterThan(this.stockQuantity)) {
             throw new CoreException(ErrorType.BAD_REQUEST, "재고가 부족합니다.");
         }
-        this.stockQuantity = this.stockQuantity.subtract(quantity);
+
+        Quantity remainingStock = this.stockQuantity.subtract(quantity);
+        if (remainingStock.equals(Quantity.ZERO)) {
+            markSoldOut();
+        }
+        this.stockQuantity = remainingStock;
     }
 
     public void markSoldOut() {

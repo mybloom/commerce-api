@@ -5,19 +5,18 @@ import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Embeddable;
 import java.util.Objects;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Embeddable
 @Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Quantity {
 
+    public static final Quantity ZERO = new Quantity(0);
     private int amount;
-
-    private Quantity(int amount) {
-        this.amount = amount;
-    }
 
     public static Quantity of(int amount) {
         if (amount < 1) {

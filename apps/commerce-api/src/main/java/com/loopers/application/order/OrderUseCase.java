@@ -42,7 +42,8 @@ public class OrderUseCase {
             allValidProducts = productService.findAllValidProductsOrThrow(
                     items.stream()
                             .map(OrderInfo.ItemInfo::productId)
-                            .collect(Collectors.toSet())
+                            .distinct()
+                            .toList()
             );
         } catch (CoreException e) {
             orderService.failValidation(order);

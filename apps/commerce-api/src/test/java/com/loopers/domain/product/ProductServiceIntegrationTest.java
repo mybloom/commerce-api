@@ -236,7 +236,7 @@ class ProductServiceIntegrationTest {
                     .toList();
 
             // Act
-            List<Product> products = sut.findAllValidProductsOrThrow(Set.copyOf(validIds));
+            List<Product> products = sut.findAllValidProductsOrThrow(validIds);
 
             // Assert
             assertThat(products).hasSize(validIds.size());
@@ -252,7 +252,7 @@ class ProductServiceIntegrationTest {
                     .limit(2)
                     .toList();
             Long invalidProductId = -999L;
-            Set<Long> mixedIds = Set.of(validProductIds.get(0), validProductIds.get(1), invalidProductId);
+            List<Long> mixedIds = List.of(validProductIds.get(0), validProductIds.get(1), invalidProductId);
 
             // Act
             CoreException exception = assertThrows(CoreException.class,
@@ -376,9 +376,9 @@ class ProductServiceIntegrationTest {
             Quantity deductQuantity1 = Quantity.of(5);
             Quantity deductQuantity2 = Quantity.of(3);
 
-            List<ProductCommand.CheckStock> commands = List.of(
-                    new ProductCommand.CheckStock(product1.getId(), deductQuantity1),
-                    new ProductCommand.CheckStock(product2.getId(), deductQuantity2)
+            List<ProductCommand.DeductStock> commands = List.of(
+                    new ProductCommand.DeductStock(product1, deductQuantity1),
+                    new ProductCommand.DeductStock(product2, deductQuantity2)
             );
 
             Quantity beforeStockOfProduct1 = product1.getStockQuantity();
@@ -398,8 +398,6 @@ class ProductServiceIntegrationTest {
                     () -> assertThat(actualProduct2.getStockQuantity()).isEqualTo(beforeStockOfProduct2.subtract(deductQuantity2)),
                     () -> assertThat(actualProduct2.getStatus()).isEqualTo(ProductStatus.AVAILABLE)
             );
-
-            verify(productRepository, times(1)).findAllByIds(List.of(product1.getId(), product2.getId()));
         }
 
         @Test
@@ -407,8 +405,8 @@ class ProductServiceIntegrationTest {
         void markSoldOutAndThrowException_whenStockNotEnough() {
             // Arrange
             Quantity overQuantity = Quantity.of(200); // 현재 재고보다 많은 수량
-            List<ProductCommand.CheckStock> commands = List.of(
-                    new ProductCommand.CheckStock(product1.getId(), overQuantity)
+            List<ProductCommand.DeductStock> commands = List.of(
+                    new ProductCommand.DeductStock(product1, overQuantity)
             );
             Quantity beforeStockOfProduct1 = product1.getStockQuantity();
 
@@ -422,9 +420,6 @@ class ProductServiceIntegrationTest {
                     () -> assertThat(isDeductStock).isFalse(),
                     () -> assertThat(updated.getStatus()).isEqualTo(ProductStatus.OUT_OF_STOCK)
             );
-
-            verify(productRepository, times(1)).findAllByIds(List.of(product1.getId()));
         }
-
     }
 }

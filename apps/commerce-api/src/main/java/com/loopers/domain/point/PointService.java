@@ -1,7 +1,6 @@
 package com.loopers.domain.point;
 
 import com.loopers.domain.commonvo.Money;
-import com.loopers.domain.order.Order;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -46,15 +45,12 @@ public class PointService {
         }
     }
 
-    public boolean use(Long userId, Money paymentAmount) {
-        try {
-            Point point = pointRepository.findByUserId(userId)
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+    public void useOrThrow(Point point, Money paymentAmount) {
+        point.use(paymentAmount);
+    }
 
-            point.use(paymentAmount);
-        }catch (CoreException e) {
-            return false;
-        }
-        return true;
+    public Point findByUser(Long userId) {
+        return pointRepository.findByUserId(userId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
     }
 }

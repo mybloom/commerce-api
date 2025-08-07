@@ -50,6 +50,6 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public List<Product> findAllByIds(List<Long> productIds) {
-        return productJpaRepository.findAllById(productIds.stream().toList());
+        return productJpaRepository.findAllById(productIds);
     }
 }
