@@ -41,6 +41,48 @@ class PaymentUseCaseIntegrationTest {
     private static final int PRICE = 500;
 
     /*@Nested
+    @Test
+@DisplayName("유효한 사용자와 주문 ID로 주문 조회 및 수량 확인이 성공한다")
+void getOrderAndPrepareCheckStock_success() {
+    // Arrange
+    Product product = Product.create(PRODUCT_ID, "상품", PRICE, STOCK_QTY);
+    productRepository.save(product);
+
+    Order order = orderService.create(USER_ID, "order-004");
+    order.addLine(OrderLine.create(PRODUCT_ID, ORDER_QTY, product.getPrice()));
+    order.calculatePaymentAmount(product.getPrice() * ORDER_QTY);
+
+    PaymentInfo.Pay payInfo = new PaymentInfo.Pay(order.getId(), "CARD");
+
+    // Act
+    Order retrievedOrder = orderService.getUserOrder(USER_ID, payInfo.orderId());
+    List<OrderLine> orderLines = retrievedOrder.getOrderLines();
+
+    List<ProductCommand.CheckStock> checkStocksCommand = orderLines.stream()
+            .map(orderLine -> ProductCommand.CheckStock.of(orderLine.getProductId(), orderLine.getQuantity()))
+            .collect(Collectors.toList());
+
+    // Assert
+    assertThat(orderLines).hasSize(1);
+    assertThat(checkStocksCommand).hasSize(1);
+    assertThat(checkStocksCommand.get(0).productId()).isEqualTo(PRODUCT_ID);
+    assertThat(checkStocksCommand.get(0).quantity().value()).isEqualTo(ORDER_QTY);
+}
+
+@Test
+@DisplayName("존재하지 않는 주문 ID로 주문 조회 시 예외가 발생한다")
+void getOrderAndPrepareCheckStock_fail_due_to_invalidOrder() {
+    // Arrange
+    Long invalidOrderId = 9999L; // 존재하지 않는 주문
+    PaymentInfo.Pay payInfo = new PaymentInfo.Pay(invalidOrderId, "CARD");
+
+    // Act & Assert
+    assertThatThrownBy(() -> orderService.getUserOrder(USER_ID, payInfo.orderId()))
+            .isInstanceOf(CoreException.class)
+            .hasMessageContaining("주문을 찾을 수 없습니다");
+}
+
+
     @DisplayName("결제 성공 시")
     class SuccessCase {
 

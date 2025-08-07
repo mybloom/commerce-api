@@ -9,6 +9,8 @@ import com.loopers.domain.product.ProductService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,7 @@ public class OrderUseCase {
 
     private final OrderLineService orderLineService = new OrderLineService();
 
-    @Transactional
+    @Transactional(noRollbackFor = CoreException.class)
     public OrderResult.OrderRequestResult order(
             final Long userId, String orderRequestId, final List<OrderInfo.ItemInfo> items) {
         // 1. 멱등키 등록 요청(주문 생성 요청) - 기존 주문 존재 할 경우 기존 주문 정보 전달
@@ -42,7 +44,7 @@ public class OrderUseCase {
         );
         if (allValidProducts.isEmpty()) {
             orderService.failValidation(order);
-            return OrderResult.OrderRequestResult.failValidation(order);
+            throw new CoreException(ErrorType.CONFLICT, "존재하지 않는 상품입니다.");
         }
 
         // 3. 상품 추가 및 상품 총액 계산
@@ -53,10 +55,13 @@ public class OrderUseCase {
         Money discountAmount = Money.ZERO;
         Money paymentAmount = orderService.calculatePaymentAmount(order, discountAmount);
 
-        // 4. 주문 총액만큼 포인트 보유 확인
-        pointService.checkSufficientBalance(userId, paymentAmount);
-
-        // 5. 주문 정보 저장 : todo 필요없음. dirty checking
+        // 5. 주문 총액만큼 포인트 보유 확인
+        try {
+            pointService.validateSufficientBalance(userId, paymentAmount);
+        }catch (CoreException e){
+            orderService.failValidation(order);
+            throw new CoreException(ErrorType.CONFLICT, "잔액이 부족합니다.");
+        }
 
         return OrderResult.OrderRequestResult.from(order);
     }

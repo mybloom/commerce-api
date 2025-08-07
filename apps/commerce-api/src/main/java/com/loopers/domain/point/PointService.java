@@ -1,6 +1,7 @@
 package com.loopers.domain.point;
 
 import com.loopers.domain.commonvo.Money;
+import com.loopers.domain.order.Order;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class PointService {
         return pointRepository.findByUserId(userId);
     }
 
-    public void checkSufficientBalance(final Long userId, final Money paymentAmount) {
+    public void validateSufficientBalance(final Long userId, final Money paymentAmount) {
         final Point point = pointRepository.findByUserId(userId)
                 .orElseThrow(() -> new CoreException(ErrorType.CONFLICT, "잔액이 부족합니다."));
 
@@ -45,7 +46,6 @@ public class PointService {
         }
     }
 
-    //todo: 테코 작성
     public boolean use(Long userId, Money paymentAmount) {
         try {
             Point point = pointRepository.findByUserId(userId)

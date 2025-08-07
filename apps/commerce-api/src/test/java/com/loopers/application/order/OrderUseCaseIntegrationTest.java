@@ -13,6 +13,8 @@ import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductStatus;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import com.loopers.testcontainers.MySqlTestContainersConfig;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.*;
@@ -25,6 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 @SpringBootTest
@@ -50,6 +53,7 @@ class OrderUseCaseIntegrationTest {
 
     private Long productId1;
     private Long productId2;
+    private Money userBalance;
 
     @BeforeEach
     void setUp() {
@@ -63,7 +67,8 @@ class OrderUseCaseIntegrationTest {
         productId1 = product1.getId();
         productId2 = product2.getId();
 
-        pointRepository.save(Point.create(USER_ID, Money.of(10_000L)));
+        Point point = pointRepository.save(Point.create(USER_ID, Money.of(10_000L)));
+        userBalance = point.balance();
     }
 
     @AfterEach
@@ -73,8 +78,63 @@ class OrderUseCaseIntegrationTest {
 
     @DisplayName("주문 등록 시,")
     @Nested
-
     class OrderPlace {
+
+        @Test
+        @DisplayName("상품 유효성 검증에 실패하더라도, 주문은 VALIDATION_FAILED 상태로 저장한다.")
+        void createOrder_shouldPersistOrderEvenIfProductValidationFails22() {
+            // arrange
+            List<OrderInfo.ItemInfo> invalidItems = List.of(
+                    new OrderInfo.ItemInfo(999999L, 1)
+            );
+
+            // act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                sut.order(USER_ID, ORDER_REQUEST_ID, invalidItems);
+            });
+
+            // assert: 예외 검증
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
+
+            // assert: 예외 발생했지만 주문은 저장되었는지 확인
+            Order actual = orderRepository.findByOrderRequestId(ORDER_REQUEST_ID).orElse(null);
+            assertAll(
+                    () -> assertThat(actual).isNotNull(),
+                    () -> assertThat(actual.getStatus()).isEqualTo(OrderStatus.VALIDATION_FAILED)
+            );
+        }
+
+        @Test
+        @DisplayName("포인트 잔액 부족으로 CoreException이 발생해도, 주문은 VALIDATION_FAILED 상태로 저장한다.")
+        void order_shouldPersistEvenWhenPointBalanceIsInsufficient() {
+            // Arrange
+            Money productPrice = productRepository.findById(productId1).orElseThrow()
+                    .getPrice();
+            int quantity = 20;
+            List<OrderInfo.ItemInfo> items = List.of(
+                    new OrderInfo.ItemInfo(productId1, quantity)
+            );
+            Money orderTotalAmount = productPrice.multiply(Quantity.of(quantity));
+            assertThat(userBalance.isLessThan(orderTotalAmount)).isTrue();
+
+            // Act
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                sut.order(USER_ID, ORDER_REQUEST_ID, items);
+            });
+
+            // Assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
+
+            // 주문은 저장되어야 한다
+            Order order = orderRepository.findByIdWithOrderLines(USER_ID).orElse(null);
+            assertAll(
+                    () -> assertThat(order).isNotNull(),
+                    () -> assertThat(order.getStatus()).isEqualTo(OrderStatus.VALIDATION_FAILED),
+                    () -> assertThat(order.getOrderLines()).hasSize(1),
+                    () -> assertThat(order.getTotalAmount()).isEqualTo(orderTotalAmount)
+            );
+        }
+
         @DisplayName("상품번호가 올바르고 보유 포인트가 충분하면, Order와 OrderLine이 저장된다.")
         @Test
         void placeOrder_successfullyPersistsOrderLinesAndCalculatesTotalAmount() {
