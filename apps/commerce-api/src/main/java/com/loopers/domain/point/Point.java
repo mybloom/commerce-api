@@ -1,5 +1,6 @@
 package com.loopers.domain.point;
 
+import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
@@ -10,36 +11,59 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "point")
 public class Point {
-    public static final long INITIAL_POINT_AMOUNT = 0L;
+    public static final Money INITIAL_POINT_AMOUNT = Money.ZERO;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private Long amount;
+    private Money amount;
 
     @Column(nullable = false, unique = true)
     private Long userId; //User의 ID를 참조
 
-    public Point(final Long userId) {
+    private Point(final Long userId) {
         this.userId = userId;
         this.amount = INITIAL_POINT_AMOUNT;
     }
 
-    public Point(final Long userId, final Long amount) {
+    private Point(final Long userId, final Money amount) {
         this.userId = userId;
         this.amount = amount;
     }
 
-    public void charge(final Long amount) {
-        if (amount == null || amount < 1) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "충전 포인트는 1 이상이어야 합니다.");
-        }
-        this.amount += amount;
+    public static Point createInitial(final Long userId) {
+        return new Point(userId);
     }
 
-    public Long balance() {
+    public static Point create(final Long userId, final Money amount) {
+        validateChargePoint(amount);
+        return new Point(userId, amount);
+    }
+
+    public void charge(final Money amount) {
+        validateChargePoint(amount);
+        this.amount = this.amount.add(amount);
+    }
+
+    private static void validateChargePoint(Money amount) {
+        if (amount == null || amount.isLessThanOne()) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "충전 포인트는 1 이상이어야 합니다.");
+        }
+    }
+
+    public Money balance() {
         return amount;
+    }
+
+    public void use(Money paymentAmount) {
+        if( paymentAmount == null || paymentAmount.isLessThan(Money.ZERO)) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "사용할 포인트는 0 이상이어야 합니다.");
+        }
+        if (this.amount.isLessThan(paymentAmount)) {
+            throw new CoreException(ErrorType.CONFLICT, "사용할 포인트가 잔액보다 많습니다.");
+        }
+        this.amount = this.amount.subtract(paymentAmount);
     }
 }

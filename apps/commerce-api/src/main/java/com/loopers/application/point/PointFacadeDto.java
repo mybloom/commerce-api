@@ -8,7 +8,7 @@ public class PointFacadeDto {
             Long amount
     ) {
         public static ChargeResult from(Point point) {
-            return new ChargeResult(point.balance());
+            return new ChargeResult(point.balance().getAmount());
         }
     }
 

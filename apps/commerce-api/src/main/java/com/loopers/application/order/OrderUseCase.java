@@ -1,17 +1,14 @@
 package com.loopers.application.order;
 
 import com.loopers.domain.commonvo.Money;
-import com.loopers.domain.commonvo.Quantity;
-import com.loopers.domain.order.Order;
-import com.loopers.domain.order.OrderService;
+import com.loopers.domain.order.*;
+import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
+
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,40 +19,45 @@ public class OrderUseCase {
 
     private final OrderService orderService;
     private final ProductService productService;
+    private final PointService pointService;
+
+    private final OrderLineService orderLineService = new OrderLineService();
 
     @Transactional
-    public OrderResult.OrderRequestResult placeOrder(Long userId, String orderRequestId, List<OrderInfo.ItemInfo> items) {
-        // 1. 멱등성 검사 및 기존 주문 존재 여부 확인
-        Optional<Order> existing = orderService.findByOrderRequestId(orderRequestId);
-        if (!existing.isEmpty()) {
-            return OrderResult.OrderRequestResult.alreadyOrder(existing.get());
+    public OrderResult.OrderRequestResult order(
+            final Long userId, String orderRequestId, final List<OrderInfo.ItemInfo> items) {
+        // 1. 멱등키 등록 요청(주문 생성 요청) - 기존 주문 존재 할 경우 기존 주문 정보 전달
+        final OrderQuery.CreatedOrder resolvedOrderQuery = orderService.createOrderByRequestId(userId, orderRequestId);
+
+        final Order order = resolvedOrderQuery.order();
+        if (!resolvedOrderQuery.isNewlyCreated()) {
+            return OrderResult.OrderRequestResult.alreadyOrder(order);
         }
 
-        // 2. 새 주문 생성 및 저장
-        Order order = orderService.createOrder(userId, orderRequestId);
-
-        // 3. 상품 유효성 검증
-        Set<Long> productIds = items.stream()
-            .map(OrderInfo.ItemInfo::productId)
-            .collect(Collectors.toSet());
-
-        List<Product> products = productService.getProducts(productIds.stream().toList());
-        if (products.size() != productIds.size()) {
-            orderService.markFailed(order);
-            throw new CoreException(ErrorType.NOT_FOUND, "상품 정보가 유효하지 않습니다");
+        // 2. 상품 유효성 검증
+        final List<Product> allValidProducts = productService.findAllValidProducts(
+                items.stream()
+                        .map(OrderInfo.ItemInfo::productId)
+                        .collect(Collectors.toSet())
+        );
+        if (allValidProducts.isEmpty()) {
+            orderService.failValidation(order);
+            return OrderResult.OrderRequestResult.failValidation(order);
         }
 
-        // 4. 상품 추가 및 총액 계산
-        for (OrderInfo.ItemInfo item : items) {
-            Product product = products.stream()
-                .filter(p -> p.getId().equals(item.productId()))
-                .findFirst()
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND));
+        // 3. 상품 추가 및 상품 총액 계산
+        final List<OrderLine> orderLines = orderLineService.createOrderLines(OrderInfo.toCommands(items), allValidProducts);
+        Money orderAmount = orderService.calculateOrderAmountByAddLines(order, orderLines);
 
-            order.addProduct(product.getId(), Quantity.of(item.quantity()), Money.of(item.price()));
-        }
-        order.calculateTotal();
+        // 4. 할인 정보 확인
+        Money discountAmount = Money.ZERO;
+        Money paymentAmount = orderService.calculatePaymentAmount(order, discountAmount);
 
-        return OrderResult.OrderRequestResult.newlyCreated(order);
+        // 4. 주문 총액만큼 포인트 보유 확인
+        pointService.checkSufficientBalance(userId, paymentAmount);
+
+        // 5. 주문 정보 저장 : todo 필요없음. dirty checking
+
+        return OrderResult.OrderRequestResult.from(order);
     }
 }

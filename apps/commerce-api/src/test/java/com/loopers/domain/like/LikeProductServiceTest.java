@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import com.loopers.application.like.LikeResult.LikeDetailResult;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandStatus;
+import com.loopers.domain.commonvo.Quantity;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductStatus;
 import java.time.LocalDate;
@@ -39,7 +40,7 @@ class LikeProductServiceTest {
             1000L,
             ProductStatus.AVAILABLE,
             0,
-            10L,
+                Quantity.of(10),
             LocalDate.now().plusDays(10),
             brandId
         );

@@ -2,14 +2,10 @@ package com.loopers.domain.order;
 
 import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.commonvo.Quantity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.ZonedDateTime;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,27 +20,41 @@ public class OrderLine {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private Order order;
+
     private Long productId;
 
     @Embedded
     @Column(name = "quantity", insertable = false, updatable = false)
+    @AttributeOverrides({
+            @AttributeOverride(name = "amount", column = @Column(name = "quantity_amount"))
+    })
     private Quantity quantity;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "amount", column = @Column(name = "discount_amount"))
+    })
     private Money price;
 
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private ZonedDateTime deletedAt;
 
-    public OrderLine(Long productId, Quantity quantity, Money price) {
+    private OrderLine(Long productId, Quantity quantity, Money price){
         this.productId = productId;
         this.quantity = quantity;
         this.price = price;
     }
 
+    public static OrderLine create(Long productId, Quantity quantity, Money price) {
+        return new OrderLine(productId, quantity, price);
+    }
+
     public Money getSubTotal() {
-        return price.multiply(quantity.getAmount());
+        return price.multiply(quantity);
     }
 
 }

@@ -8,6 +8,7 @@ import com.loopers.application.product.ProductQueryResult.ListViewItemResult;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.brand.BrandStatus;
+import com.loopers.domain.commonvo.Quantity;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductSortType;
@@ -91,7 +92,7 @@ class ProductUseCaseIntegrationTest {
         }
 
         private Product createProduct(String name, LocalDate saleDate, long price, int likes) {
-            return Product.from(name, price, ProductStatus.AVAILABLE, likes, 10L, saleDate, brandId);
+            return Product.from(name, price, ProductStatus.AVAILABLE, likes, Quantity.of(10), saleDate, brandId);
         }
 
         @Test

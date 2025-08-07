@@ -1,15 +1,12 @@
 package com.loopers.domain.payment;
 
 import com.loopers.domain.commonvo.Money;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
+import jakarta.persistence.*;
+
 import java.time.ZonedDateTime;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,28 +21,42 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "order_id", nullable = false, updatable = false)
     private Long orderId;
 
-    @Embedded
-    private Money amount;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false, updatable = false)
+    private PaymentMethod paymentMethod;
 
     @Embedded
-    @AttributeOverride(name = "amount", column = @Column(name = "used_point"))
-    private Money usedPoint;
+    @AttributeOverride(name = "amount", column = @Column(name = "payment_amount", nullable = false))
+    private Money amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false)
+    private PaymentStatus paymentStatus;
 
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private ZonedDateTime deletedAt;
 
 
-    private Payment(Long orderId, Money amount, Money usedPoint) {
+    private Payment(Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus) {
         this.orderId = orderId;
+        this.paymentMethod = paymentMethod;
         this.amount = amount;
-        this.usedPoint = usedPoint;
+        this.paymentStatus = paymentStatus;
         this.createdAt = ZonedDateTime.now();
     }
 
-    public Payment confirm(Long orderId, Money amount, Money usedPoint) {
-        return new Payment(orderId, amount, usedPoint);
+    public static Payment confirm(Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus) {
+        if (orderId == null || paymentMethod == null || amount == null || paymentStatus == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID, 결제 방법, 결제 금액, 결제 상태는 필수입니다.");
+        }
+        if (amount.getAmount() < 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제 금액은 0이상이여야 합니다.");
+        }
+
+        return new Payment(orderId, paymentMethod, amount, paymentStatus);
     }
 }

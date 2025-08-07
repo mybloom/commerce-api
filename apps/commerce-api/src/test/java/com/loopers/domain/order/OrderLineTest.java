@@ -24,7 +24,7 @@ class OrderLineTest {
         @DisplayName("상품Id, 수량, 가격을 전달하면, OrderLine 객체가 생성된다.")
         void createOrderLine_successfully() {
             // Act
-            OrderLine orderLine = new OrderLine(PRODUCT_ID, QUANTITY, PRICE);
+            OrderLine orderLine = OrderLine.create(PRODUCT_ID, QUANTITY, PRICE);
 
             // Assert
             assertThat(orderLine).isNotNull();
@@ -43,7 +43,7 @@ class OrderLineTest {
         @DisplayName("상품ID마다 수량 * 가격 결과가 반환된다.")
         void returnsSubtotalCorrectly() {
             // Arrange
-            OrderLine orderLine = new OrderLine(PRODUCT_ID, QUANTITY, PRICE);
+            OrderLine orderLine = OrderLine.create(PRODUCT_ID, QUANTITY, PRICE);
 
             // Act
             Money subtotal = orderLine.getSubTotal();

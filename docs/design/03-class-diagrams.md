@@ -290,3 +290,83 @@ class ProductSearchCondition {
 }
 
 ```
+
+---
+
+## 2. 주문/결제 
+```mermaid
+classDiagram
+%% =========================
+%% OrderAggregate
+%% =========================
+class Order {
+    - Long orderId
+    - Long userId
+    - List<OrderLine> orderLines
+    - Money totalAmount //상품 총 금액
+    - Money paymentAmount //실 결제 금액 
+    - OrderStatus status
+    - Date createdAt
+    - Long paymentId
+    - String paymentRequestId //멱등키 UUID
+    + addProduct(Product p, int qty): void
+    + calculateTotal(): Money    
+    + getDetail(): String
+    + getStatus(): OrderStatus
+    + create(): Order //PENDING 상태로 생성 
+    + markPaid(): void
+    + markPaymentFailed(): void
+}
+
+class OrderLine {
+    - Long productId  %% ProductAggregate 참조
+    - Quantity quantity
+    - Money price
+    + getSubTotal(): Money
+}
+
+class Quantity {
+    <<value object>>
+    - int amount
+    + isPositive(): boolean
+    + add(Quantity other): Quantity
+    + substract(Quantity other): Quantity
+}
+
+class OrderStatus {
+    <<enumeration>>
+    PENDING : 주문 생성 
+    PAID  : 결제 성공 
+    FAILED: 결제 요청 실패
+}
+
+Order "1" *-- "*" OrderLine : composition >
+OrderLine --> Quantity : uses >
+
+%% =========================
+%% PaymentAggregate
+%% =========================
+class Payment {
+    - Long paymentId
+    - Long orderId  
+    - Money amount
+    - Money usedPoint
+    - Date createdAt  
+    + confirm(): void
+}
+
+Payment --> Order : references >
+Payment --> Money : uses >
+
+%% =========================
+%% 공통 VO
+%% =========================
+class Money {
+    <<value object>>
+    - int amount
+    + add(Money other): Money
+    + subtract(Money other): Money
+    + isGreaterThan(Money other): boolean
+}
+
+```

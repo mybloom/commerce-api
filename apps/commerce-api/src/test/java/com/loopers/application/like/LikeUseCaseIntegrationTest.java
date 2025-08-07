@@ -3,6 +3,7 @@ package com.loopers.application.like;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.brand.BrandStatus;
+import com.loopers.domain.commonvo.Quantity;
 import com.loopers.domain.like.LikeHistory;
 import com.loopers.domain.like.LikeHistoryRepository;
 import com.loopers.domain.product.Product;
@@ -59,7 +60,7 @@ class LikeUseCaseIntegrationTest {
                         1000L,
                         ProductStatus.AVAILABLE,
                         0,
-                        100L,
+                        Quantity.of(100),
                         LocalDate.now(),
                         brand.getId()
                 )

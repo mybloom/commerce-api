@@ -5,6 +5,8 @@ import com.loopers.domain.product.ProductListProjection;
 import com.loopers.domain.product.ProductRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,7 +49,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public List<Product> findAllById(List<Long> productIds) {
-        return productJpaRepository.findAllById(productIds);
+    public List<Product> findAllByIds(List<Long> productIds) {
+        return productJpaRepository.findAllById(productIds.stream().toList());
     }
 }
