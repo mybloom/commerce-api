@@ -3,6 +3,7 @@ package com.loopers.application.payment;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.payment.PaymentFailureReason;
 import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductCommand;
@@ -11,6 +12,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,41 +25,44 @@ public class PaymentUseCase {
     private final PointService pointService;
     private final PaymentService paymentService;
 
+    @Transactional(noRollbackFor = CoreException.class)
     public PaymentResult.Pay pay(Long userId, PaymentInfo.Pay payInfo) {
         // 0. 주문 조회 및 수량 확인
         Order order = orderService.getUserOrder(userId, payInfo.orderId());
         List<OrderLine> orderLines = order.getOrderLines();
 
         List<ProductCommand.CheckStock> checkStocksCommand = orderLines.stream()
-                .map(orderLine -> ProductCommand.CheckStock.of(orderLine.getProductId(), orderLine.getQuantity()))
-                .collect(Collectors.toList());
+                .map(orderLine ->
+                        ProductCommand.CheckStock.of(orderLine.getProductId(), orderLine.getQuantity()))
+                .collect(Collectors.toList()
+                );
 
         // 1. 재고 차감
         if (!productService.deductStock(checkStocksCommand)) {
-            return fail(order, payInfo, "재고가 부족합니다.");
+            throwPaymentFailure(order, payInfo, PaymentFailureReason.OUT_OF_STOCK);
         }
 
         // 2. 포인트 결제
         if (!pointService.use(userId, order.getPaymentAmount())) {
-            return fail(order, payInfo, "포인트 결제에 실패했습니다.");
+            throwPaymentFailure(order, payInfo, PaymentFailureReason.INSUFFICIENT_BALANCE);
         }
 
         // 3. 결제 성공 처리
-        boolean isPaymentConfirmed = true;
-        orderService.finalizePaymentResult(order, isPaymentConfirmed);
-        Long paymentId = paymentService.save(payInfo.orderId(), payInfo.paymentMethod(), order.getPaymentAmount(), isPaymentConfirmed);
+        boolean isOrderConfirm = true;
+        orderService.finalizeOrderResult(order, isOrderConfirm);
+        Long paymentId = paymentService.saveSuccess(payInfo.orderId(), payInfo.paymentMethod(), order.getPaymentAmount());
 
-        return PaymentResult.Pay.of(paymentId, isPaymentConfirmed);
+        return PaymentResult.Pay.of(paymentId);
     }
 
     // 공통 실패 처리 메서드
-    private PaymentResult.Pay fail(Order order, PaymentInfo.Pay payInfo, String errorMessage) {
-        boolean isPaymentConfirmed = false;
+    private PaymentResult.Pay throwPaymentFailure(Order order, PaymentInfo.Pay payInfo, PaymentFailureReason failureReason) {
+        boolean isOrderConfirm = false;
+        orderService.finalizeOrderResult(order, isOrderConfirm);
 
-        orderService.finalizePaymentResult(order, isPaymentConfirmed);
-        paymentService.save(payInfo.orderId(), payInfo.paymentMethod(), order.getPaymentAmount(), isPaymentConfirmed);
+        paymentService.saveFailure(payInfo.orderId(), payInfo.paymentMethod(), order.getPaymentAmount(), failureReason);
 
-        throw new CoreException(ErrorType.CONFLICT, errorMessage);
+        throw new CoreException(ErrorType.CONFLICT, failureReason.getMessage());
     }
 
 }

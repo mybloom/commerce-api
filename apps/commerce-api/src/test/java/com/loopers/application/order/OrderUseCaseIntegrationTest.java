@@ -82,7 +82,7 @@ class OrderUseCaseIntegrationTest {
 
         @Test
         @DisplayName("상품 유효성 검증에 실패하더라도, 주문은 VALIDATION_FAILED 상태로 저장한다.")
-        void createOrder_shouldPersistOrderEvenIfProductValidationFails22() {
+        void createOrder_shouldPersistOrderEvenIfProductValidationFails() {
             // arrange
             List<OrderInfo.ItemInfo> invalidItems = List.of(
                     new OrderInfo.ItemInfo(999999L, 1)
@@ -94,7 +94,7 @@ class OrderUseCaseIntegrationTest {
             });
 
             // assert: 예외 검증
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
 
             // assert: 예외 발생했지만 주문은 저장되었는지 확인
             Order actual = orderRepository.findByOrderRequestId(ORDER_REQUEST_ID).orElse(null);

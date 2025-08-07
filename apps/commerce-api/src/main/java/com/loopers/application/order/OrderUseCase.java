@@ -37,14 +37,16 @@ public class OrderUseCase {
         }
 
         // 2. 상품 유효성 검증
-        final List<Product> allValidProducts = productService.findAllValidProducts(
-                items.stream()
-                        .map(OrderInfo.ItemInfo::productId)
-                        .collect(Collectors.toSet())
-        );
-        if (allValidProducts.isEmpty()) {
+        final List<Product> allValidProducts;
+        try {
+            allValidProducts = productService.findAllValidProductsOrThrow(
+                    items.stream()
+                            .map(OrderInfo.ItemInfo::productId)
+                            .collect(Collectors.toSet())
+            );
+        } catch (CoreException e) {
             orderService.failValidation(order);
-            throw new CoreException(ErrorType.CONFLICT, "존재하지 않는 상품입니다.");
+            throw e;
         }
 
         // 3. 상품 추가 및 상품 총액 계산
@@ -58,7 +60,7 @@ public class OrderUseCase {
         // 5. 주문 총액만큼 포인트 보유 확인
         try {
             pointService.validateSufficientBalance(userId, paymentAmount);
-        }catch (CoreException e){
+        } catch (CoreException e) {
             orderService.failValidation(order);
             throw new CoreException(ErrorType.CONFLICT, "잔액이 부족합니다.");
         }

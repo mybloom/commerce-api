@@ -7,9 +7,8 @@ public class PaymentResult {
             Long paymentId,
             PaymentStatus paymentStatus
     ) {
-        public static Pay of(Long paymentId, boolean isPaymentConfirmed) {
-            PaymentStatus paymentStatus = isPaymentConfirmed ? PaymentStatus.CONFIRMED : PaymentStatus.CANCELED;
-            return new Pay(paymentId, paymentStatus);
+        public static Pay of(Long paymentId) {
+            return new Pay(paymentId, PaymentStatus.CONFIRMED);
         }
     }
 }

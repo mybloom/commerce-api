@@ -45,7 +45,7 @@ public class PaymentServiceIntegrationTest {
         void saveConfirmedPayment() {
             // Act
             boolean isPaymentConfirmed = true;
-            Long paymentId = sut.save(orderId, PaymentMethod.POINT, amount, isPaymentConfirmed);
+            Long paymentId = sut.saveSuccess(orderId, PaymentMethod.POINT, amount);
 
             // Assert
             Payment actual = paymentRepository.findById(paymentId).orElseThrow();
@@ -62,18 +62,19 @@ public class PaymentServiceIntegrationTest {
         }
 
         @Test
-        @DisplayName("결제 실패일 경우, CANCELED 상태로 저장된다.")
+        @DisplayName("잔액부족으로 결제 실패일 경우, CANCELED 상태로 저장되고 실패 사유에 잔액 부족을 기록한다.")
         void saveCanceledPayment() {
             // Act
             boolean isPaymentConfirmed = false;
-            Long paymentId = sut.save(orderId, PaymentMethod.POINT, amount, isPaymentConfirmed);
+            Long paymentId = sut.saveFailure(orderId, PaymentMethod.POINT, amount, PaymentFailureReason.INSUFFICIENT_BALANCE);
 
             // Assert
             Payment actual = paymentRepository.findById(paymentId).orElseThrow();
             assertAll(
                     () -> assertThat(actual.getOrderId()).isEqualTo(orderId),
                     () -> assertThat(actual.getAmount()).isEqualTo(amount),
-                    () -> assertThat(actual.getPaymentStatus()).isEqualTo(PaymentStatus.CANCELED)
+                    () -> assertThat(actual.getPaymentStatus()).isEqualTo(PaymentStatus.CANCELED),
+                    () -> assertThat(actual.getFailureReason()).isEqualTo(PaymentFailureReason.INSUFFICIENT_BALANCE)
             );
             verify(paymentRepository, times(1)).save(any(Payment.class));
         }

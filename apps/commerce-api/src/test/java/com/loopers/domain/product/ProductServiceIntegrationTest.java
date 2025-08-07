@@ -22,6 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -177,6 +178,89 @@ class ProductServiceIntegrationTest {
                     () -> assertThat(actual).isPresent(),
                     () -> assertThat(actual.get().getId()).isEqualTo(validProductId)
             );
+        }
+    }
+
+    @DisplayName("상품 ID 목록으로 상품 조회 시,")
+    @Nested
+    class GetProductsByIds {
+        private Brand brand;
+        private Long brandId;
+        private int productTotalCount = 0;
+
+        @BeforeEach
+        void setUp() {
+            brand = brandRepository.save(
+                    Brand.from("Nike", "Global brand", BrandStatus.ACTIVE)
+            );
+            brandId = brand.getId();
+            Brand adidas = brandRepository.save(
+                    Brand.from("Adidas", "Global brand!", BrandStatus.ACTIVE)
+            );
+
+            // 상품 데이터 여러 개 저장
+            for (int i = 1; i <= 5; i++) {
+                productRepository.save(
+                        Product.from(
+                                "Product_nike_" + i,
+                                1000L * i,
+                                ProductStatus.AVAILABLE,
+                                i,
+                                Quantity.of(100),
+                                LocalDate.now().minusDays(i),
+                                brand.getId()
+                        )
+                );
+                productRepository.save(
+                        Product.from(
+                                "Product_adidas_" + i,
+                                1000L * i,
+                                ProductStatus.AVAILABLE,
+                                i,
+                                Quantity.of(100),
+                                LocalDate.now().minusDays(i),
+                                adidas.getId()
+                        )
+                );
+                productTotalCount += 2;
+            }
+        }
+
+        @Test
+        @DisplayName("모든 상품 ID가 유효하면, 상품 리스트를 반환한다.")
+        void findAllValidProductsOrThrow_success() {
+            // Arrange
+            List<Long> validIds = productRepository.findAll().stream()
+                    .map(Product::getId)
+                    .limit(3)
+                    .toList();
+
+            // Act
+            List<Product> products = sut.findAllValidProductsOrThrow(Set.copyOf(validIds));
+
+            // Assert
+            assertThat(products).hasSize(validIds.size());
+            assertThat(products).extracting(Product::getId).containsAll(validIds);
+        }
+
+        @Test
+        @DisplayName("상품 ID 중 하나라도 존재하지 않으면, NOT_FOUND  예외가 발생한다.")
+        void findAllValidProductsOrThrow_fail_whenAnyMissing() {
+            // Arrange
+            List<Long> validProductIds = productRepository.findAll().stream()
+                    .map(Product::getId)
+                    .limit(2)
+                    .toList();
+            Long invalidProductId = -999L;
+            Set<Long> mixedIds = Set.of(validProductIds.get(0), validProductIds.get(1), invalidProductId);
+
+            // Act
+            CoreException exception = assertThrows(CoreException.class,
+                    () -> sut.findAllValidProductsOrThrow(mixedIds)
+            );
+
+            // Assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
         }
     }
 

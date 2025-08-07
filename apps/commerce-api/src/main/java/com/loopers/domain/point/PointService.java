@@ -52,7 +52,7 @@ public class PointService {
                     .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
             point.use(paymentAmount);
-        }catch (Exception e) {
+        }catch (CoreException e) {
             return false;
         }
         return true;
