@@ -311,7 +311,7 @@ class ProductServiceIntegrationTest {
                     () -> assertThat(actualProduct1.getStockQuantity()).isEqualTo(beforeStockOfProduct1.subtract(deductQuantity1)),
                     () -> assertThat(actualProduct1.getStatus()).isEqualTo(ProductStatus.AVAILABLE),
 
-                     () -> assertThat(actualProduct2.getStockQuantity()).isEqualTo(beforeStockOfProduct2.subtract(deductQuantity2)),
+                    () -> assertThat(actualProduct2.getStockQuantity()).isEqualTo(beforeStockOfProduct2.subtract(deductQuantity2)),
                     () -> assertThat(actualProduct2.getStatus()).isEqualTo(ProductStatus.AVAILABLE)
             );
 
@@ -319,7 +319,7 @@ class ProductServiceIntegrationTest {
         }
 
         @Test
-        @DisplayName("재고가 부족할 경우, 상품 상태가 OUT_OF_STOCK으로 변경되고 예외가 발생한다.")
+        @DisplayName("재고가 부족할 경우, 상품 상태가 OUT_OF_STOCK으로 변경되고 false를 반환한다.")
         void markSoldOutAndThrowException_whenStockNotEnough() {
             // Arrange
             Quantity overQuantity = Quantity.of(200); // 현재 재고보다 많은 수량
@@ -329,15 +329,13 @@ class ProductServiceIntegrationTest {
             Quantity beforeStockOfProduct1 = product1.getStockQuantity();
 
             // Act
-            CoreException exception = assertThrows(CoreException.class, () -> {
-                sut.deductStock(commands);
-            });
+            boolean isDeductStock = sut.deductStock(commands);
 
             Product updated = productRepository.findById(product1.getId()).orElseThrow();
 
             // Assert
             assertAll(
-                    () -> assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT),
+                    () -> assertThat(isDeductStock).isFalse(),
                     () -> assertThat(updated.getStatus()).isEqualTo(ProductStatus.OUT_OF_STOCK)
             );
 

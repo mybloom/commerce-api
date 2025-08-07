@@ -56,4 +56,14 @@ public class Point {
     public Money balance() {
         return amount;
     }
+
+    public void use(Money paymentAmount) {
+        if( paymentAmount == null || paymentAmount.isLessThan(Money.ZERO)) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "사용할 포인트는 0 이상이어야 합니다.");
+        }
+        if (this.amount.isLessThan(paymentAmount)) {
+            throw new CoreException(ErrorType.CONFLICT, "사용할 포인트가 잔액보다 많습니다.");
+        }
+        this.amount = this.amount.subtract(paymentAmount);
+    }
 }

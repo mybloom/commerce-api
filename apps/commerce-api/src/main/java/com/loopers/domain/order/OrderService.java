@@ -22,17 +22,8 @@ public class OrderService {
                 });
     }
 
-    public Order createOrder(Long userId, String orderRequestId) {
-        Order order = Order.create(userId, orderRequestId);
-        return orderRepository.save(order);
-    }
-
     public void failValidation(final Order order) {
         order.failValidation();
-    }
-
-    public void markFailed(Order order) {
-        order.markFailed();
     }
 
     public Money calculateOrderAmountByAddLines(final Order order, final List<OrderLine> orderLines) {
@@ -40,8 +31,8 @@ public class OrderService {
         return order.calculateOrderAmount();
     }
 
-    public Money calculatePaymentAmount(Order order) {
-        order.applyDiscount(Money.ZERO);
+    public Money calculatePaymentAmount(Order order, Money discountAmount) {
+        order.applyDiscount(discountAmount);
         return order.getPaymentAmount();
     }
 
@@ -51,7 +42,11 @@ public class OrderService {
                 .orElseThrow(() -> new CoreException(ErrorType.FORBIDDEN, "해당 사용자의 주문이 아닙니다."));
     }
 
-    public void checkOrderLines(Order order) {
-        //상품번호, 수량 전달.
+    public void finalizePaymentResult(Order order, boolean isPaymentConfirmed) {
+        if (isPaymentConfirmed) {
+            order.markPaid();
+        } else {
+            order.failPaid();
+        }
     }
 }

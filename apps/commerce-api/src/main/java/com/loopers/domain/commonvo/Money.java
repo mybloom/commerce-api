@@ -18,6 +18,9 @@ public class Money {
     private final Long amount;
 
     public static Money of(Long amount) {
+        if (amount == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "금액은 빈 값이 될 수 없습니다.");
+        }
         if (amount < 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "금액은 음수가 될 수 없습니다.");
         }

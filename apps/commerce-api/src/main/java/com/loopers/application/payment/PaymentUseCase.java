@@ -7,6 +7,8 @@ import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductService;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,26 +24,40 @@ public class PaymentUseCase {
     private final PaymentService paymentService;
 
     public PaymentResult.Pay pay(Long userId, PaymentInfo.Pay payInfo) {
-        //0-1 orderId로 orderLines 가져오기. : 주문 수량 확인
-        //0-2 orderId로 paymentAmount 가져오기 : 결제 요청
+        // 0. 주문 조회 및 수량 확인
         Order order = orderService.getUserOrder(userId, payInfo.orderId());
         List<OrderLine> orderLines = order.getOrderLines();
 
-        //stream 탐색
         List<ProductCommand.CheckStock> checkStocksCommand = orderLines.stream()
-                .map(orderLine ->
-                        ProductCommand.CheckStock.of(orderLine.getProductId(), orderLine.getQuantity())
-                )
+                .map(orderLine -> ProductCommand.CheckStock.of(orderLine.getProductId(), orderLine.getQuantity()))
                 .collect(Collectors.toList());
 
-        //1. 재고 차감 요청
-        //todo: 재고 부족 시 상품 상태 일시품절 처리 (비동기로 변경)
-        productService.deductStock(checkStocksCommand);
+        // 1. 재고 차감
+        if (!productService.deductStock(checkStocksCommand)) {
+            return fail(order, payInfo, "재고가 부족합니다.");
+        }
 
-        //2. 포인트 결제 요청(포인트 차감)
+        // 2. 포인트 결제
+        if (!pointService.use(userId, order.getPaymentAmount())) {
+            return fail(order, payInfo, "포인트 결제에 실패했습니다.");
+        }
 
-        //3. 결제 성공시, 결제 정보 저장
+        // 3. 결제 성공 처리
+        boolean isPaymentConfirmed = true;
+        orderService.finalizePaymentResult(order, isPaymentConfirmed);
+        Long paymentId = paymentService.save(payInfo.orderId(), payInfo.paymentMethod(), order.getPaymentAmount(), isPaymentConfirmed);
 
-        return null;
+        return PaymentResult.Pay.of(paymentId, isPaymentConfirmed);
     }
+
+    // 공통 실패 처리 메서드
+    private PaymentResult.Pay fail(Order order, PaymentInfo.Pay payInfo, String errorMessage) {
+        boolean isPaymentConfirmed = false;
+
+        orderService.finalizePaymentResult(order, isPaymentConfirmed);
+        paymentService.save(payInfo.orderId(), payInfo.paymentMethod(), order.getPaymentAmount(), isPaymentConfirmed);
+
+        throw new CoreException(ErrorType.CONFLICT, errorMessage);
+    }
+
 }

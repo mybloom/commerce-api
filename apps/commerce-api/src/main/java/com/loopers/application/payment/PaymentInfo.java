@@ -1,11 +1,10 @@
 package com.loopers.application.payment;
 
-import com.loopers.domain.commonvo.Money;
-import com.loopers.domain.payment.PayMethod;
+import com.loopers.domain.payment.PaymentMethod;
 
 public class PaymentInfo {
     public record Pay(
             Long orderId,
-            PayMethod payMethod
+            PaymentMethod paymentMethod
     ){}
 }

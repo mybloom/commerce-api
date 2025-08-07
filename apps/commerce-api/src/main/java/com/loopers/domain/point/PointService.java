@@ -44,4 +44,17 @@ public class PointService {
             throw new CoreException(ErrorType.CONFLICT, "보유 포인트가 충분하지 않습니다.");
         }
     }
+
+    //todo: 테코 작성
+    public boolean use(Long userId, Money paymentAmount) {
+        try {
+            Point point = pointRepository.findByUserId(userId)
+                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+            point.use(paymentAmount);
+        }catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
 }

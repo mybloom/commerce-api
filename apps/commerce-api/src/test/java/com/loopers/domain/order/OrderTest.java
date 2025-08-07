@@ -4,6 +4,8 @@ import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.commonvo.Quantity;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductStatus;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,6 +18,7 @@ import java.util.UUID;
 
 import static com.loopers.domain.order.OrderStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
 
 class OrderTest {
 
@@ -30,7 +33,7 @@ class OrderTest {
 
     private List<OrderLineCommand> orderLineCommands;
     private List<Product> products;
-    private Money expectedTotal = Money.ZERO;
+    private Money expectedTotal;
 
     @BeforeEach
     void setUp() {
@@ -119,18 +122,16 @@ class OrderTest {
     class Status {
 
         @Test
-        @DisplayName("결제 정상 처리가 되면, 상태는 PAID로 변경되고 결제 ID와 금액이 설정된다")
+        @DisplayName("결제 정상 처리가 되면, 상태는 PAID로 변경된다")
         void markAsPaid() {
             // Arrange
             Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
 
             // Act
-            order.markPaid(PAYMENT_ID, PAYMENT_AMOUNT);
+            order.markPaid();
 
             // Assert
             assertThat(order.getStatus()).isEqualTo(PAID);
-            assertThat(order.getPaymentId()).isEqualTo(PAYMENT_ID);
-            assertThat(order.getPaymentAmount()).isEqualTo(PAYMENT_AMOUNT);
         }
 
         @Test
@@ -140,10 +141,101 @@ class OrderTest {
             Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
 
             // Act
-            order.markFailed();
+            order.failPaid();
 
             // Assert
             assertThat(order.getStatus()).isEqualTo(PAID_FAILED);
         }
+    }
+
+    @DisplayName("할인 적용 시")
+    @Nested
+    class Discount {
+
+        @Test
+        @DisplayName("할인 금액이 적용되면, 결제 금액은 (총합 - 할인) 으로 계산된다")
+        void applyDiscount() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+
+            OrderLineService orderLineService = new OrderLineService();
+            List<OrderLine> orderLines = orderLineService.createOrderLines(orderLineCommands, products);
+            order.addOrderLine(orderLines);
+
+            // 초기 상태 검증
+            assertThat(order.getDiscountAmount()).isNull();
+            assertThat(order.getPaymentAmount()).isNull();
+            assertThat(order.getTotalAmount()).isNull();
+
+            // 총액 계산
+            Money calculatedTotal = order.calculateOrderAmount();
+            assertThat(calculatedTotal).isEqualTo(expectedTotal);
+
+            Money discountAmount = Money.of(500L);
+
+            // Act
+            order.applyDiscount(discountAmount);
+
+            // Assert
+            assertThat(order.getDiscountAmount()).isEqualTo(discountAmount);
+            assertThat(order.getPaymentAmount()).isEqualTo(expectedTotal.subtract(discountAmount));
+        }
+
+    }
+
+    @DisplayName("주문 상태를 변경 할 때, ")
+    @Nested
+    class ValidationFail {
+        @Test
+        @DisplayName("주문 상태가 PENDING일 경우, VALIDATION_FAILED로 변경할 수 있다.")
+        void failValidation_shouldChangeStatus() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+
+            // Act
+            order.failValidation();
+
+            // Assert
+            assertThat(order.getStatus()).isEqualTo(VALIDATION_FAILED);
+        }
+
+        @Test
+        @DisplayName("ALIDATION_FAILED로 변경 시, 주문 상태가 PENDING이 아닌 경우 CONFLICT 예외가 발생한다")
+        void failValidation_shouldThrowExceptionIfStatusIsNotPending() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+            order.failPaid(); // 상태를 PAID_FAILED로 변경
+
+            // Act & Assert
+            CoreException exception = assertThrows(CoreException.class, order::failValidation);
+
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
+            assertThat(exception.getMessage()).contains("주문 상태가 올바르지 않습니다.");
+        }
+
+        @Test
+        @DisplayName("PAID로 상태 변경 시, 결제 상태가 PENDING이 아니면 CONFLICT 예외가 발생한다")
+        void throwException_whenMarkPaidIfNotPending() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+            order.failValidation();
+
+            // Act
+            CoreException exception = assertThrows(CoreException.class, order::markPaid);
+
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
+        }
+
+        @Test
+        @DisplayName("PAID_FAILED로 상태 변경 시, 결제 상태가 PENDING이 아니면 CONFLICT 예외가 발생한다")
+        void markFailed_shouldFailIfNotPending() {
+            // Arrange
+            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
+            order.failValidation();
+
+            // Act & Assert
+            org.junit.jupiter.api.Assertions.assertThrows(CoreException.class, order::failPaid);
+        }
+
     }
 }

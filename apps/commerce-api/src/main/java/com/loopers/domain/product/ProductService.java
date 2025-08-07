@@ -54,7 +54,7 @@ public class ProductService {
         return products;
     }
 
-    public void deductStock(List<ProductCommand.CheckStock> commands) {
+    public boolean deductStock(List<ProductCommand.CheckStock> commands) {
         Set<Long> productIds = commands.stream().map(ProductCommand.CheckStock::productId).collect(Collectors.toSet());
         List<Product> products = productRepository.findAllByIds(productIds.stream().toList());
 
@@ -69,9 +69,10 @@ public class ProductService {
             } catch (CoreException e) {
                 // TODO: 재고 부족 시 상품 상태 일시품절 처리 (비동기)
                 product.markSoldOut();
-                throw new CoreException(ErrorType.CONFLICT, "재고 부족: " + command.productId());
+                return false;
             }
         }
+        return true;
     }
 
 }

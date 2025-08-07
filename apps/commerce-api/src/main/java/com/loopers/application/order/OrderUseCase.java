@@ -50,7 +50,8 @@ public class OrderUseCase {
         Money orderAmount = orderService.calculateOrderAmountByAddLines(order, orderLines);
 
         // 4. 할인 정보 확인
-        Money paymentAmount = orderService.calculatePaymentAmount(order);
+        Money discountAmount = Money.ZERO;
+        Money paymentAmount = orderService.calculatePaymentAmount(order, discountAmount);
 
         // 4. 주문 총액만큼 포인트 보유 확인
         pointService.checkSufficientBalance(userId, paymentAmount);

@@ -52,8 +52,6 @@ public class Order {
     @AttributeOverride(name = "amount", column = @Column(name = "payment_amount"))
     private Money paymentAmount;
 
-    private Long paymentId;
-
     private String orderRequestId; // 멱등키
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -75,14 +73,14 @@ public class Order {
     }
 
     public void addOrderLine(List<OrderLine> orderLines) {
-        if(orderLines.isEmpty()){
+        if (orderLines.isEmpty()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "주문 상품이 없습니다.");
         }
         this.orderLines = orderLines;
     }
 
     public Money calculateOrderAmount() {
-        if(orderLines.isEmpty()){
+        if (orderLines.isEmpty()) {
             throw new CoreException(ErrorType.CONFLICT, "주문 상품이 없습니다.");
         }
 
@@ -93,16 +91,23 @@ public class Order {
     }
 
     public void failValidation() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
+        }
         this.status = OrderStatus.VALIDATION_FAILED;
     }
 
-    public void markPaid(Long paymentId, Money paymentAmount) {
+    public void markPaid() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태이 결제 가능한 상태가 아닙니다.");
+        }
         this.status = OrderStatus.PAID;
-        this.paymentId = paymentId;
-        this.paymentAmount = paymentAmount;
     }
 
-    public void markFailed() {
+    public void failPaid() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
+        }
         this.status = OrderStatus.PAID_FAILED;
     }
 
