@@ -3,13 +3,16 @@ package com.loopers.domain.coupon;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class CouponService {
@@ -34,26 +37,31 @@ public class CouponService {
         return userCoupons;
     }
 
-    public Money use(List<UserCoupon> userCoupons,Money orderAmount) {
+    @Transactional
+    public Money use(List<UserCoupon> userCoupons, Money orderAmount) {
+        log.info("*******Using coupons: {}", userCoupons);
         if (userCoupons == null || userCoupons.isEmpty()) {
             return Money.ZERO;
         }
 
         // 유효성 검사
         userCoupons.forEach(UserCoupon::validateUsable);
+        log.info("********All coupons are valid.");
+
 
         // 할인 금액 계산 후 합산
         Money totalDiscount = userCoupons.stream()
                 .map(userCoupon -> {
                     Coupon coupon = userCoupon.getCoupon();
-                    return coupon.getDiscountPolicy()
+                    Money discountAmount = coupon.getDiscountPolicy()
                             .getDiscountType()
                             .calculateDiscountAmount(orderAmount.getAmount(), coupon.getDiscountPolicy().getDiscountValue());
+
+                    userCoupon.markUsed(); // 여기서 사용 처리
+                    return discountAmount;
                 })
                 .reduce(Money.ZERO, Money::add);
 
         return totalDiscount;
     }
-
-
 }

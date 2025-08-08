@@ -18,7 +18,7 @@ public class DiscountPolicy {
     @Column(name = "discount_type", nullable = false)
     private DiscountType discountType;
 
-    @Column(precision = 8, scale = 3, name = "discount_rate", nullable = false)
+    @Column(precision = 8, scale = 3, name = "discount_value", nullable = false)
     private BigDecimal discountValue; // 예: 10% => 0.100, 10,000 => 10000.000
 
     public static DiscountPolicy of(

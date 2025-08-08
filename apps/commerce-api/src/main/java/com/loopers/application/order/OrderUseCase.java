@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,9 +68,9 @@ public class OrderUseCase {
                     .map(couponService::findAllValidCouponsOrThrow)
                     .map(coupons -> couponService.use(coupons, orderAmount))
                     .orElse(Money.ZERO);
-        } catch (CoreException e) {
+        } catch (CoreException | ObjectOptimisticLockingFailureException e) {
             orderService.failValidation(order);
-            throw e;
+            throw new CoreException(ErrorType.CONFLICT, "쿠폰 정보가 유효하지 않습니다.");
         }
 
         // 4. 할인 정보 확인

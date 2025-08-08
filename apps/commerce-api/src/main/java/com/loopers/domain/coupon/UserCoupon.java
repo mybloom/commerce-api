@@ -29,6 +29,9 @@ public class UserCoupon {
     @Column(name = "used", nullable = false)
     private boolean used;
 
+    @Version
+    private Long version;
+
     @Column(name = "issued_at", nullable = false)
     private LocalDate issuedAt;
 
