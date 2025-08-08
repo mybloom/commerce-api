@@ -36,6 +36,9 @@ public class Payment {
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
 
+    @Column(name = "failure_reason", nullable = true)
+    private PaymentFailureReason failureReason;
+
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private ZonedDateTime deletedAt;
@@ -49,7 +52,18 @@ public class Payment {
         this.createdAt = ZonedDateTime.now();
     }
 
-    public static Payment confirm(Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus) {
+    private Payment(Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus, PaymentFailureReason failureReason) {
+        this.orderId = orderId;
+        this.paymentMethod = paymentMethod;
+        this.amount = amount;
+        this.paymentStatus = paymentStatus;
+        this.failureReason = failureReason;
+        this.createdAt = ZonedDateTime.now();
+    }
+
+    public static Payment confirmSuccess(
+            Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus
+    ) {
         if (orderId == null || paymentMethod == null || amount == null || paymentStatus == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID, 결제 방법, 결제 금액, 결제 상태는 필수입니다.");
         }
@@ -58,5 +72,19 @@ public class Payment {
         }
 
         return new Payment(orderId, paymentMethod, amount, paymentStatus);
+    }
+
+    public static Payment confirmFailure(
+            Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus,
+            PaymentFailureReason paymentFailureReason
+    ) {
+        if (orderId == null || paymentMethod == null || amount == null || paymentStatus == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID, 결제 방법, 결제 금액, 결제 상태는 필수입니다.");
+        }
+        if (amount.getAmount() < 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제 금액은 0이상이여야 합니다.");
+        }
+
+        return new Payment(orderId, paymentMethod, amount, paymentStatus, paymentFailureReason);
     }
 }

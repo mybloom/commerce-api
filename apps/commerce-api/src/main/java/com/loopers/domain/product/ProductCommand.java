@@ -12,4 +12,13 @@ public class ProductCommand {
             return new CheckStock(productId, quantity);
         }
     }
+
+    public record DeductStock(
+            Product product,
+            Quantity quantity
+    ) {
+        public static DeductStock of(Product product, Quantity quantity) {
+            return new DeductStock(product, quantity);
+        }
+    }
 }

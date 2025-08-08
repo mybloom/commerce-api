@@ -2,7 +2,6 @@ package com.loopers.domain.payment;
 
 import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +26,7 @@ class PaymentTest {
         @DisplayName("결제 정보를 전달하면, Payment 객체가 정상적으로 생성된다.")
         void createPayment_successfully() {
             // Act
-            Payment payment = Payment.confirm(ORDER_ID, PAYMENT_METHOD, AMOUNT, PaymentStatus.CONFIRMED);
+            Payment payment = Payment.confirmSuccess(ORDER_ID, PAYMENT_METHOD, AMOUNT, PaymentStatus.CONFIRMED);
 
             // Assert
             assertAll(
@@ -63,13 +62,13 @@ class PaymentTest {
                     () -> {
                         Long nullOrderId = null;
                         assertThrows(CoreException.class, () ->
-                                Payment.confirm(nullOrderId, validMethod, validAmount, validStatus)
+                                Payment.confirmSuccess(nullOrderId, validMethod, validAmount, validStatus)
                         );
                     },
                     () -> {
                         PaymentMethod nullPaymentMethod = null;
                         assertThrows(CoreException.class, () ->
-                                Payment.confirm(validOrderId, nullPaymentMethod, validAmount, validStatus)
+                                Payment.confirmSuccess(validOrderId, nullPaymentMethod, validAmount, validStatus)
                         );
                     },
 //                    () -> {
@@ -81,7 +80,7 @@ class PaymentTest {
                     () -> {
                         PaymentStatus nullPaymentStatus = null;
                         assertThrows(CoreException.class, () ->
-                                Payment.confirm(validOrderId, validMethod, validAmount, nullPaymentStatus)
+                                Payment.confirmSuccess(validOrderId, validMethod, validAmount, nullPaymentStatus)
                         );
                     }
             );

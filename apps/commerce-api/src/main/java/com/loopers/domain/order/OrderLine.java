@@ -24,6 +24,7 @@ public class OrderLine {
     @JoinColumn(name = "order_id")
     private Order order;
 
+    @Column(name = "product_id", nullable = false)
     private Long productId;
 
     @Embedded
@@ -35,7 +36,7 @@ public class OrderLine {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "amount", column = @Column(name = "discount_amount"))
+            @AttributeOverride(name = "amount", column = @Column(name = "product_price"))
     })
     private Money price;
 

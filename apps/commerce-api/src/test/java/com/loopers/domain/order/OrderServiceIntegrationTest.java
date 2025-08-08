@@ -130,7 +130,7 @@ class OrderServiceIntegrationTest {
 
             // Act
             boolean isPaymentConfirmed = true;
-            sut.finalizePaymentResult(order, isPaymentConfirmed);
+            sut.finalizeOrderResult(order, isPaymentConfirmed);
 
             // Assert
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
@@ -144,7 +144,7 @@ class OrderServiceIntegrationTest {
 
             // Act
             boolean isPaymentConfirmed = false;
-            sut.finalizePaymentResult(order, isPaymentConfirmed);
+            sut.finalizeOrderResult(order, isPaymentConfirmed);
 
             // Assert
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID_FAILED);

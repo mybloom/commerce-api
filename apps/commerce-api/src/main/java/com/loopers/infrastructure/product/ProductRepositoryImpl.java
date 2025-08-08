@@ -3,6 +3,7 @@ package com.loopers.infrastructure.product;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductListProjection;
 import com.loopers.domain.product.ProductRepository;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,6 +51,21 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public List<Product> findAllByIds(List<Long> productIds) {
-        return productJpaRepository.findAllById(productIds.stream().toList());
+        return productJpaRepository.findAllById(productIds);
+    }
+
+    @Override
+    public int updateLikeCountById(Long id) {
+        return productJpaRepository.updateLikeCountById(id);
+    }
+
+    @Override
+    public int decreaseLikeCountById(Long id) {
+        return productJpaRepository.decreaseLikeCountById(id);
+    }
+
+    @Override
+    public List<Product> findAllValidWithPessimisticLock(List<Long> productIds) {
+        return productJpaRepository.findAllValidWithPessimisticLock(productIds);
     }
 }

@@ -13,4 +13,8 @@ public interface LikeHistoryRepository {
     Optional<LikeHistory> findByUserIdAndProductId(Long userId, Long productId);
 
     Page<LikeHistory> findByUserIdAndDeletedAtIsNull(Long userId, Pageable pageable);
+
+    int deleteByUserIdAndProductId(Long userId, Long productId);
+
+    void deleteAll();
 }

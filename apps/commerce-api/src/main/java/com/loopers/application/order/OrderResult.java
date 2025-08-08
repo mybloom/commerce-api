@@ -25,14 +25,5 @@ public class OrderResult {
                 createdOrder.getStatus()
             );
         }
-
-        public static OrderRequestResult failValidation(Order order) {
-            return new OrderRequestResult(
-                    false,
-                    order.getId(),
-                    order.getStatus()
-            );
-        }
     }
-
 }

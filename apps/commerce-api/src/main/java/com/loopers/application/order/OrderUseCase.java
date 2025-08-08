@@ -1,15 +1,22 @@
 package com.loopers.application.order;
 
 import com.loopers.domain.commonvo.Money;
+import com.loopers.domain.coupon.Coupon;
+import com.loopers.domain.coupon.CouponService;
+import com.loopers.domain.coupon.UserCoupon;
 import com.loopers.domain.order.*;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,12 +27,13 @@ public class OrderUseCase {
     private final OrderService orderService;
     private final ProductService productService;
     private final PointService pointService;
+    private final CouponService couponService;
 
     private final OrderLineService orderLineService = new OrderLineService();
 
-    @Transactional
+    @Transactional(noRollbackFor = CoreException.class)
     public OrderResult.OrderRequestResult order(
-            final Long userId, String orderRequestId, final List<OrderInfo.ItemInfo> items) {
+            final Long userId, String orderRequestId, final List<OrderInfo.ItemInfo> items, final List<Long> userCouponIds) {
         // 1. 멱등키 등록 요청(주문 생성 요청) - 기존 주문 존재 할 경우 기존 주문 정보 전달
         final OrderQuery.CreatedOrder resolvedOrderQuery = orderService.createOrderByRequestId(userId, orderRequestId);
 
@@ -35,28 +43,46 @@ public class OrderUseCase {
         }
 
         // 2. 상품 유효성 검증
-        final List<Product> allValidProducts = productService.findAllValidProducts(
-                items.stream()
-                        .map(OrderInfo.ItemInfo::productId)
-                        .collect(Collectors.toSet())
-        );
-        if (allValidProducts.isEmpty()) {
+        final List<Product> allValidProducts;
+        try {
+            allValidProducts = productService.findAllValidProductsOrThrow(
+                    items.stream()
+                            .map(OrderInfo.ItemInfo::productId)
+                            .distinct()
+                            .toList()
+            );
+        } catch (CoreException e) {
             orderService.failValidation(order);
-            return OrderResult.OrderRequestResult.failValidation(order);
+            throw e;
         }
 
         // 3. 상품 추가 및 상품 총액 계산
         final List<OrderLine> orderLines = orderLineService.createOrderLines(OrderInfo.toCommands(items), allValidProducts);
         Money orderAmount = orderService.calculateOrderAmountByAddLines(order, orderLines);
 
+        // 4-0 쿠폰 정보 확인 및 할인 금액 계산
+        final Money discountAmount;
+        try {
+            discountAmount = Optional.ofNullable(userCouponIds)
+                    .filter(ids -> !ids.isEmpty())
+                    .map(couponService::findAllValidCouponsOrThrow)
+                    .map(coupons -> couponService.use(coupons, orderAmount))
+                    .orElse(Money.ZERO);
+        } catch (CoreException | ObjectOptimisticLockingFailureException e) {
+            orderService.failValidation(order);
+            throw new CoreException(ErrorType.CONFLICT, "쿠폰 정보가 유효하지 않습니다.");
+        }
+
         // 4. 할인 정보 확인
-        Money discountAmount = Money.ZERO;
         Money paymentAmount = orderService.calculatePaymentAmount(order, discountAmount);
 
-        // 4. 주문 총액만큼 포인트 보유 확인
-        pointService.checkSufficientBalance(userId, paymentAmount);
-
-        // 5. 주문 정보 저장 : todo 필요없음. dirty checking
+        // 5. 주문 총액만큼 포인트 보유 확인
+        try {
+            pointService.validateSufficientBalance(userId, paymentAmount);
+        } catch (CoreException e) {
+            orderService.failValidation(order);
+            throw new CoreException(ErrorType.CONFLICT, "잔액이 부족합니다.");
+        }
 
         return OrderResult.OrderRequestResult.from(order);
     }
