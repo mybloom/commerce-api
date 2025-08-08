@@ -114,4 +114,24 @@ public class LikeUseCase {
             )
         );
     }
+
+    @Transactional
+    public LikeResult.LikeRegisterResult registerV2(final Long userId, final Long productId){
+        // 1. 상품 유효성 검사 (락 없이)
+        Product product = productService.retrieveOne(productId)
+                .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "해당 상품에 좋아요를 할 수 없습니다."));
+
+        // 2. 좋아요 등록 시도 (멱등성 검사 포함)
+        final LikeQuery.LikeRegisterQuery likeRegisterQuery = likeService.register(userId, productId);
+
+        // 3. 중복이 아닐 때만 락 걸고 좋아요 수 증가
+        if (!likeRegisterQuery.isDuplicatedRequest()) {
+            // 상품을 비관적 락으로 다시 조회
+            Product lockedProduct = productService.retrieveWithPessimisticLock(productId);
+            productService.increaseLikeCount(lockedProduct);
+        }
+
+        return LikeResult.LikeRegisterResult.from(likeRegisterQuery);
+    }
+
 }
