@@ -29,11 +29,6 @@ public class ProductService {
         return productRepository.findById(productId);
     }
 
-    //todo: 제거 예정
-    public void increaseLikeCountOld(final Product product) {
-        product.increaseLikeCount();
-    }
-
     public void increaseLikeCount(final Product product) {
         int processCount = productRepository.updateLikeCountById(product.getId());
     }

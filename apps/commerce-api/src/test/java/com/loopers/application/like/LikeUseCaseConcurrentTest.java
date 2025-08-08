@@ -7,7 +7,6 @@ import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductStatus;
 import com.loopers.testcontainers.MySqlTestContainersConfig;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +51,7 @@ class LikeUseCaseConcurrentTest {
         productId = product.getId();
     }
 
-    @DisplayName("하나의 상품에 여러 명이 동시에 좋아요 요청 시, 좋아요 수는 정확히 1씩 증가하고 요청 성공/실패가 구분되어야 한다.")
+    @DisplayName("하나의 상품에 각 50명 사용자가 동시에 좋아요 요청 시, 좋아요 수는 1씩 증가하고 중복 요청은 없어야한다.")
     @Test
     void testLikeCountConcurrentRequestsWithSingleLikePerUser() throws Exception {
         // assign

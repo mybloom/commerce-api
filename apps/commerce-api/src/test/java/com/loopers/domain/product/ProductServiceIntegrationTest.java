@@ -297,7 +297,7 @@ class ProductServiceIntegrationTest {
                     .getLikeCount().getValue();
 
             // Act
-            sut.increaseLikeCountOld(product);
+            sut.increaseLikeCount(product);
 
             // Assert
             Product actual = productRepository.findById(product.getId()).orElseThrow();
