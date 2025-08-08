@@ -52,56 +52,69 @@ class LikeUseCaseConcurrentTest {
         productId = product.getId();
     }
 
+    @DisplayName("하나의 상품에 여러 명이 동시에 좋아요 요청 시, 좋아요 수는 정확히 1씩 증가하고 요청 성공/실패가 구분되어야 한다.")
     @Test
-    @DisplayName("동시 요청 시 성공/실패 요청을 기록하고 likeCount 검증")
-    void likeCountConcurrencyTest_withSuccessFailLogging() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(50);
-        CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
+    void testLikeCountConcurrentRequestsWithSingleLikePerUser() throws Exception {
+        // assign
+        int threadCount = 50;
+        ExecutorService executorService = Executors.newFixedThreadPool(20);
+        List<CompletableFuture<Boolean>> tasks = new ArrayList<>(threadCount);
 
-        AtomicInteger successCount = new AtomicInteger();
-        AtomicInteger failCount = new AtomicInteger();
-        AtomicInteger duplicatedCount = new AtomicInteger();
+        AtomicInteger exceptionCount = new AtomicInteger(0);
+        AtomicInteger duplicatedCount = new AtomicInteger(0);
+        AtomicInteger successCount = new AtomicInteger(0);
 
-        for (int i = 0; i < THREAD_COUNT; i++) {
-            final long userId = i + 1; // 100명 유저
-            executorService.submit(() -> {
-                try {
-                    LikeResult.LikeRegisterResult result = likeUseCase.register(userId, productId);
-
-                    if (result.isDuplicatedRequest()) {
-                        duplicatedCount.incrementAndGet();
-                        System.out.println("[중복] userId = " + userId);
-                        failCount.incrementAndGet();
-                    } else {
-                        successCount.incrementAndGet();
-                    }
-                } catch (Exception e) {
-                    failCount.incrementAndGet();
-                    System.err.println("[예외 발생] userId = " + userId + ", message = " + e.getMessage());
-                } finally {
-                    latch.countDown();
-                }
-            });
+        // act
+        for (int i = 0; i < threadCount; i++) {
+            final long userId = i + 1;
+            tasks.add(
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            LikeResult.LikeRegisterResult result = likeUseCase.register(userId, productId);
+                            if (result.isDuplicatedRequest()) {
+                                duplicatedCount.incrementAndGet();
+                                return false;
+                            } else {
+                                successCount.incrementAndGet();
+                                return true;
+                            }
+                        } catch (Exception e) {
+                            exceptionCount.incrementAndGet();
+                            return false;
+                        }
+                    }, executorService)
+            );
         }
 
-        latch.await();
+        // assert
+        CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
+
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.SECONDS);
 
+        int totalSuccess = successCount.get();
+        int totalDuplicated = duplicatedCount.get();
+        int totalException = exceptionCount.get();
+
         Product product = productRepository.findById(productId).orElseThrow();
 
-        // 결과 출력
-        System.out.println("🟢 성공한 요청 수: " + successCount.get());
-        System.out.println("🔴 실패한 요청 수: " + failCount.get());
-        System.out.println("🎯 최종 likeCount: " + product.getLikeCount().getValue());
-        System.out.println("🔁 중복 요청 수: " + duplicatedCount.get());
+        assertSoftly(softly -> {
+            softly.assertThat(totalException)
+                    .as("예외 발생 횟수 검증")
+                    .isEqualTo(0); // 예외는 없어야 함
 
-        // 검증
-        assertThat(product.getLikeCount().getValue()).isEqualTo(successCount.get());
-        assertThat(successCount.get() + failCount.get()).isEqualTo(THREAD_COUNT);
+            softly.assertThat(totalDuplicated)
+                    .as("중복 요청 수 검증")
+                    .isEqualTo(0); // 유저가 다 다르므로 중복 요청 없어야 함
+
+            softly.assertThat(totalSuccess)
+                    .as("성공한 요청 수 검증")
+                    .isEqualTo(threadCount);
+
+            softly.assertThat(product.getLikeCount().getValue())
+                    .as("최종 likeCount는 요청 수와 같아야 함")
+                    .isEqualTo(threadCount);
+        });
     }
-
-
-
 }
 
