@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,9 +89,11 @@ class OrderUseCaseIntegrationTest {
                     new OrderInfo.ItemInfo(999999L, 1)
             );
 
+            List<Long> userCouponIds = Collections.emptyList();
+
             // act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                sut.order(USER_ID, ORDER_REQUEST_ID, invalidItems);
+                sut.order(USER_ID, ORDER_REQUEST_ID, invalidItems, userCouponIds);
             });
 
             // assert: 예외 검증
@@ -117,9 +120,11 @@ class OrderUseCaseIntegrationTest {
             Money orderTotalAmount = productPrice.multiply(Quantity.of(quantity));
             assertThat(userBalance.isLessThan(orderTotalAmount)).isTrue();
 
+            List<Long> userCouponIds = Collections.emptyList();
+
             // Act
             CoreException exception = assertThrows(CoreException.class, () -> {
-                sut.order(USER_ID, ORDER_REQUEST_ID, items);
+                sut.order(USER_ID, ORDER_REQUEST_ID, items, userCouponIds);
             });
 
             // Assert
@@ -145,7 +150,8 @@ class OrderUseCaseIntegrationTest {
             );
 
             // act
-            OrderResult.OrderRequestResult result = sut.order(USER_ID, ORDER_REQUEST_ID, items);
+            List<Long> userCouponIds = Collections.emptyList();
+            OrderResult.OrderRequestResult result = sut.order(USER_ID, ORDER_REQUEST_ID, items, userCouponIds);
 
             // assert
             Order order = orderRepository.findByIdWithOrderLines(result.orderId()).orElseThrow();

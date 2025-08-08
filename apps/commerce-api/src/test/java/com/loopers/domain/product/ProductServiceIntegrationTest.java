@@ -232,6 +232,7 @@ class ProductServiceIntegrationTest {
 
         @Test
         @DisplayName("모든 상품 ID가 유효하면, 상품 리스트를 반환한다.")
+        @Transactional //비관적락은 트랜잭션이 있어야 동작한다.
         void findAllValidProductsOrThrow_success() {
             // Arrange
             List<Long> validIds = productRepository.findAll().stream()
@@ -249,6 +250,7 @@ class ProductServiceIntegrationTest {
 
         @Test
         @DisplayName("상품 ID 중 하나라도 존재하지 않으면, NOT_FOUND  예외가 발생한다.")
+        @Transactional //비관적락은 트랜잭션이 있어야 동작한다.
         void findAllValidProductsOrThrow_fail_whenAnyMissing() {
             // Arrange
             List<Long> validProductIds = productRepository.findAll().stream()
