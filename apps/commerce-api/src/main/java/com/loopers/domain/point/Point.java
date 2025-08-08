@@ -18,7 +18,8 @@ public class Point {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "balance", nullable = false))
     private Money amount;
 
     @Column(nullable = false, unique = true)

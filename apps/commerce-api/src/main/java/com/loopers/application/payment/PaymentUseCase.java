@@ -48,7 +48,7 @@ public class PaymentUseCase {
 
         // OrderLine에서 상품 및 수량 확인
         List<Long> productIds = orderLines.stream()
-                .map(OrderLine::getId)
+                .map(OrderLine::getProductId)
                 .toList();
 
         // 1. 재고 차감
@@ -69,7 +69,7 @@ public class PaymentUseCase {
         }
 
         // 2. 포인트 결제
-        Point point = pointService.findByUser(userId);
+        Point point = pointService.findByUserWithLock(userId);
         pointService.useOrThrow(point, order.getPaymentAmount());
 
         // 3. 결제 성공 처리

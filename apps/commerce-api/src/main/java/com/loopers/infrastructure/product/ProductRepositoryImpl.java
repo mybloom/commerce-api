@@ -63,4 +63,9 @@ public class ProductRepositoryImpl implements ProductRepository {
     public int decreaseLikeCountById(Long id) {
         return productJpaRepository.decreaseLikeCountById(id);
     }
+
+    @Override
+    public List<Product> findAllValidWithPessimisticLock(List<Long> productIds) {
+        return productJpaRepository.findAllValidWithPessimisticLock(productIds);
+    }
 }

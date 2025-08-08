@@ -3,15 +3,7 @@ package com.loopers.domain.product;
 import com.loopers.domain.commonvo.*;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
@@ -46,8 +38,11 @@ public class Product {
     @Convert(converter = LikeCountConverter.class)
     private LikeCount likeCount;
 
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "stock_quantity", nullable = false))
     private Quantity stockQuantity; //TODO: Inventory에서 관리여부를 고민
 
+    @Column(name = "sale_start_date", nullable = false)
     private LocalDate saleStartDate;
 
     @Column(nullable = false, name = "brand_id")

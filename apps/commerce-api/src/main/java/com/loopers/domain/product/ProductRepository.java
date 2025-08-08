@@ -22,4 +22,6 @@ public interface ProductRepository {
     int updateLikeCountById(Long id);
 
     int decreaseLikeCountById(Long id);
+
+    List<Product> findAllValidWithPessimisticLock(List<Long> productIds);
 }

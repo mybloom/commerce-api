@@ -42,7 +42,7 @@ public class ProductService {
     }
 
     public List<Product> findAllValidProductsOrThrow(List<Long> productIds) {
-        List<Product> products = productRepository.findAllByIds(productIds);
+        List<Product> products = productRepository.findAllValidWithPessimisticLock(productIds);
 
         Set<Long> foundIds = products.stream()
                 .map(Product::getId)

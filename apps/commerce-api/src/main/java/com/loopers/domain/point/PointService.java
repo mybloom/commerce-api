@@ -53,4 +53,9 @@ public class PointService {
         return pointRepository.findByUserId(userId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
     }
+
+    public Point findByUserWithLock(Long userId) {
+        return pointRepository.findByUserIdWithLock(userId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+    }
 }
