@@ -3,6 +3,7 @@ package com.loopers.application.order;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.coupon.Coupon;
 import com.loopers.domain.coupon.CouponService;
+import com.loopers.domain.coupon.UserCoupon;
 import com.loopers.domain.order.*;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.Product;
@@ -58,12 +59,15 @@ public class OrderUseCase {
         Money orderAmount = orderService.calculateOrderAmountByAddLines(order, orderLines);
 
         // 4-0 쿠폰 정보 확인 및 할인 금액 계산
-        final List<Coupon> allValidCoupons;
+        final List<UserCoupon> userCoupons;
         try {
-        couponService.findAllValidCouponsOrThrow(userCouponIds);
+            userCoupons = couponService.findAllValidCouponsOrThrow(userCouponIds);
+        } catch (CoreException e) {
+            throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 쿠폰입니다.");
+        }
+        Money discountAmount = couponService.use(userCoupons, orderAmount);
 
         // 4. 할인 정보 확인
-        Money discountAmount = Money.ZERO;
         Money paymentAmount = orderService.calculatePaymentAmount(order, discountAmount);
 
         // 5. 주문 총액만큼 포인트 보유 확인

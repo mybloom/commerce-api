@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "user_coupon")
 public class UserCoupon {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -41,5 +44,6 @@ public class UserCoupon {
         if (this.used) {
             throw new CoreException(ErrorType.CONFLICT, "이미 사용된 쿠폰입니다.");
         }
+        coupon.validateUsable();
     }
 }
