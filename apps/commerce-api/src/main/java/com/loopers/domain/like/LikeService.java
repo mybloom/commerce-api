@@ -1,9 +1,14 @@
 package com.loopers.domain.like;
 
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Component
@@ -11,22 +16,15 @@ public class LikeService {
 
     private final LikeHistoryRepository likeHistoryRepository;
 
-    public LikeQuery.LikeRegisterQuery register(final Long userId, final Long productId) {
-        final LikeHistory history = likeHistoryRepository.findByUserIdAndProductId(userId, productId)
-                .orElse(null);
-
-        if (history == null) {
-            final LikeHistory saved = likeHistoryRepository.save(LikeHistory.from(userId, productId));
-            return LikeQuery.LikeRegisterQuery.success(saved);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public LikeHistory register(Long userId, Long productId) {
+        LikeHistory likeHistory;
+        try {
+            likeHistory = likeHistoryRepository.save(LikeHistory.from(userId, productId));
+        }catch (DataIntegrityViolationException e){
+            throw new CoreException(ErrorType.CONFLICT,"이미 좋아요를 등록한 상품입니다.");
         }
-
-        if (!history.isDeleted()) {
-            return LikeQuery.LikeRegisterQuery.alreadyRegister(history);
-        }
-
-        history.restore();
-        likeHistoryRepository.save(history);
-        return LikeQuery.LikeRegisterQuery.success(history);
+        return likeHistory;
     }
 
     public LikeQuery.LikeRemoveQuery remove(final Long userId, final Long productId) {

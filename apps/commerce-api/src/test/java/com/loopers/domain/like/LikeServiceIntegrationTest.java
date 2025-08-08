@@ -10,10 +10,14 @@ import com.loopers.domain.product.ProductStatus;
 import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserRepository;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import com.loopers.testcontainers.MySqlTestContainersConfig;
 import com.loopers.utils.DatabaseCleanUp;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,6 +32,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -98,16 +103,12 @@ class LikeServiceIntegrationTest {
             assertThat(found).isPresent();
 
             // Act
-            LikeQuery.LikeRegisterQuery actual = sut.register(userId, productId);
+            CoreException exception = Assert.assertThrows(CoreException.class, () -> {
+                sut.register(userId, productId);
+            });
 
             // Assert
-            assertAll(
-                () -> assertThat(actual).isNotNull(),
-                () -> assertThat(actual.isDuplicatedRequest()).isTrue(),
-                () -> assertThat(actual.likeHistory().getUserId()).isEqualTo(userId),
-                () -> assertThat(actual.likeHistory().getProductId()).isEqualTo(productId),
-                () -> assertThat(actual.likeHistory().getId()).isNotNull()
-            );
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
         }
 
         @Test
@@ -118,15 +119,14 @@ class LikeServiceIntegrationTest {
             assertThat(found).isEmpty();
 
             // Act
-            LikeQuery.LikeRegisterQuery actual = sut.register(userId, productId);
+            LikeHistory actual = sut.register(userId, productId);
 
             // Assert
             assertAll(
                 () -> assertThat(actual).isNotNull(),
-                () -> assertThat(actual.isDuplicatedRequest()).isFalse(),
-                () -> assertThat(actual.likeHistory().getUserId()).isEqualTo(userId),
-                () -> assertThat(actual.likeHistory().getProductId()).isEqualTo(productId),
-                () -> assertThat(actual.likeHistory().getId()).isNotNull()
+                () -> assertThat(actual.getUserId()).isEqualTo(userId),
+                () -> assertThat(actual.getProductId()).isEqualTo(productId),
+                () -> assertThat(actual.getId()).isNotNull()
             );
         }
     }
@@ -299,7 +299,5 @@ class LikeServiceIntegrationTest {
             verify(likeHistoryRepository, times(1))
                 .findByUserIdAndDeletedAtIsNull(likeHaveUserId, pageable);
         }
-
-
     }
 }
