@@ -32,12 +32,10 @@ public class ProductService {
 
     public void increaseLikeCount(final Product product) {
         product.increaseLikeCount();
-        productRepository.save(product);
     }
 
     public void decreaseLikeCount(final Product product) {
         product.decreaseLikeCount();
-        productRepository.save(product);
     }
 
     public List<Product> getProducts(List<Long> productIds) {

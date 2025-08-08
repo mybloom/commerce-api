@@ -290,6 +290,7 @@ class ProductServiceIntegrationTest {
 
         @Test
         @DisplayName("increaseLikeCount를 호출하면, 좋아요 수가 1 증가분이 DB에 반영된다.")
+        @Transactional
         void increaseLikeCount() {
             // arrange
             int beforeLikeCount = productRepository.findById(product.getId())
@@ -306,6 +307,7 @@ class ProductServiceIntegrationTest {
 
         @Test
         @DisplayName("decreaseLikeCount를 호출하면, 좋아요 수가 1 감소분이 DB에 반영된다.")
+        @Transactional // todo: 트랜잭션이 없으면, JPA가 영속성 컨텍스트를 플러시하지 않아 변경 사항이 DB에 반영되지 않음. 이 테스트가 과연 필요할까? 이런 테스트는  usecase 단위로 통합테스트코드 작성하는 것이 맞다고 생각함.
         void decreaseLikeCount() {
             // Arrange
             product.increaseLikeCount(); // 먼저 증가
