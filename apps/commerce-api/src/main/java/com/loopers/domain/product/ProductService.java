@@ -29,7 +29,7 @@ public class ProductService {
         return productRepository.findById(productId);
     }
 
-    public void increaseLikeCount(final Product product) {
+    public void increaseLikeCountAtomically(final Product product) {
         int processCount = productRepository.updateLikeCountById(product.getId());
     }
 

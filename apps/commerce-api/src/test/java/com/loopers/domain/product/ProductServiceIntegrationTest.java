@@ -9,6 +9,8 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.testcontainers.MySqlTestContainersConfig;
 import com.loopers.utils.DatabaseCleanUp;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,9 @@ class ProductServiceIntegrationTest {
 
     @MockitoSpyBean
     private BrandRepository brandRepository;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
@@ -297,7 +302,11 @@ class ProductServiceIntegrationTest {
                     .getLikeCount().getValue();
 
             // Act
-            sut.increaseLikeCount(product);
+            sut.increaseLikeCountAtomically(product); //jpql update 쿼리 호출
+
+            // 영속성 컨텍스트 동기화 및 캐시 초기화
+            em.flush();
+            em.clear();
 
             // Assert
             Product actual = productRepository.findById(product.getId()).orElseThrow();

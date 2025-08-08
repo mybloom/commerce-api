@@ -47,7 +47,7 @@ public class LikeUseCase {
         }
 
         // 좋아요 수 증가
-        productService.increaseLikeCount(product);
+        productService.increaseLikeCountAtomically(product);
         return LikeResult.LikeRegisterResult.newCreated(userId, productId);
     }
 
