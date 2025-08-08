@@ -107,6 +107,37 @@ POINT {
 }
 
 %% =========================
+%% coupon
+%% =========================
+COUPON {
+    bigint id PK
+    varchar(100) name
+    date start_at
+    date end_at
+    varchar discount_type
+    decimal discount_rate
+}
+
+USER_COUPON {
+    bigint id PK
+    bigint user_id
+    bigint coupon_id FK
+    boolean used   
+    datetime issued_at
+    datetime updated_at
+}
+
+COUPON_USE_HISTORY {
+    bigint id PK
+    bigint user_coupon_id FK
+    bigint user_id
+    bigint order_id
+    datetime used_at
+    decimal discount_applied_amount
+}
+
+
+%% =========================
 %% 관계
 %% =========================
 BRAND ||--o{ PRODUCT : "has many"
@@ -117,5 +148,7 @@ PRODUCT ||--o{ ORDER_LINE : "referenced by"
 ORDER ||--o| PAYMENT : "paid by"
 USER ||--o{ ORDER : "places"
 USER ||--|| POINT : "owns"
+COUPON ||--o{ USER_COUPON : "has"
+USER_COUPON ||--o{ COUPON_USAGE_HISTORY : "records"
 
 ```
