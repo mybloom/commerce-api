@@ -1,6 +1,8 @@
 package com.loopers.application.order;
 
 import com.loopers.domain.commonvo.Money;
+import com.loopers.domain.coupon.Coupon;
+import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.*;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.Product;
@@ -22,12 +24,13 @@ public class OrderUseCase {
     private final OrderService orderService;
     private final ProductService productService;
     private final PointService pointService;
+    private final CouponService couponService;
 
     private final OrderLineService orderLineService = new OrderLineService();
 
     @Transactional(noRollbackFor = CoreException.class)
     public OrderResult.OrderRequestResult order(
-            final Long userId, String orderRequestId, final List<OrderInfo.ItemInfo> items) {
+            final Long userId, String orderRequestId, final List<OrderInfo.ItemInfo> items, final List<Long> userCouponIds) {
         // 1. 멱등키 등록 요청(주문 생성 요청) - 기존 주문 존재 할 경우 기존 주문 정보 전달
         final OrderQuery.CreatedOrder resolvedOrderQuery = orderService.createOrderByRequestId(userId, orderRequestId);
 
@@ -53,6 +56,11 @@ public class OrderUseCase {
         // 3. 상품 추가 및 상품 총액 계산
         final List<OrderLine> orderLines = orderLineService.createOrderLines(OrderInfo.toCommands(items), allValidProducts);
         Money orderAmount = orderService.calculateOrderAmountByAddLines(order, orderLines);
+
+        // 4-0 쿠폰 정보 확인 및 할인 금액 계산
+        final List<Coupon> allValidCoupons;
+        try {
+        couponService.findAllValidCouponsOrThrow(userCouponIds);
 
         // 4. 할인 정보 확인
         Money discountAmount = Money.ZERO;
