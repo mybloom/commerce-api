@@ -22,7 +22,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -298,7 +297,7 @@ class ProductServiceIntegrationTest {
                     .getLikeCount().getValue();
 
             // Act
-            sut.increaseLikeCount(product);
+            sut.increaseLikeCountOld(product);
 
             // Assert
             Product actual = productRepository.findById(product.getId()).orElseThrow();
