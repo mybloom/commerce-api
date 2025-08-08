@@ -16,4 +16,9 @@ public class CouponRepositoryImpl implements CouponRepository {
     public List<Coupon> findAllById(List<Long> userCouponIds) {
         return couponJpaRepository.findAllById(userCouponIds);
     }
+
+    @Override
+    public Coupon save(Coupon coupon) {
+        return couponJpaRepository.save(coupon);
+    }
 }

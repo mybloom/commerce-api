@@ -10,6 +10,7 @@ import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.loopers.support.error.CoreException;
@@ -59,13 +60,17 @@ public class OrderUseCase {
         Money orderAmount = orderService.calculateOrderAmountByAddLines(order, orderLines);
 
         // 4-0 쿠폰 정보 확인 및 할인 금액 계산
-        final List<UserCoupon> userCoupons;
+        final Money discountAmount;
         try {
-            userCoupons = couponService.findAllValidCouponsOrThrow(userCouponIds);
+            discountAmount = Optional.ofNullable(userCouponIds)
+                    .filter(ids -> !ids.isEmpty())
+                    .map(couponService::findAllValidCouponsOrThrow)
+                    .map(coupons -> couponService.use(coupons, orderAmount))
+                    .orElse(Money.ZERO);
         } catch (CoreException e) {
-            throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 쿠폰입니다.");
+            orderService.failValidation(order);
+            throw e;
         }
-        Money discountAmount = couponService.use(userCoupons, orderAmount);
 
         // 4. 할인 정보 확인
         Money paymentAmount = orderService.calculatePaymentAmount(order, discountAmount);

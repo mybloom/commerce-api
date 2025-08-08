@@ -3,12 +3,15 @@ package com.loopers.domain.coupon;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
+@Builder(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "user_coupon")
 public class UserCoupon {
@@ -32,6 +35,18 @@ public class UserCoupon {
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
+    public static UserCoupon create(Long userId, Coupon coupon) {
+        if (userId == null || coupon == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "사용자 아이디와 쿠폰은 필수입니다.");
+        }
+        return UserCoupon.builder()
+                .userId(userId)
+                .coupon(coupon)
+                .used(false)
+                .issuedAt(LocalDate.now())
+                .build();
+    }
+
     public void markUsed() {
         this.used = true;
     }
@@ -46,4 +61,6 @@ public class UserCoupon {
         }
         coupon.validateUsable();
     }
+
+
 }
