@@ -20,4 +20,6 @@ public interface ProductRepository {
     List<Product> findAllByIds(List<Long> productIds);
 
     int updateLikeCountById(Long id);
+
+    int decreaseLikeCountById(Long id);
 }

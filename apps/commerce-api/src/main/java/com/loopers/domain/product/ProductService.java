@@ -34,7 +34,7 @@ public class ProductService {
     }
 
     public void decreaseLikeCount(final Product product) {
-        product.decreaseLikeCount();
+        productRepository.decreaseLikeCountById(product.getId());
     }
 
     public List<Product> getProducts(List<Long> productIds) {

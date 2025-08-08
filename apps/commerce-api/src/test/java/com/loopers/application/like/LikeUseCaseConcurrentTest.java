@@ -6,9 +6,12 @@ import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductStatus;
 import com.loopers.testcontainers.MySqlTestContainersConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -25,6 +28,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 @SpringBootTest
 @Import(MySqlTestContainersConfig.class)
 class LikeUseCaseConcurrentTest {
+    private static final Logger log = LoggerFactory.getLogger(LikeUseCaseConcurrentTest.class);
 
     @Autowired
     private LikeUseCase likeUseCase;
@@ -114,6 +118,89 @@ class LikeUseCaseConcurrentTest {
                     .as("최종 likeCount는 요청 수와 같아야 함")
                     .isEqualTo(threadCount);
         });
+
+        log.info("🟢 성공 요청 수: {}", totalSuccess);
+        log.info("🔁 중복 요청 수: {}", totalDuplicated);
+        log.info("🔴 예외 발생 수: {}", totalException);
+        log.info("❤️ 최종 likeCount: {}", product.getLikeCount().getValue());
     }
+
+    @DisplayName("하나의 상품에 대해 50명 사용자가 동시에 좋아요 해제 요청 시, likeCount는 1씩 정확히 감소해야 한다.")
+    @Test
+    void testLikeCountConcurrentRemoveRequests() throws Exception {
+        // given: 50명 유저가 먼저 좋아요 등록
+        int userCount = 50;
+        for (int i = 0; i < userCount; i++) {
+            long userId = i + 1;
+            likeUseCase.register(userId, productId);
+        }
+
+        Product likedProduct = productRepository.findById(productId).orElseThrow();
+        assertThat(likedProduct.getLikeCount().getValue()).isEqualTo(userCount);
+
+        // when: 동시에 좋아요 해제 요청
+        ExecutorService executorService = Executors.newFixedThreadPool(20);
+        List<CompletableFuture<Boolean>> tasks = new ArrayList<>(userCount);
+
+        AtomicInteger exceptionCount = new AtomicInteger(0);
+        AtomicInteger duplicatedCount = new AtomicInteger(0);
+        AtomicInteger successCount = new AtomicInteger(0);
+
+        for (int i = 0; i < userCount; i++) {
+            final long userId = i + 1;
+            tasks.add(
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            LikeResult.LikeRemoveResult result = likeUseCase.remove(userId, productId);
+                            if (result.isDuplicatedRequest()) {
+                                duplicatedCount.incrementAndGet();
+                                return false;
+                            } else {
+                                successCount.incrementAndGet();
+                                return true;
+                            }
+                        } catch (Exception e) {
+                            exceptionCount.incrementAndGet();
+                            return false;
+                        }
+                    }, executorService)
+            );
+        }
+
+        // then
+        CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
+        executorService.shutdown();
+        executorService.awaitTermination(10, TimeUnit.SECONDS);
+
+        int totalSuccess = successCount.get();
+        int totalDuplicated = duplicatedCount.get();
+        int totalException = exceptionCount.get();
+
+        Product finalProduct = productRepository.findById(productId).orElseThrow();
+
+        assertSoftly(softly -> {
+            softly.assertThat(totalException)
+                    .as("예외 발생 횟수 검증")
+                    .isEqualTo(0);
+
+            softly.assertThat(totalDuplicated)
+                    .as("중복 요청 수 검증")
+                    .isEqualTo(0); // 유저 당 1번 요청이므로 중복 없어야 함
+
+            softly.assertThat(totalSuccess)
+                    .as("성공한 해제 요청 수 검증")
+                    .isEqualTo(userCount);
+
+            softly.assertThat(finalProduct.getLikeCount().getValue())
+                    .as("최종 likeCount는 0이어야 함")
+                    .isEqualTo(0);
+        });
+
+        log.info("🟢 성공 요청 수: {}", totalSuccess);
+        log.info("🔁 중복 요청 수: {}", totalDuplicated);
+        log.info("🔴 예외 발생 수: {}", totalException);
+        log.info("❤️ 최종 likeCount: {}", finalProduct.getLikeCount().getValue());
+    }
+
 }
 

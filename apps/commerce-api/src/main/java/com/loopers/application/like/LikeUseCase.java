@@ -58,9 +58,9 @@ public class LikeUseCase {
                 .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "해당 상품에 좋아요를 해제 할 수 없습니다."));
 
         // 좋아요 해제
-        boolean isProcess = likeService.remove(userId, productId);
+        boolean isDeleted = likeService.remove(userId, productId);
 
-        if (!isProcess) {
+        if (!isDeleted) {
             return LikeResult.LikeRemoveResult.duplicated(userId, productId);
         }
 

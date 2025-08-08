@@ -58,4 +58,9 @@ public class ProductRepositoryImpl implements ProductRepository {
     public int updateLikeCountById(Long id) {
         return productJpaRepository.updateLikeCountById(id);
     }
+
+    @Override
+    public int decreaseLikeCountById(Long id) {
+        return productJpaRepository.decreaseLikeCountById(id);
+    }
 }

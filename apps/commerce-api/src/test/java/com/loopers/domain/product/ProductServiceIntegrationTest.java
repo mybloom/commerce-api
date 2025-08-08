@@ -325,6 +325,10 @@ class ProductServiceIntegrationTest {
             // Act
             sut.decreaseLikeCount(product);
 
+            // 영속성 컨텍스트 동기화 및 캐시 초기화
+            em.flush();
+            em.clear();
+
             // Assert
             Product actual = productRepository.findById(product.getId()).orElseThrow();
             assertThat(actual.getLikeCount().getValue()).isEqualTo(beforeLikeCount - 1);
