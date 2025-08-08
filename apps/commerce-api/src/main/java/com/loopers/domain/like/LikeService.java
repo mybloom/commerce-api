@@ -27,22 +27,9 @@ public class LikeService {
         return likeHistory;
     }
 
-    public LikeQuery.LikeRemoveQuery remove(final Long userId, final Long productId) {
-        final LikeHistory existing = likeHistoryRepository.findByUserIdAndProductId(userId, productId)
-                .orElse(null);
-
-        if (existing == null) {
-            return LikeQuery.LikeRemoveQuery.alreadyRemoved(userId, productId);
-        }
-
-        if(existing.isDeleted()){
-            return LikeQuery.LikeRemoveQuery.alreadyRemoved(userId,productId);
-        }
-
-        existing.delete();
-        likeHistoryRepository.save(existing);
-
-        return LikeQuery.LikeRemoveQuery.success(userId, productId);
+    public boolean remove(final Long userId, final Long productId) {
+        int deletedCount = likeHistoryRepository.deleteByUserIdAndProductId(userId, productId);
+        return deletedCount > 0;
     }
 
     public Page<LikeHistory> retrieveHistories(final Long userId, final Pageable pageable) {

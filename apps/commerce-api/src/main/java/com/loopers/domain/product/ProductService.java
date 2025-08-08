@@ -4,7 +4,6 @@ import java.util.*;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +29,13 @@ public class ProductService {
         return productRepository.findById(productId);
     }
 
-    public void increaseLikeCount(final Product product) {
+    //todo: 제거 예정
+    public void increaseLikeCountOld(final Product product) {
         product.increaseLikeCount();
+    }
+
+    public void increaseLikeCount(final Product product) {
+        int processCount = productRepository.updateLikeCountById(product.getId());
     }
 
     public void decreaseLikeCount(final Product product) {

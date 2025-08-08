@@ -18,4 +18,6 @@ public interface ProductRepository {
     List<Product> findAll();
 
     List<Product> findAllByIds(List<Long> productIds);
+
+    int updateLikeCountById(Long id);
 }

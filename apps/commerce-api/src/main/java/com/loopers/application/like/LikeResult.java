@@ -44,12 +44,16 @@ public class LikeResult {
             Long productId,
             boolean isDuplicatedRequest
     ) {
-
-        public static LikeRemoveResult from(LikeQuery.LikeRemoveQuery likeRemoveQuery) {
+        public static LikeRemoveResult newProcess(Long userId, Long productId) {
+            boolean isDuplicatedRequest = false;
             return new LikeRemoveResult(
-                    likeRemoveQuery.userId(),
-                    likeRemoveQuery.productId(),
-                    likeRemoveQuery.isDuplicatedRequest()
+              userId, productId, isDuplicatedRequest
+            );
+        }
+        public static LikeRemoveResult duplicated(Long userId, Long productId) {
+            boolean isDuplicatedRequest = true;
+            return new LikeRemoveResult(
+                    userId, productId, isDuplicatedRequest
             );
         }
     }

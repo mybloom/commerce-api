@@ -14,9 +14,11 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.testcontainers.MySqlTestContainersConfig;
 import com.loopers.utils.DatabaseCleanUp;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.transaction.Transactional;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,18 +79,18 @@ class LikeServiceIntegrationTest {
             //사용자와 상품을 저장
             User user = userRepository.save(new User("member123", "test@example.com", "2000-01-01", Gender.MALE));
             Brand brand = brandRepository.save(
-                Brand.from("Nike", "Global Sports Brand", BrandStatus.ACTIVE)
+                    Brand.from("Nike", "Global Sports Brand", BrandStatus.ACTIVE)
             );
             Product product = productRepository.save(
-                Product.from(
-                    "Test Product",
-                    1000L,
-                    ProductStatus.AVAILABLE,
-                    0,
-                    Quantity.of(100),
-                    LocalDate.now(),
-                    brand.getId()
-                )
+                    Product.from(
+                            "Test Product",
+                            1000L,
+                            ProductStatus.AVAILABLE,
+                            0,
+                            Quantity.of(100),
+                            LocalDate.now(),
+                            brand.getId()
+                    )
             );
             userId = user.getId();
             productId = product.getId();
@@ -123,10 +125,10 @@ class LikeServiceIntegrationTest {
 
             // Assert
             assertAll(
-                () -> assertThat(actual).isNotNull(),
-                () -> assertThat(actual.getUserId()).isEqualTo(userId),
-                () -> assertThat(actual.getProductId()).isEqualTo(productId),
-                () -> assertThat(actual.getId()).isNotNull()
+                    () -> assertThat(actual).isNotNull(),
+                    () -> assertThat(actual.getUserId()).isEqualTo(userId),
+                    () -> assertThat(actual.getProductId()).isEqualTo(productId),
+                    () -> assertThat(actual.getId()).isNotNull()
             );
         }
     }
@@ -143,81 +145,52 @@ class LikeServiceIntegrationTest {
             //사용자와 상품을 저장
             User user = userRepository.save(new User("member123", "test@example.com", "2000-01-01", Gender.MALE));
             Brand brand = brandRepository.save(
-                Brand.from("Nike", "Global Sports Brand", BrandStatus.ACTIVE)
+                    Brand.from("Nike", "Global Sports Brand", BrandStatus.ACTIVE)
             );
             Product product = productRepository.save(
-                Product.from(
-                    "Test Product",
-                    1000L,
-                    ProductStatus.AVAILABLE,
-                    0,
-                    Quantity.of(100),
-                    LocalDate.now(),
-                    brand.getId()
-                )
+                    Product.from(
+                            "Test Product",
+                            1000L,
+                            ProductStatus.AVAILABLE,
+                            0,
+                            Quantity.of(100),
+                            LocalDate.now(),
+                            brand.getId()
+                    )
             );
             userId = user.getId();
             productId = product.getId();
         }
 
+        @DisplayName("좋아요 기록 없었으면, false를 반환한다.")
         @Test
-        @DisplayName("좋아요 이력이 없으면, 중복 요청으로 처리된다.")
-        void returnsDuplicate_whenNoLikeHistoryExists() {
-            // Arrange
+        void returnFalse_whenLikeHistoryAlreadyGone() {
             Optional<LikeHistory> found = likeHistoryRepository.findByUserIdAndProductId(userId, productId);
             assertThat(found).isEmpty();
 
-            // Act
-            LikeQuery.LikeRemoveQuery actual = sut.remove(userId, productId);
+            //act
+            boolean actual = sut.remove(userId, productId);
 
-            // Assert
-            assertAll(
-                () -> assertThat(actual).isNotNull(),
-                () -> assertThat(actual.isDuplicatedRequest()).isTrue(),
-                () -> assertThat(actual.userId()).isEqualTo(userId),
-                () -> assertThat(actual.productId()).isEqualTo(productId)
-            );
+            //assert
+            assertThat(actual).isFalse();
         }
 
+        @DisplayName("좋아요 기록이 있어서 제대로 삭제했으면, true을 반환한다.")
         @Test
-        @DisplayName("좋아요 이력이 있고 삭제되지 않았으면, 성공적으로 삭제된다.")
-        void removesLikeHistory_whenExistsAndNotDeleted() {
+        @Transactional
+        void returnTrue_whenDeleteLikeHistory() {
             // Arrange
             LikeHistory saved = likeHistoryRepository.save(LikeHistory.from(userId, productId));
             assertThat(saved.isDeleted()).isFalse();
 
             // Act
-            LikeQuery.LikeRemoveQuery actual = sut.remove(userId, productId);
+            boolean actual = sut.remove(userId, productId);
 
             // Assert
-            LikeHistory updated = likeHistoryRepository.findById(saved.getId()).orElseThrow();
-
+            Optional<LikeHistory> updated = likeHistoryRepository.findById(saved.getId());
             assertAll(
-                () -> assertThat(actual).isNotNull(),
-                () -> assertThat(actual.isDuplicatedRequest()).isFalse(),
-                () -> assertThat(actual.userId()).isEqualTo(userId),
-                () -> assertThat(actual.productId()).isEqualTo(productId),
-                () -> assertThat(updated.isDeleted()).isTrue()
-            );
-        }
-
-        @Test
-        @DisplayName("이미 삭제된 좋아요 이력이면, 중복 요청으로 처리된다.")
-        void returnsDuplicate_whenAlreadyDeleted() {
-            // Arrange
-            LikeHistory saved = likeHistoryRepository.save(LikeHistory.from(userId, productId));
-            saved.delete();
-            likeHistoryRepository.save(saved);
-
-            // Act
-            LikeQuery.LikeRemoveQuery result = sut.remove(userId, productId);
-
-            // Assert
-            assertAll(
-                () -> assertThat(result).isNotNull(),
-                () -> assertThat(result.isDuplicatedRequest()).isTrue(),
-                () -> assertThat(result.userId()).isEqualTo(userId),
-                () -> assertThat(result.productId()).isEqualTo(productId)
+                    () -> assertThat(actual).isTrue(),
+                    () -> assertThat(updated).isEmpty()
             );
         }
     }
@@ -237,24 +210,24 @@ class LikeServiceIntegrationTest {
             User user = userRepository.save(new User("member1", "test1@example.com", "2000-01-01", Gender.MALE));
             likeHaveUserId = user.getId();
             likeNoHaveUserId = userRepository.save(new User("member2", "test2@example.com", "2000-01-01", Gender.MALE))
-                .getId();
+                    .getId();
 
             // 브랜드 저장
             Brand brand = brandRepository.save(
-                Brand.from("Nike", "Global Sports Brand", BrandStatus.ACTIVE)
+                    Brand.from("Nike", "Global Sports Brand", BrandStatus.ACTIVE)
             );
             brandId = brand.getId();
 
             // 상품 5개 저장
             for (int i = 0; i < 5; i++) {
                 Product product = Product.from(
-                    "Test Product " + i,
-                    1000L + i,
-                    ProductStatus.AVAILABLE,
-                    0,
-                    Quantity.of(100),
-                    LocalDate.now().minusDays(i),
-                    brandId
+                        "Test Product " + i,
+                        1000L + i,
+                        ProductStatus.AVAILABLE,
+                        0,
+                        Quantity.of(100),
+                        LocalDate.now().minusDays(i),
+                        brandId
                 );
                 Product savedProduct = productRepository.save(product);
                 savedProducts.add(savedProduct);
@@ -269,9 +242,9 @@ class LikeServiceIntegrationTest {
 
             // Assert
             assertAll(
-                () -> assertThat(result).isNotNull(),
-                () -> assertThat(result.getContent()).isEmpty(),
-                () -> assertThat(result.getTotalElements()).isEqualTo(0)
+                    () -> assertThat(result).isNotNull(),
+                    () -> assertThat(result.getContent()).isEmpty(),
+                    () -> assertThat(result.getTotalElements()).isEqualTo(0)
             );
         }
 
@@ -289,15 +262,15 @@ class LikeServiceIntegrationTest {
 
             // Assert
             assertAll(
-                () -> assertThat(actual).isNotNull(),
-                () -> assertThat(actual.getContent()).isNotEmpty(),
-                () -> assertThat(actual.getTotalElements()).isEqualTo(likeCount),
-                () -> assertThat(actual.getContent())
-                    .allMatch(like -> like.getUserId().equals(likeHaveUserId))
+                    () -> assertThat(actual).isNotNull(),
+                    () -> assertThat(actual.getContent()).isNotEmpty(),
+                    () -> assertThat(actual.getTotalElements()).isEqualTo(likeCount),
+                    () -> assertThat(actual.getContent())
+                            .allMatch(like -> like.getUserId().equals(likeHaveUserId))
             );
 
             verify(likeHistoryRepository, times(1))
-                .findByUserIdAndDeletedAtIsNull(likeHaveUserId, pageable);
+                    .findByUserIdAndDeletedAtIsNull(likeHaveUserId, pageable);
         }
     }
 }

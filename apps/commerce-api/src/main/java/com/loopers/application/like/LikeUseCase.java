@@ -5,7 +5,6 @@ import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.like.LikeHistory;
 import com.loopers.domain.like.LikeProductService;
-import com.loopers.domain.like.LikeQuery;
 import com.loopers.domain.like.LikeService;
 import com.loopers.domain.like.LikeSortType;
 import com.loopers.domain.product.Product;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,20 +53,21 @@ public class LikeUseCase {
 
     @Transactional
     public LikeResult.LikeRemoveResult remove(final Long userId, final Long productId) {
-        //상품 유효성 검사
+        // 상품 유효성 검사
         Product product = productService.retrieveOne(productId)
                 .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "해당 상품에 좋아요를 해제 할 수 없습니다."));
 
-        //좋아요 해제
-        LikeQuery.LikeRemoveQuery likeRemoveQuery = likeService.remove(userId, productId);
+        // 좋아요 해제
+        boolean isProcess = likeService.remove(userId, productId);
 
-        //좋아요 수 감소
-        if (!likeRemoveQuery.isDuplicatedRequest()) {
-            productService.decreaseLikeCount(product);
+        if (!isProcess) {
+            return LikeResult.LikeRemoveResult.duplicated(userId, productId);
         }
 
-        return LikeResult.LikeRemoveResult.from(likeRemoveQuery);
+        productService.decreaseLikeCount(product);
+        return LikeResult.LikeRemoveResult.newProcess(userId, productId);
     }
+
 
     public LikeResult.LikeListResult retrieveLikedProducts(
             final Long userId,
