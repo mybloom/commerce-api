@@ -37,17 +37,14 @@ public class CouponService {
         return userCoupons;
     }
 
-    @Transactional
+    //todo: @Transactional 달았을 때 UnexpectedRollbackException 발생
     public Money use(List<UserCoupon> userCoupons, Money orderAmount) {
-        log.info("*******Using coupons: {}", userCoupons);
         if (userCoupons == null || userCoupons.isEmpty()) {
             return Money.ZERO;
         }
 
         // 유효성 검사
         userCoupons.forEach(UserCoupon::validateUsable);
-        log.info("********All coupons are valid.");
-
 
         // 할인 금액 계산 후 합산
         Money totalDiscount = userCoupons.stream()

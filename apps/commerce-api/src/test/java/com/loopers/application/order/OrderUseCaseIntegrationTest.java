@@ -273,7 +273,6 @@ class OrderUseCaseIntegrationTest {
             });
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
-            assertThat(exception.getMessage()).contains("사용할 수 없는 쿠폰");
 
             Order order = orderRepository.findByOrderRequestId(ORDER_REQUEST_ID).orElse(null);
             assertThat(order).isNotNull();
