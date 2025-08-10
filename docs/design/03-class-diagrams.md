@@ -370,3 +370,47 @@ class Money {
 }
 
 ```
+
+---
+
+# 쿠폰 
+
+```mermaid
+classDiagram
+    class Coupon {
+        - Long id
+        - String name
+        - LocalDate startAt
+        - LocalDate endAt
+        - DiscountPolicy discountPolicy
+        + validateUsable()
+    }
+
+    class DiscountPolicy {
+        - DiscountType discountType
+        - BigDecimal discountValue
+        + calculateDiscountAmount(Long totalPrice)
+    }
+
+    class DiscountType {
+        <<enum>>
+        RATE
+        FIXED_AMOUNT
+        + calculateDiscountAmount(Long totalPrice, BigDecimal discountValue): Money
+    }
+
+    class Money {
+        - Long amount
+        + of(Long): Money
+        + add(Money): Money
+        + subtract(Money): Money
+        + multiply(Quantity): Money
+        + isLessThan(Money): boolean
+    }
+
+    Coupon --> DiscountPolicy : has
+    DiscountPolicy --> DiscountType : uses
+    DiscountType --> Money : returns
+
+
+```

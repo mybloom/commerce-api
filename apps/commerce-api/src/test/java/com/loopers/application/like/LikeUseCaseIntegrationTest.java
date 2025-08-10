@@ -83,10 +83,12 @@ class LikeUseCaseIntegrationTest {
         void register_firstTimeLike_increasesLikeCount() {
             Optional<LikeHistory> foundLikeHistory = likeHistoryRepository.findByUserIdAndProductId(userId, productId);
             assertThat(foundLikeHistory).isEmpty();
+
             Product foundProduct = productRepository.findById(productId).orElseThrow();
             int beforeLikeCount = 0;
             assertThat(foundProduct.getLikeCount().getValue()).isEqualTo(beforeLikeCount);
 
+            // Act
             LikeResult.LikeRegisterResult actual = sut.register(userId, productId);
 
             // Assert
@@ -102,22 +104,26 @@ class LikeUseCaseIntegrationTest {
         @DisplayName("이미 좋아요한 경우 중복요청은 참이고, likeCount는 증가하지 않는다")
         void register_duplicateLike_doesNotIncreaseLikeCount() {
             // Arrange
-            sut.register(userId, productId);
+            sut.register(userId, productId); //좋아요 등록 이미한 상태로 만듦
+
             Optional<LikeHistory> foundLikeHistory = likeHistoryRepository.findByUserIdAndProductId(userId, productId);
             Optional<Product> foundProduct = productRepository.findById(productId);
             assertThat(foundLikeHistory).isPresent();
+
             int beforeLikeCount = 1;
             assertThat(foundProduct.get().getLikeCount().getValue()).isEqualTo(beforeLikeCount);
 
             // Act
-            LikeResult.LikeRegisterResult result = sut.register(userId, productId);
+            LikeResult.LikeRegisterResult actual = sut.register(userId, productId);
 
             // Assert
             Product updated = productRepository.findById(productId).orElseThrow();
 
             assertAll(
-                    () -> assertThat(result).isNotNull(),
-                    () -> assertThat(result.isDuplicatedRequest()).isTrue(),
+                    () -> assertThat(actual).isNotNull(),
+                    () -> assertThat(actual.isDuplicatedRequest()).isTrue(),
+                    () ->assertThat(actual.userId()).isEqualTo(userId),
+                    () -> assertThat(actual.productId()).isEqualTo(productId),
                     () -> assertThat(updated.getLikeCount().getValue()).isEqualTo(beforeLikeCount)
             );
         }

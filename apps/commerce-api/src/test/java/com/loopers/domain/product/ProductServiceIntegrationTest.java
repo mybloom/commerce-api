@@ -9,6 +9,8 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.testcontainers.MySqlTestContainersConfig;
 import com.loopers.utils.DatabaseCleanUp;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,9 @@ class ProductServiceIntegrationTest {
 
     @MockitoSpyBean
     private BrandRepository brandRepository;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
@@ -180,6 +185,91 @@ class ProductServiceIntegrationTest {
         }
     }
 
+    @DisplayName("상품 ID 목록으로 상품 조회 시,")
+    @Nested
+    class GetProductsByIds {
+        private Brand brand;
+        private Long brandId;
+        private int productTotalCount = 0;
+
+        @BeforeEach
+        void setUp() {
+            brand = brandRepository.save(
+                    Brand.from("Nike", "Global brand", BrandStatus.ACTIVE)
+            );
+            brandId = brand.getId();
+            Brand adidas = brandRepository.save(
+                    Brand.from("Adidas", "Global brand!", BrandStatus.ACTIVE)
+            );
+
+            // 상품 데이터 여러 개 저장
+            for (int i = 1; i <= 5; i++) {
+                productRepository.save(
+                        Product.from(
+                                "Product_nike_" + i,
+                                1000L * i,
+                                ProductStatus.AVAILABLE,
+                                i,
+                                Quantity.of(100),
+                                LocalDate.now().minusDays(i),
+                                brand.getId()
+                        )
+                );
+                productRepository.save(
+                        Product.from(
+                                "Product_adidas_" + i,
+                                1000L * i,
+                                ProductStatus.AVAILABLE,
+                                i,
+                                Quantity.of(100),
+                                LocalDate.now().minusDays(i),
+                                adidas.getId()
+                        )
+                );
+                productTotalCount += 2;
+            }
+        }
+
+        @Test
+        @DisplayName("모든 상품 ID가 유효하면, 상품 리스트를 반환한다.")
+        @Transactional //비관적락은 트랜잭션이 있어야 동작한다.
+        void findAllValidProductsOrThrow_success() {
+            // Arrange
+            List<Long> validIds = productRepository.findAll().stream()
+                    .map(Product::getId)
+                    .limit(3)
+                    .toList();
+
+            // Act
+            List<Product> products = sut.findAllValidProductsOrThrow(validIds);
+
+            // Assert
+            assertThat(products).hasSize(validIds.size());
+            assertThat(products).extracting(Product::getId).containsAll(validIds);
+        }
+
+        @Test
+        @DisplayName("상품 ID 중 하나라도 존재하지 않으면, NOT_FOUND  예외가 발생한다.")
+        @Transactional //비관적락은 트랜잭션이 있어야 동작한다.
+        void findAllValidProductsOrThrow_fail_whenAnyMissing() {
+            // Arrange
+            List<Long> validProductIds = productRepository.findAll().stream()
+                    .map(Product::getId)
+                    .limit(2)
+                    .toList();
+            Long invalidProductId = -999L;
+            List<Long> mixedIds = List.of(validProductIds.get(0), validProductIds.get(1), invalidProductId);
+
+            // Act
+            CoreException exception = assertThrows(CoreException.class,
+                    () -> sut.findAllValidProductsOrThrow(mixedIds)
+            );
+
+            // Assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+        }
+    }
+
     @DisplayName("좋아요 증가/감소 시,")
     @Nested
     class LikeCountUpdate {
@@ -206,6 +296,7 @@ class ProductServiceIntegrationTest {
 
         @Test
         @DisplayName("increaseLikeCount를 호출하면, 좋아요 수가 1 증가분이 DB에 반영된다.")
+        @Transactional
         void increaseLikeCount() {
             // arrange
             int beforeLikeCount = productRepository.findById(product.getId())
@@ -213,7 +304,11 @@ class ProductServiceIntegrationTest {
                     .getLikeCount().getValue();
 
             // Act
-            sut.increaseLikeCount(product);
+            sut.increaseLikeCountAtomically(product); //jpql update 쿼리 호출
+
+            // 영속성 컨텍스트 동기화 및 캐시 초기화
+            em.flush();
+            em.clear();
 
             // Assert
             Product actual = productRepository.findById(product.getId()).orElseThrow();
@@ -222,6 +317,7 @@ class ProductServiceIntegrationTest {
 
         @Test
         @DisplayName("decreaseLikeCount를 호출하면, 좋아요 수가 1 감소분이 DB에 반영된다.")
+        @Transactional // todo: 트랜잭션이 없으면, JPA가 영속성 컨텍스트를 플러시하지 않아 변경 사항이 DB에 반영되지 않음. 이 테스트가 과연 필요할까? 이런 테스트는  usecase 단위로 통합테스트코드 작성하는 것이 맞다고 생각함.
         void decreaseLikeCount() {
             // Arrange
             product.increaseLikeCount(); // 먼저 증가
@@ -230,6 +326,10 @@ class ProductServiceIntegrationTest {
 
             // Act
             sut.decreaseLikeCount(product);
+
+            // 영속성 컨텍스트 동기화 및 캐시 초기화
+            em.flush();
+            em.clear();
 
             // Assert
             Product actual = productRepository.findById(product.getId()).orElseThrow();
@@ -292,9 +392,9 @@ class ProductServiceIntegrationTest {
             Quantity deductQuantity1 = Quantity.of(5);
             Quantity deductQuantity2 = Quantity.of(3);
 
-            List<ProductCommand.CheckStock> commands = List.of(
-                    new ProductCommand.CheckStock(product1.getId(), deductQuantity1),
-                    new ProductCommand.CheckStock(product2.getId(), deductQuantity2)
+            List<ProductCommand.DeductStock> commands = List.of(
+                    new ProductCommand.DeductStock(product1, deductQuantity1),
+                    new ProductCommand.DeductStock(product2, deductQuantity2)
             );
 
             Quantity beforeStockOfProduct1 = product1.getStockQuantity();
@@ -314,8 +414,6 @@ class ProductServiceIntegrationTest {
                     () -> assertThat(actualProduct2.getStockQuantity()).isEqualTo(beforeStockOfProduct2.subtract(deductQuantity2)),
                     () -> assertThat(actualProduct2.getStatus()).isEqualTo(ProductStatus.AVAILABLE)
             );
-
-            verify(productRepository, times(1)).findAllByIds(List.of(product1.getId(), product2.getId()));
         }
 
         @Test
@@ -323,8 +421,8 @@ class ProductServiceIntegrationTest {
         void markSoldOutAndThrowException_whenStockNotEnough() {
             // Arrange
             Quantity overQuantity = Quantity.of(200); // 현재 재고보다 많은 수량
-            List<ProductCommand.CheckStock> commands = List.of(
-                    new ProductCommand.CheckStock(product1.getId(), overQuantity)
+            List<ProductCommand.DeductStock> commands = List.of(
+                    new ProductCommand.DeductStock(product1, overQuantity)
             );
             Quantity beforeStockOfProduct1 = product1.getStockQuantity();
 
@@ -338,9 +436,6 @@ class ProductServiceIntegrationTest {
                     () -> assertThat(isDeductStock).isFalse(),
                     () -> assertThat(updated.getStatus()).isEqualTo(ProductStatus.OUT_OF_STOCK)
             );
-
-            verify(productRepository, times(1)).findAllByIds(List.of(product1.getId()));
         }
-
     }
 }

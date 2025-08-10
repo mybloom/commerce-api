@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface LikeHistoryJpaRepository extends JpaRepository<LikeHistory, Long> {
     Optional<LikeHistory> findByUserIdAndProductId(Long userId, Long productId);
     Page<LikeHistory> findByUserIdAndDeletedAtIsNull(Long userId, Pageable pageable);
+    int deleteByUserIdAndProductId(Long userId, Long productId);
 }

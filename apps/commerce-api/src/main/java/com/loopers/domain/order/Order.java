@@ -52,6 +52,7 @@ public class Order {
     @AttributeOverride(name = "amount", column = @Column(name = "payment_amount"))
     private Money paymentAmount;
 
+    @Column(name = "order_request_id", unique = true, nullable = false)
     private String orderRequestId; // 멱등키
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)

@@ -125,10 +125,11 @@ public class PointServiceIntegrationTest {
     class Use {
         private final Long userId = 1L;
         private final Money initialAmount = Money.of(1000L);
+        private Point point;
 
         @BeforeEach
         void setUp() {
-            Point point = Point.create(userId, initialAmount);
+            point = Point.create(userId, initialAmount);
             pointRepository.save(point);
         }
 
@@ -139,7 +140,7 @@ public class PointServiceIntegrationTest {
             Money useAmount = Money.of(300L);
 
             // Act
-            sut.use(userId, useAmount);
+            sut.useOrThrow(point, useAmount);
 
             // Assert
             Point actual = pointRepository.findByUserId(userId).orElseThrow();

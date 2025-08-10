@@ -10,11 +10,27 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
 
-    public Long save(
-            Long orderId, PaymentMethod paymentMethod, Money amount, boolean isPaymentConfirmed
+    public Long saveSuccess(
+            final Long orderId, final PaymentMethod paymentMethod, final Money amount
     ) {
-        PaymentStatus paymentStatus = isPaymentConfirmed ? PaymentStatus.CONFIRMED : PaymentStatus.CANCELED;
-        final Payment payment = paymentRepository.save(Payment.confirm(orderId, paymentMethod, amount, paymentStatus));
+        final Payment payment = paymentRepository.save(
+                Payment.confirmSuccess(orderId, paymentMethod, amount, PaymentStatus.CONFIRMED)
+        );
+
+        return payment.getId();
+    }
+
+    public Long saveFailure(
+            final Long orderId,
+            final PaymentMethod paymentMethod,
+            final Money amount,
+            final PaymentFailureReason failureReason
+    ) {
+        final Payment payment = paymentRepository.save(
+                Payment.confirmFailure(
+                        orderId, paymentMethod, amount, PaymentStatus.CANCELED, failureReason
+                )
+        );
 
         return payment.getId();
     }

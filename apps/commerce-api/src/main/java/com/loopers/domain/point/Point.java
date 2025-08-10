@@ -1,6 +1,7 @@
 package com.loopers.domain.point;
 
 import com.loopers.domain.commonvo.Money;
+import com.loopers.domain.payment.PaymentFailureReason;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
@@ -17,7 +18,8 @@ public class Point {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "balance", nullable = false))
     private Money amount;
 
     @Column(nullable = false, unique = true)
@@ -62,7 +64,7 @@ public class Point {
             throw new CoreException(ErrorType.BAD_REQUEST, "사용할 포인트는 0 이상이어야 합니다.");
         }
         if (this.amount.isLessThan(paymentAmount)) {
-            throw new CoreException(ErrorType.CONFLICT, "사용할 포인트가 잔액보다 많습니다.");
+            throw new CoreException(ErrorType.CONFLICT, PaymentFailureReason.INSUFFICIENT_BALANCE.getMessage());
         }
         this.amount = this.amount.subtract(paymentAmount);
     }

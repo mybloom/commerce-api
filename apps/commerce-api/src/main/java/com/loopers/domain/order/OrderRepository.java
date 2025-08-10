@@ -9,4 +9,6 @@ public interface OrderRepository {
     Order save(Order order);
 
     Optional<Order> findByIdWithOrderLines(Long id);
+
+    Long findTotalPaymentAmountByUserId(Long userId);
 }

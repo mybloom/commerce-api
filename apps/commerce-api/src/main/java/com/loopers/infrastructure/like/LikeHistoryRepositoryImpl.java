@@ -34,4 +34,14 @@ public class LikeHistoryRepositoryImpl implements LikeHistoryRepository {
     public Page<LikeHistory> findByUserIdAndDeletedAtIsNull(Long userId, Pageable pageable) {
         return likeHistoryJpaRepository.findByUserIdAndDeletedAtIsNull(userId, pageable);
     }
+
+    @Override
+    public int deleteByUserIdAndProductId(Long userId, Long productId) {
+        return likeHistoryJpaRepository.deleteByUserIdAndProductId(userId, productId);
+    }
+
+    @Override
+    public void deleteAll() {
+        likeHistoryJpaRepository.deleteAll();
+    }
 }

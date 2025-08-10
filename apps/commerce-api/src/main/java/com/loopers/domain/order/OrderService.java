@@ -42,7 +42,7 @@ public class OrderService {
                 .orElseThrow(() -> new CoreException(ErrorType.FORBIDDEN, "해당 사용자의 주문이 아닙니다."));
     }
 
-    public void finalizePaymentResult(Order order, boolean isPaymentConfirmed) {
+    public void finalizeOrderResult(Order order, boolean isPaymentConfirmed) {
         if (isPaymentConfirmed) {
             order.markPaid();
         } else {
