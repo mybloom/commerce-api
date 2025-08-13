@@ -117,7 +117,7 @@ public class ProductDslRepositoryImpl implements ProductDslRepository {
 
     private OrderSpecifier<?> getOrderSpecifier(Sort.Order order, QProduct product, QBrand brand) {
         String property = order.getProperty();
-        System.out.println("정렬 필드: " + property);
+        log.info("정렬 필드: " + property);
 
         // product 기준 정렬
         PathBuilder<?> entity = new PathBuilder<>(product.getType(), product.getMetadata());

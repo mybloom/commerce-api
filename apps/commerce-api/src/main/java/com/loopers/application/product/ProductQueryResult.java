@@ -3,6 +3,8 @@ package com.loopers.application.product;
 
 import com.loopers.domain.product.ProductListProjection;
 import com.loopers.support.paging.Pagination;
+
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class ProductQueryResult {
                     p.productName(),
                     p.productPrice().getAmount(),
                     p.likeCount().getValue(),
-                    p.productCreatedAt()
+                    p.saleStartDate()
                 ))
                 .toList();
 
@@ -37,7 +39,7 @@ public class ProductQueryResult {
         String productName,
         long price,
         int likeCount,
-        ZonedDateTime createdAt
+        LocalDate saleStartDate
     ) {
 
     }

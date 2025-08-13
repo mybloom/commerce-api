@@ -5,6 +5,8 @@ import com.loopers.application.product.ProductQueryResult.ListViewResult;
 import com.loopers.domain.product.ProductSortType;
 import com.loopers.support.paging.Pagination;
 import jakarta.annotation.Nullable;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -48,7 +50,7 @@ public class ProductV1Dto {
                     product.productName(),
                     product.price(),
                     product.likeCount(),
-                    product.createdAt()
+                    product.saleStartDate()
                 ))
                 .toList();
 
@@ -65,7 +67,7 @@ public class ProductV1Dto {
         String productName,
         long price,
         int likeCount,
-        ZonedDateTime createdAt
+        LocalDate saleStartDate
     ){}
 
     public record PaginationResponse(
