@@ -29,6 +29,7 @@ Root
 │   └── 📦 commerce-api
 ├── modules ( reusable-configurations )
 │   └── 📦 jpa
+│   └── 📦 redis
 └── supports ( add-ons )
     ├── 📦 monitoring
     └── 📦 logging
