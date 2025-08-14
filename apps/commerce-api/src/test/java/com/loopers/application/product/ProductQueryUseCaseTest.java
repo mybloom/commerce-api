@@ -6,13 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import com.loopers.application.common.PagingCondition;
 import com.loopers.application.product.ProductQueryResult.ListViewItemResult;
 import com.loopers.domain.brand.Brand;
-import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.brand.BrandStatus;
 import com.loopers.domain.commonvo.Quantity;
 import com.loopers.domain.product.Product;
-import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductSortType;
 import com.loopers.domain.product.ProductStatus;
+import com.loopers.infrastructure.brand.BrandJpaRepository;
+import com.loopers.infrastructure.product.ProductJpaRepository;
 import com.loopers.support.paging.PagingPolicy;
 import com.loopers.testcontainers.MySqlTestContainersConfig;
 import com.loopers.utils.DatabaseCleanUp;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @SpringBootTest
@@ -32,9 +33,9 @@ class ProductUseCaseIntegrationTest {
     private final DatabaseCleanUp databaseCleanUp;
 
     @MockitoSpyBean
-    private ProductRepository productRepository;
+    private ProductJpaRepository productRepository;
     @MockitoSpyBean
-    private BrandRepository brandRepository;
+    private BrandJpaRepository brandRepository;
 
     @Autowired
     public ProductUseCaseIntegrationTest(
@@ -43,6 +44,16 @@ class ProductUseCaseIntegrationTest {
     ) {
         this.sut = productUseCase;
         this.databaseCleanUp = databaseCleanUp;
+    }
+
+    @Autowired
+    StringRedisTemplate sredis;
+
+    @BeforeEach
+    void flushRedis() {
+        sredis.getConnectionFactory().getConnection()
+                .serverCommands()
+                .flushDb();
     }
 
     @AfterEach
@@ -101,8 +112,11 @@ class ProductUseCaseIntegrationTest {
             Optional<ProductSortType> emptySortType = Optional.empty();
             Optional<PagingCondition> emptyPagingCondition = Optional.empty();
 
-            var actual = sut.findList(Optional.of(brandId), emptySortType, emptyPagingCondition);
-
+            var actual = sut.findList(Optional.of(brandId), emptySortType, emptyPagingCondition); //todo: 쿼리에 limit 가 없다. count 조회 쿼리도 없고
+            /**
+             * select b1_0.id,b1_0.created_at,b1_0.deleted_at,b1_0.description,b1_0.name,b1_0.status,b1_0.updated_at from brand b1_0 where b1_0.id=?
+             * Hibernate: select b1_0.id,b1_0.created_at,b1_0.deleted_at,b1_0.description,b1_0.name,b1_0.status,b1_0.updated_at from brand b1_0 where b1_0.id=?
+             */
             assertAll(
                     () -> assertThat(actual.products())
                             .extracting(ListViewItemResult::brandId)
@@ -157,11 +171,11 @@ class ProductUseCaseIntegrationTest {
 
         @Test
         @DisplayName("정렬/페이징 모두 존재할 때, 조건에 맞는 해당 브랜드의 상품 목록을 반환한다.")
-        void sortAndPaging() {
+        void  sortAndPaging() {
             Optional<ProductSortType> sortType = Optional.of(ProductSortType.LIKES_DESC);
             Optional<PagingCondition> pagingCondition = Optional.of(new PagingCondition(0, 2));
 
-            var result = sut.findList(Optional.of(brandId), sortType, pagingCondition);
+            var result = sut.findList(Optional.of(brandId), sortType, pagingCondition); //todo : 잘됨
 
             assertAll(
                     () -> assertThat(result.pagination().totalCount()).isEqualTo(3), // 검색 조건에 맞는 전체 상품 수
