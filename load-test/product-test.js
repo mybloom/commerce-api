@@ -3,6 +3,8 @@ import { baseline } from './scenarios/baseline.js';
 import { rampup } from './scenarios/rampup.js';
 import { spike } from './scenarios/spike.js';
 import { stress } from './scenarios/stress.js';
+import { check } from 'k6';
+
 
 const BASE = 'http://localhost:8080';
 
@@ -20,6 +22,14 @@ export const options = {
 };
 
 export default function () {
-  const url = `${BASE}/api/v1/users`;
-  http.get(url);
+  const page = 0;
+  const size = 50;
+  const sort = 'LATEST';
+
+  const url = `${BASE}/api/v1/products?pagingCondition.page=${page}&pagingCondition.size=${size}&sortCondition=${sort}`;
+  const res = http.get(url);
+
+  check(res, {
+      'status is 200': (r) => r.status === 200,
+    });
 }
