@@ -1,9 +1,12 @@
 package com.loopers.application.product;
 
 
+import com.loopers.domain.brand.Brand;
 import com.loopers.domain.product.ProductListProjection;
+import com.loopers.domain.product.ProductQuery;
 import com.loopers.support.paging.Pagination;
-import java.time.ZonedDateTime;
+
+import java.time.LocalDate;
 import java.util.List;
 
 public class ProductQueryResult {
@@ -31,14 +34,38 @@ public class ProductQueryResult {
     }
 
     public record ListViewItemResult(
-        Long productId,
-        Long brandId,
-        String brandName,
-        String productName,
-        long price,
-        int likeCount,
-        ZonedDateTime createdAt
+            Long productId,
+            Long brandId,
+            String brandName,
+            String productName,
+            long price,
+            int likeCount,
+            LocalDate saleStartDate
     ) {
 
+    }
+
+    public record CatalogDetailResult(
+            Long productId,
+            String productName,
+            long productPrice,
+            int likeCount,
+            String productStatus,
+            Long brandId,
+            String brandName
+    ) {
+
+        //Brand, Product를 받아 CatalogDetailResult 생성하는 정적 메서드
+        public static CatalogDetailResult from(Brand brand, ProductQuery.ProductDetailQuery product) {
+            return new CatalogDetailResult(
+                    product.id(),
+                    product.name(),
+                    product.price().getAmount(),
+                    product.likeCount().getValue(),
+                    product.status().name(),
+                    brand.getId(),
+                    brand.getName()
+            );
+        }
     }
 }
