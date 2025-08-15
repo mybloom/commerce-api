@@ -25,8 +25,10 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class ProductUseCase {
-    private static final List<Integer> CACHEABLE_PAGES = List.of(0, 1);
+public class ProductListUseCase {
+    //todo: 테스트로 1페이지는 캐시 없이, 2,3페이지만 캐시 적용
+//    private static final List<Integer> CACHEABLE_PAGES = List.of(0, 1);
+    private static final List<Integer> CACHEABLE_PAGES = List.of(1, 2);
 
     private final BrandService brandService;
     private final ProductService productService;

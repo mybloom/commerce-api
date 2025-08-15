@@ -30,9 +30,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class ProductUseCaseCacheableTest {
+class ProductListUseCaseCacheableTest {
     @Autowired
-    private ProductUseCase sut;
+    private ProductListUseCase sut;
 
     @MockitoBean
     private ProductService productService;
