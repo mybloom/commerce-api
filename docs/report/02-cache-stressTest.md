@@ -20,7 +20,9 @@
 ---
 
 ## 2. 시나리오 A — 캐시 적용(2페이지)
-![img_1.png](img_1.png)
+<img width="2940" height="918" alt="Image" src="https://github.com/user-attachments/assets/2ca27e06-7075-4fb8-9369-38be4f09d421" />
+
+
 ### 핵심 지표
 
 - **Active VUs:** 5 (Max=5, Min=5)
@@ -44,7 +46,9 @@
 ---
 
 ## 3. 시나리오 B — 캐시 미적용(1페이지)
-![img.png](img.png)
+<img width="2968" height="926" alt="Image" src="https://github.com/user-attachments/assets/0b9d34f1-0cba-49ae-aeef-ba775cb86b2a">
+
+
 ### 핵심 지표
 
 - **Active VUs:** 5 (Max=5, Min=5)
