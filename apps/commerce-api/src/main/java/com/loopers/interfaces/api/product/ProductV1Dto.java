@@ -1,6 +1,7 @@
 package com.loopers.interfaces.api.product;
 
 import com.loopers.application.common.PagingCondition;
+import com.loopers.application.product.ProductQueryResult;
 import com.loopers.application.product.ProductQueryResult.ListViewResult;
 import com.loopers.domain.product.ProductSortType;
 import com.loopers.support.paging.Pagination;
@@ -97,10 +98,21 @@ public class ProductV1Dto {
         Long productId,
         String brandName,
         String productName,
-        int price,
+        long price,
         int likeCount,
         LocalDateTime createdAt,
-        String productStatus,
-        String productDescription
-    ){}
+        String productStatus
+    ){
+        public static DetailViewResponse from(ProductQueryResult.CatalogDetailResult result) {
+            return new DetailViewResponse(
+                result.productId(),
+                result.brandName(),
+                result.productName(),
+                result.productPrice(),
+                result.likeCount(),
+                ZonedDateTime.now().toLocalDateTime(), // Assuming createdAt is now, adjust as needed
+                result.productStatus()
+            );
+        }
+    }
 }
