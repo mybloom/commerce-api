@@ -2,6 +2,8 @@ package com.loopers.domain.product;
 
 import java.util.*;
 
+import com.loopers.application.product.ProductDetailCachePolicy;
+import com.loopers.support.cache.CacheTemplate;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CacheTemplate cache;
+    private final ProductDetailCachePolicy detailPolicy;
 
     public Page<ProductListProjection> retrieveListByBrand(final Long brandId, final Pageable pageable) {
         return productRepository.findAllForListViewByBrand(brandId, pageable);
@@ -27,6 +31,43 @@ public class ProductService {
 
     public Optional<Product> retrieveOne(Long productId) {
         return productRepository.findById(productId);
+    }
+
+    public Product retrieveOneByCacheOld(Long productId) {
+        final String key = detailPolicy.getKeyFormat().formatted(productId);
+
+        // 캐시에 Product 자체를 저장/조회 (주의: JPA Lazy 필드 있으면 DTO/Snapshot 권장)
+        Product product = cache.getOrLoad(
+                detailPolicy.getCacheName(),
+                key,
+                Product.class,
+                () -> productRepository.findById(productId).orElse(null), // 미스 시 DB
+                detailPolicy.getTtl(),
+                detailPolicy.getNullTtl()
+        );
+
+        if (product == null) {
+            // null 마커는 캐시에 짧게 들어감(nullTtl), 호출자는 예외로 처리
+            throw new CoreException(ErrorType.NOT_FOUND, "유효한 상품을 찾을 수 없습니다.");
+        }
+        return product;
+    }
+
+    public ProductQuery.ProductDetailQuery retrieveOneByCache(Long productId) {
+        String key = detailPolicy.getKeyFormat().formatted(productId);
+
+        ProductQuery.ProductDetailQuery query = cache.getOrLoad(
+                detailPolicy.getCacheName(),
+                key,
+                ProductQuery.ProductDetailQuery.class,
+                () -> productRepository.findById(productId) // 캐시 미스 시 DB
+                        .map(ProductQuery.ProductDetailQuery::from)
+                        .orElse(null),
+                detailPolicy.getTtl(),
+                detailPolicy.getNullTtl()
+        );
+
+        return query;
     }
 
     public void increaseLikeCountAtomically(final Product product) {

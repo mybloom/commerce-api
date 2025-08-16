@@ -19,7 +19,10 @@ public enum ProductSortType implements SortType {
             case PRICE_ASC -> Sort.by(Sort.Direction.ASC, "price");
             case PRICE_DESC -> Sort.by(Sort.Direction.DESC, "price");
             case LIKES_DESC -> Sort.by(Sort.Direction.DESC, "likeCount");
-            case LATEST -> Sort.by(Sort.Direction.DESC, "saleStartDate");
+            case LATEST -> Sort.by(
+                    Sort.Order.desc("saleStartDate"),
+                    Sort.Order.desc("id")
+            );
         };
     }
 }

@@ -13,14 +13,14 @@ public record PagingCondition(
 ) {
     public static final int FIRST_PAGE = 0;
 
-    public PagingCondition {
+    public static PagingCondition defaultCondition(int defaultSize) {
+        return new PagingCondition(FIRST_PAGE, defaultSize);
+    }
+    public static PagingCondition create(int page, int size) {
         if (page < 0 || size <= 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Invalid paging condition");
         }
-    }
-
-    public static PagingCondition defaultCondition(int defaultSize) {
-        return new PagingCondition(FIRST_PAGE, defaultSize);
+        return new PagingCondition(page, size);
     }
 
     public int getOffset() {
