@@ -73,9 +73,15 @@ class CouponUseCaseConcurrencyTest {
             final String orderRequestId = ORDER_REQUEST_PREFIX + i;
             futures.add(CompletableFuture.supplyAsync(() -> {
                 try {
-                    OrderInfo.ItemInfo item = new OrderInfo.ItemInfo(productId, quantity);
+                    OrderInfo.Create.Product item = OrderInfo.Create.Product.builder()
+                            .productId(productId)
+                            .quantity(quantity)
+                            .build();
                     List<Long> couponIds = List.of(couponId);
-                    orderUseCase.order(USER_ID, orderRequestId, List.of(item), couponIds);
+
+                    OrderInfo.Create orderInfo = OrderInfo.Create.of(USER_ID, orderRequestId, List.of(item), couponIds);
+                    orderUseCase.order(orderInfo);
+
                     return true;
                 } catch (Exception e) {
 //                    log.warn("❌ 실패: {}", e.getMessage());

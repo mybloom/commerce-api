@@ -23,12 +23,12 @@ public class PaymentService {
     public Long saveFailure(
             final Long orderId,
             final PaymentMethod paymentMethod,
-            final Money amount,
+//            final Money amount,
             final PaymentFailureReason failureReason
     ) {
         final Payment payment = paymentRepository.save(
                 Payment.confirmFailure(
-                        orderId, paymentMethod, amount, PaymentStatus.CANCELED, failureReason
+                        orderId, paymentMethod,PaymentStatus.CANCELED, failureReason
                 )
         );
 

@@ -1,5 +1,6 @@
 package com.loopers.domain.coupon;
 
+import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
@@ -60,10 +61,22 @@ public class UserCoupon {
 
     public void validateUsable() {
         if (this.used) {
-            throw new CoreException(ErrorType.CONFLICT, "이미 사용된 쿠폰입니다.");
+            throw new CoreException(ErrorType.CONFLICT,
+                    String.format("이미 사용된 쿠폰입니다. 쿠폰ID: %d, 사용자ID: %d",
+                            id, userId
+                    )
+            );
         }
         coupon.validateUsable();
     }
 
+    public Money calculateDiscount(Money orderAmount) {
+        // Coupon의 DiscountPolicy를 통해 할인 계산
+        Coupon coupon = this.getCoupon();
+        Money discountAmount = coupon.getDiscountPolicy()
+                .getDiscountType()
+                .calculateDiscountAmount(orderAmount.getAmount(), coupon.getDiscountPolicy().getDiscountValue());
 
+        return discountAmount;
+    }
 }

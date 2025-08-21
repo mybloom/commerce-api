@@ -1,14 +1,23 @@
 package com.loopers.application.payment;
 
 import com.loopers.domain.payment.PaymentStatus;
+import lombok.*;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class PaymentResult {
-    public record Pay(
-            Long paymentId,
-            PaymentStatus paymentStatus
-    ) {
+
+    @Getter
+    @Builder(access = AccessLevel.PRIVATE)
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Pay {
+        private final Long paymentId;
+        private final PaymentStatus paymentStatus;
+
         public static Pay of(Long paymentId) {
-            return new Pay(paymentId, PaymentStatus.CONFIRMED);
+            return Pay.builder()
+                    .paymentId(paymentId)
+                    .paymentStatus(PaymentStatus.CONFIRMED)
+                    .build();
         }
     }
 }

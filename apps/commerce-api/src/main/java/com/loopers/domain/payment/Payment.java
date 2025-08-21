@@ -52,10 +52,9 @@ public class Payment {
         this.createdAt = ZonedDateTime.now();
     }
 
-    private Payment(Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus, PaymentFailureReason failureReason) {
+    private Payment(Long orderId, PaymentMethod paymentMethod, PaymentStatus paymentStatus, PaymentFailureReason failureReason) {
         this.orderId = orderId;
         this.paymentMethod = paymentMethod;
-        this.amount = amount;
         this.paymentStatus = paymentStatus;
         this.failureReason = failureReason;
         this.createdAt = ZonedDateTime.now();
@@ -75,16 +74,17 @@ public class Payment {
     }
 
     public static Payment confirmFailure(
-            Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus,
+            Long orderId, PaymentMethod paymentMethod, PaymentStatus paymentStatus,
             PaymentFailureReason paymentFailureReason
     ) {
-        if (orderId == null || paymentMethod == null || amount == null || paymentStatus == null) {
+        if (orderId == null || paymentMethod == null || paymentStatus == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID, 결제 방법, 결제 금액, 결제 상태는 필수입니다.");
         }
-        if (amount.getAmount() < 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 금액은 0이상이여야 합니다.");
-        }
 
-        return new Payment(orderId, paymentMethod, amount, paymentStatus, paymentFailureReason);
+        /*if (amount.getAmount() < 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제 금액은 0이상이여야 합니다.");
+        }*/
+
+        return new Payment(orderId, paymentMethod, paymentStatus, paymentFailureReason);
     }
 }

@@ -57,7 +57,11 @@ public class Coupon {
 
     public void validateUsable() {
         if (!isUsable()) {
-            throw new CoreException(ErrorType.CONFLICT, "사용할 수 없는 쿠폰입니다.");
+            throw new CoreException(ErrorType.CONFLICT,
+                    String.format("사용할 수 없는 쿠폰입니다. 쿠폰ID: %d, 유효기간: %s ~ %s"
+                            , id, startAt, endAt
+                    )
+            );
         }
     }
 }

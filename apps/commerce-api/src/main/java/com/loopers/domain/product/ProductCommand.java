@@ -1,24 +1,37 @@
 package com.loopers.domain.product;
 
 import com.loopers.domain.commonvo.Quantity;
+import lombok.*;
+import java.util.List;
 
-public class ProductCommand {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class ProductCommand {
 
-    public record CheckStock(
-            Long productId,
-            Quantity quantity
-    ) {
-        public static CheckStock of(Long productId, Quantity quantity) {
-            return new CheckStock(productId, quantity);
+    @Getter
+    @Builder(access = AccessLevel.PRIVATE)
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class OrderProducts {
+        private final List<OrderProduct> products;
+
+        public static OrderProducts of(List<OrderProduct> products) {
+            return OrderProducts.builder()
+                    .products(products)
+                    .build();
         }
-    }
 
-    public record DeductStock(
-            Product product,
-            Quantity quantity
-    ) {
-        public static DeductStock of(Product product, Quantity quantity) {
-            return new DeductStock(product, quantity);
+        @Getter
+        @Builder(access = AccessLevel.PRIVATE)
+        @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class OrderProduct {
+            private final Long productId;
+            private final Quantity quantity;
+
+            public static OrderProduct of(Long productId, Integer quantity) {
+                return OrderProduct.builder()
+                        .productId(productId)
+                        .quantity(Quantity.of(quantity))
+                        .build();
+            }
         }
     }
 }

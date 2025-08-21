@@ -10,23 +10,6 @@ import java.util.stream.Collectors;
 
 public class OrderLineService {
 
-    public List<OrderLine> createOrderLinesOld(final List<OrderLineCommand> lines, final List<Product> products) {
-        if(lines.size()!= products.size()) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 라인과 상품의 개수가 일치하지 않습니다.");
-        }
-
-        final Map<Long, Product> productMap = products.stream()
-                .collect(Collectors.toMap(Product::getId, Function.identity()));
-
-        List<OrderLine> orderLines = new ArrayList<>();
-        for (OrderLineCommand line : lines) {
-            final Product product = Optional.ofNullable(productMap.get(line.productId()))
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품 없음: " + line.productId()));
-            orderLines.add(OrderLine.create(line.productId(), line.quantity(), product.getPrice()));
-        }
-        return orderLines;
-    }
-
     public List<OrderLine> createOrderLines(final List<OrderLineCommand> lines, final List<Product> products) {
         //수량 일치 검증
         if (products.size() != lines.size()) {

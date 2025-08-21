@@ -1,29 +1,34 @@
 package com.loopers.application.order;
 
 import com.loopers.domain.order.Order;
-import com.loopers.domain.order.OrderStatus;
+import lombok.*;
 
-public class OrderResult {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class OrderResult {
 
-    public record OrderRequestResult(
-        boolean duplicateRequest,
-        Long orderId,
-        OrderStatus status
-    ) {
+    @ToString
+    @Getter
+    @Builder
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class OrderRequestResult {
+        private final boolean duplicateRequest;
+        private final Long orderId;
+        private final String status;
+
         public static OrderRequestResult alreadyOrder(Order existingOrder) {
-            return new OrderRequestResult(
-                true,
-                existingOrder.getId(),
-                existingOrder.getStatus()
-            );
+            return OrderRequestResult.builder()
+                    .duplicateRequest(true)
+                    .orderId(existingOrder.getId())
+                    .status(existingOrder.getStatus().name())
+                    .build();
         }
 
-        public static OrderRequestResult from(Order createdOrder) {
-            return new OrderRequestResult(
-                false,
-                createdOrder.getId(),
-                createdOrder.getStatus()
-            );
+        public static OrderRequestResult completedOrder(Order createdOrder) {
+            return OrderRequestResult.builder()
+                    .duplicateRequest(false)
+                    .orderId(createdOrder.getId())
+                    .status(createdOrder.getStatus().name())
+                    .build();
         }
     }
 }

@@ -70,8 +70,8 @@ class PaymentUseCaseConcurrencyTest {
             final long orderId = 1000L + i; // 1001 ~ 1020
             CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
                 try {
-                    PaymentInfo.Pay payInfo = new PaymentInfo.Pay(orderId, PaymentMethod.POINT);
-                    paymentUseCase.pay(USER_ID, payInfo);
+                    PaymentInfo.Pay payInfo = PaymentInfo.Pay.of(USER_ID, orderId, PaymentMethod.POINT.name());
+                    paymentUseCase.pay(payInfo);
                     return true;
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -26,9 +26,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class ProductListUseCase {
-    //todo: 테스트로 1페이지는 캐시 없이, 2,3페이지만 캐시 적용
-//    private static final List<Integer> CACHEABLE_PAGES = List.of(0, 1);
-    private static final List<Integer> CACHEABLE_PAGES = List.of(1, 2);
+    //todo : @ConfigurationProperties(prefix = "cache.product-list") 방식으로 수정
+    private static final List<Integer> CACHEABLE_PAGES = List.of(0, 1);
 
     private final BrandService brandService;
     private final ProductService productService;

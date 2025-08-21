@@ -123,15 +123,15 @@ class PaymentUseCaseIntegrationTest {
     void pay_success() {
         prepareOrderAndOrderLines(Quantity.of(2), Quantity.of(2));
 
-        PaymentInfo.Pay payInfo = new PaymentInfo.Pay(orderId, PaymentMethod.POINT);
+        PaymentInfo.Pay payInfo = PaymentInfo.Pay.of(USER_ID, orderId, PaymentMethod.POINT.name());
         Order order = orderRepository.findByIdWithOrderLines(orderId).orElseThrow();
         Money expectedAmount = order.getPaymentAmount();
 
-        PaymentResult.Pay result = sut.pay(USER_ID, payInfo);
-        Payment payment = paymentRepository.findById(result.paymentId()).orElseThrow();
+        PaymentResult.Pay result = sut.pay(payInfo);
+        Payment payment = paymentRepository.findById(result.getPaymentId()).orElseThrow();
 
         assertAll(
-                () -> assertThat(result.paymentId()).isNotNull(),
+                () -> assertThat(result.getPaymentId()).isNotNull(),
                 () -> assertThat(payment.getFailureReason()).isNull(),
                 () -> assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.CONFIRMED),
                 () -> assertThat(payment.getAmount()).isEqualTo(expectedAmount)
@@ -147,7 +147,7 @@ class PaymentUseCaseIntegrationTest {
         Product before2 = productRepository.findById(productId2).orElseThrow();
 
         CoreException ex = assertThrows(CoreException.class,
-                () -> sut.pay(USER_ID, new PaymentInfo.Pay(orderId, PaymentMethod.POINT)));
+                () -> sut.pay(PaymentInfo.Pay.of(USER_ID, orderId, PaymentMethod.POINT.name())));
 
         Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow();
         Product after1 = productRepository.findById(productId1).orElseThrow();
@@ -179,10 +179,10 @@ class PaymentUseCaseIntegrationTest {
         Money userBalance = beforePoint.balance();
 
         //act
-        PaymentResult.Pay result = sut.pay(USER_ID, new PaymentInfo.Pay(orderId, PaymentMethod.POINT));
+        PaymentResult.Pay result = sut.pay(PaymentInfo.Pay.of(USER_ID, orderId, PaymentMethod.POINT.name()));
 
         // assert
-        Payment payment = paymentRepository.findById(result.paymentId()).orElseThrow();
+        Payment payment = paymentRepository.findById(result.getPaymentId()).orElseThrow();
         Product after1 = productRepository.findById(productId1).orElseThrow();
         Product after2 = productRepository.findById(productId2).orElseThrow();
         Money expectedDeductedAmount = before1.getPrice().multiply(q1)
@@ -211,7 +211,7 @@ class PaymentUseCaseIntegrationTest {
         assertThat(userBalance.isLessThan(order.getPaymentAmount())).isTrue();
 
         CoreException ex = assertThrows(CoreException.class,
-                () -> sut.pay(USER_ID, new PaymentInfo.Pay(orderId, PaymentMethod.POINT)));
+                () -> sut.pay(PaymentInfo.Pay.of(USER_ID, orderId, PaymentMethod.POINT.name())));
 
         Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow();
         Product current1 = productRepository.findById(productId1).orElseThrow();
