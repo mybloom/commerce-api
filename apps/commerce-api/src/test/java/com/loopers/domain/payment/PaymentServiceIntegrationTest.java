@@ -66,7 +66,7 @@ public class PaymentServiceIntegrationTest {
         void saveCanceledPayment() {
             // Act
             boolean isPaymentConfirmed = false;
-            Long paymentId = sut.saveFailure(orderId, PaymentMethod.POINT, amount, PaymentFailureReason.INSUFFICIENT_BALANCE);
+            Long paymentId = sut.saveFailure(orderId, PaymentMethod.POINT, PaymentFailureReason.INSUFFICIENT_BALANCE);
 
             // Assert
             Payment actual = paymentRepository.findById(paymentId).orElseThrow();

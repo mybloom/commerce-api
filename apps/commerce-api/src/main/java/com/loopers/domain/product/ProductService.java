@@ -1,8 +1,13 @@
 package com.loopers.domain.product;
 
+import java.math.BigDecimal;
 import java.util.*;
 
+import com.loopers.application.order.OrderInfo;
 import com.loopers.application.product.ProductDetailCachePolicy;
+import com.loopers.domain.commonvo.Money;
+import com.loopers.domain.commonvo.Quantity;
+import com.loopers.domain.order.OrderCommand;
 import com.loopers.support.cache.CacheTemplate;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -31,26 +36,6 @@ public class ProductService {
 
     public Optional<Product> retrieveOne(Long productId) {
         return productRepository.findById(productId);
-    }
-
-    public Product retrieveOneByCacheOld(Long productId) {
-        final String key = detailPolicy.getKeyFormat().formatted(productId);
-
-        // 캐시에 Product 자체를 저장/조회 (주의: JPA Lazy 필드 있으면 DTO/Snapshot 권장)
-        Product product = cache.getOrLoad(
-                detailPolicy.getCacheName(),
-                key,
-                Product.class,
-                () -> productRepository.findById(productId).orElse(null), // 미스 시 DB
-                detailPolicy.getTtl(),
-                detailPolicy.getNullTtl()
-        );
-
-        if (product == null) {
-            // null 마커는 캐시에 짧게 들어감(nullTtl), 호출자는 예외로 처리
-            throw new CoreException(ErrorType.NOT_FOUND, "유효한 상품을 찾을 수 없습니다.");
-        }
-        return product;
     }
 
     public ProductQuery.ProductDetailQuery retrieveOneByCache(Long productId) {
@@ -82,23 +67,80 @@ public class ProductService {
         return productRepository.findAllByIds(productIds);
     }
 
-    public List<Product> findAllValidProductsOrThrow(List<Long> productIds) {
-        List<Product> products = productRepository.findAllValidWithPessimisticLock(productIds);
+    public List<Product> validateProductsAndStock(ProductCommand.OrderProducts command) {
+        // 1. 상품 ID 추출
+        List<Long> commandProductIds = command.getProducts().stream()
+                .map(ProductCommand.OrderProducts.OrderProduct::getProductId)
+                .toList();
 
-        Set<Long> foundIds = products.stream()
-                .map(Product::getId)
-                .collect(Collectors.toSet());
+        // 2. 상품 존재 여부 확인 (비관적 락으로 조회)
+        List<Product> products = productRepository.findAllValidWithPessimisticLock(commandProductIds);
 
-        if (!foundIds.containsAll(productIds)) {
+        // 3. 상품 ID 유효성 검증
+        if (products.size() != commandProductIds.size()) {
+            throw new CoreException(ErrorType.NOT_FOUND, "주문 불가능한 상품이 포함되어 있습니다.");
+        }
+
+        // 4. 재고 검증
+        Map<Long, Quantity> productQuntityMap = command.getProducts().stream()
+                .collect(Collectors.toMap(
+                        ProductCommand.OrderProducts.OrderProduct::getProductId,
+                        ProductCommand.OrderProducts.OrderProduct::getQuantity
+                ));
+
+         for (Product product : products) {
+            Quantity quantity = productQuntityMap.get(product.getId());
+
+             if (quantity.isGreaterThan(product.getStockQuantity())) {
+                throw new CoreException(ErrorType.CONFLICT,
+                        String.format("상품 [%s]의 재고가 부족합니다. 주문수량: %d, 재고수량: %d",
+                                product.getName(), quantity.getAmount(), product.getStockQuantity().getAmount()));
+            }
+          }
+
+        return products;
+    }
+
+
+    public List<Product> assertDeductible(final Map<Long, Quantity> commandMap) {
+        final List<Product> products = productRepository.findAllValidWithPessimisticLock(commandMap.keySet().stream().toList());
+
+        // 1. 상품 ID 유효성 검증
+        if (products.size() != commandMap.size()) {
             throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다.");
+        }
+
+        // 2. 재고 검증
+        for (Product product : products) {
+            final Quantity orderQuantity = commandMap.get(product.getId());
+            if (orderQuantity.isGreaterThan(product.getStockQuantity())) {
+                throw new CoreException(ErrorType.CONFLICT, "재고가 부족합니다: " + product.getId());
+            }
         }
 
         return products;
     }
 
-    public boolean deductStock(final List<ProductCommand.DeductStock> commands) {
+    public Money calculateTotalAmount(List<Product> products, ProductCommand.OrderProducts orderProducts) {
+        // productId를 키로 하는 수량 맵 생성
+        Map<Long, Quantity> quantityMap = orderProducts.getProducts().stream()
+                .collect(Collectors.toMap(
+                        ProductCommand.OrderProducts.OrderProduct::getProductId,
+                        ProductCommand.OrderProducts.OrderProduct::getQuantity
+                ));
+
+        // 각 상품별로 (가격 × 수량) 계산하여 총합 반환
+        return products.stream()
+                .map(product -> {
+                    Quantity orderQuantity = quantityMap.get(product.getId());
+                    return product.getPrice().multiply(orderQuantity);
+                })
+                .reduce(Money.ZERO, Money::add);
+    }
+
+    public boolean deductStock(final List<ProductCommandOld.DeductStock> commands) {
         // 1. 재고 검증 (재고 수량 변경 없이)
-        for (ProductCommand.DeductStock command : commands) {
+        for (ProductCommandOld.DeductStock command : commands) {
             Product product = command.product();
             if (command.quantity().isGreaterThan(product.getStockQuantity())) {
                 product.markSoldOut();
@@ -107,7 +149,7 @@ public class ProductService {
         }
 
         // 2. 재고 차감 (모든 검증 통과 후)
-        for (ProductCommand.DeductStock command : commands) {
+        for (ProductCommandOld.DeductStock command : commands) {
             Product product = command.product();
             product.deductStock(command.quantity());
         }

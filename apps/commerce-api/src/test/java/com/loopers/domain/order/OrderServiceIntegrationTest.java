@@ -118,38 +118,7 @@ class OrderServiceIntegrationTest {
         }
     }
 
-    @Nested
-    @DisplayName("finalizePaymentResult() 호출 시")
-    class FinalizePayment {
-
-        @Test
-        @DisplayName("결제 성공이면, 상태가 PAID로 변경된다")
-        void markPaid() {
-            // Arrange
-            Order order = orderRepository.save(Order.create(USER_ID, UUID.randomUUID().toString()));
-
-            // Act
-            boolean isPaymentConfirmed = true;
-            sut.finalizeOrderResult(order, isPaymentConfirmed);
-
-            // Assert
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
-        }
-
-        @Test
-        @DisplayName("결제 실패이면, 상태가 PAID_FAILED로 변경된다")
-        void markFailed() {
-            // Arrange
-            Order order = orderRepository.save(Order.create(USER_ID, UUID.randomUUID().toString()));
-
-            // Act
-            boolean isPaymentConfirmed = false;
-            sut.finalizeOrderResult(order, isPaymentConfirmed);
-
-            // Assert
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID_FAILED);
-        }
-    }
+   
 
     @DisplayName("calculateOrderAmountByAddLines() 호출시, ")
     @Nested

@@ -231,42 +231,85 @@ class ProductServiceIntegrationTest {
         }
 
         @Test
-        @DisplayName("모든 상품 ID가 유효하면, 상품 리스트를 반환한다.")
+        @DisplayName("모든 상품 ID가 유효하고 재고가 충분하면, 상품 리스트를 반환한다.")
         @Transactional //비관적락은 트랜잭션이 있어야 동작한다.
-        void findAllValidProductsOrThrow_success() {
+        void validateProductsAndStock_success() {
             // Arrange
-            List<Long> validIds = productRepository.findAll().stream()
-                    .map(Product::getId)
+            List<Product> availableProducts = productRepository.findAll().stream()
                     .limit(3)
                     .toList();
 
+            List<ProductCommand.OrderProducts.OrderProduct> orderProducts = availableProducts.stream()
+                    .map(product -> ProductCommand.OrderProducts.OrderProduct.of(
+                            product.getId(),
+                            1 // 재고보다 적은 수량으로 주문
+                    ))
+                    .toList();
+
+            ProductCommand.OrderProducts command = ProductCommand.OrderProducts.of(orderProducts);
+
             // Act
-            List<Product> products = sut.findAllValidProductsOrThrow(validIds);
+            List<Product> products = sut.validateProductsAndStock(command);
 
             // Assert
-            assertThat(products).hasSize(validIds.size());
-            assertThat(products).extracting(Product::getId).containsAll(validIds);
+            assertThat(products).hasSize(availableProducts.size());
+            assertThat(products).extracting(Product::getId)
+                    .containsAll(availableProducts.stream().map(Product::getId).toList());
         }
 
         @Test
-        @DisplayName("상품 ID 중 하나라도 존재하지 않으면, NOT_FOUND  예외가 발생한다.")
+        @DisplayName("상품 ID 중 하나라도 존재하지 않으면, NOT_FOUND 예외가 발생한다.")
         @Transactional //비관적락은 트랜잭션이 있어야 동작한다.
-        void findAllValidProductsOrThrow_fail_whenAnyMissing() {
+        void validateProductsAndStock_fail_whenProductNotFound() {
             // Arrange
-            List<Long> validProductIds = productRepository.findAll().stream()
-                    .map(Product::getId)
+            List<Product> validProducts = productRepository.findAll().stream()
                     .limit(2)
                     .toList();
-            Long invalidProductId = -999L;
-            List<Long> mixedIds = List.of(validProductIds.get(0), validProductIds.get(1), invalidProductId);
+
+            int quantity = 1;
+            List<ProductCommand.OrderProducts.OrderProduct> orderProducts = List.of(
+                    ProductCommand.OrderProducts.OrderProduct.of(validProducts.get(0).getId(), quantity),
+                    ProductCommand.OrderProducts.OrderProduct.of(validProducts.get(1).getId(), quantity),
+                    ProductCommand.OrderProducts.OrderProduct.of(-999L, quantity) // 존재하지 않는 상품
+            );
+
+            ProductCommand.OrderProducts command = ProductCommand.OrderProducts.of(orderProducts);
 
             // Act
             CoreException exception = assertThrows(CoreException.class,
-                    () -> sut.findAllValidProductsOrThrow(mixedIds)
+                    () -> sut.validateProductsAndStock(command)
             );
 
             // Assert
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("재고가 부족한 상품이 있으면, CONFLICT 예외가 발생한다.")
+        @Transactional //비관적락은 트랜잭션이 있어야 동작한다.
+        void validateProductsAndStock_fail_whenInsufficientStock() {
+            // Arrange
+            Product product = productRepository.findAll().stream()
+                    .findFirst()
+                    .orElseThrow();
+
+            // 현재 재고보다 많은 수량으로 주문
+            Quantity excessiveQuantity = product.getStockQuantity().add(Quantity.of(1));
+
+            List<ProductCommand.OrderProducts.OrderProduct> orderProducts = List.of(
+                    ProductCommand.OrderProducts.OrderProduct.of(product.getId(), excessiveQuantity.getAmount())
+            );
+
+            ProductCommand.OrderProducts command = ProductCommand.OrderProducts.of(orderProducts);
+
+            // Act
+            CoreException exception = assertThrows(CoreException.class,
+                    () -> sut.validateProductsAndStock(command)
+            );
+
+            // Assert
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
+            assertThat(exception.getMessage()).contains("재고가 부족합니다");
         }
     }
 
@@ -392,9 +435,9 @@ class ProductServiceIntegrationTest {
             Quantity deductQuantity1 = Quantity.of(5);
             Quantity deductQuantity2 = Quantity.of(3);
 
-            List<ProductCommand.DeductStock> commands = List.of(
-                    new ProductCommand.DeductStock(product1, deductQuantity1),
-                    new ProductCommand.DeductStock(product2, deductQuantity2)
+            List<ProductCommandOld.DeductStock> commands = List.of(
+                    new ProductCommandOld.DeductStock(product1, deductQuantity1),
+                    new ProductCommandOld.DeductStock(product2, deductQuantity2)
             );
 
             Quantity beforeStockOfProduct1 = product1.getStockQuantity();
@@ -421,8 +464,8 @@ class ProductServiceIntegrationTest {
         void markSoldOutAndThrowException_whenStockNotEnough() {
             // Arrange
             Quantity overQuantity = Quantity.of(200); // 현재 재고보다 많은 수량
-            List<ProductCommand.DeductStock> commands = List.of(
-                    new ProductCommand.DeductStock(product1, overQuantity)
+            List<ProductCommandOld.DeductStock> commands = List.of(
+                    new ProductCommandOld.DeductStock(product1, overQuantity)
             );
             Quantity beforeStockOfProduct1 = product1.getStockQuantity();
 

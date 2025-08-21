@@ -3,19 +3,7 @@ package com.loopers.domain.order;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -55,6 +43,7 @@ public class Order {
     @Column(name = "order_request_id", unique = true, nullable = false)
     private String orderRequestId; // 멱등키
 
+    //todo: 관계 설정 블로그에 정리해두기
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "order_id")
     @Builder.Default
@@ -80,6 +69,13 @@ public class Order {
         this.orderLines = orderLines;
     }
 
+    public void addOrderLineByCommand(List<OrderLine> orderLines) {
+        if (orderLines.isEmpty()) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "주문 상품이 없습니다.");
+        }
+        this.orderLines = orderLines;
+    }
+
     public Money calculateOrderAmount() {
         if (orderLines.isEmpty()) {
             throw new CoreException(ErrorType.CONFLICT, "주문 상품이 없습니다.");
@@ -91,7 +87,7 @@ public class Order {
         return totalAmount;
     }
 
-    public void failValidation() {
+   /* public void failValidation() {
         if (this.status != OrderStatus.PENDING) {
             throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
         }
@@ -110,10 +106,38 @@ public class Order {
             throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
         }
         this.status = OrderStatus.PAID_FAILED;
-    }
+    }*/
 
     public void applyDiscount(Money discountAmount) {
         this.discountAmount = discountAmount;
         this.paymentAmount = this.totalAmount.subtract(discountAmount);
+    }
+
+    public void complete(List<OrderLine> orderLines,
+                         Money totalAmount,
+                         Money discountAmount,
+                         Money paymentAmount) {
+
+        validateDiscountAmount(totalAmount,discountAmount);
+
+        // 주문 상태 변경
+        if (this.status != OrderStatus.PENDING) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
+        }
+        this.status = OrderStatus.COMPLETED;
+
+        // 금액 정보 설정
+        this.totalAmount = totalAmount;
+        this.discountAmount = discountAmount;
+        this.paymentAmount = paymentAmount;
+
+        // OrderLine 설정
+        this.orderLines = orderLines;
+    }
+
+    private void validateDiscountAmount(Money totalAmount, Money discountAmount) {
+        if (totalAmount.isLessThan(discountAmount)) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "할인 금액이 주문 금액을 초과할 수 없습니다.");
+        }
     }
 }

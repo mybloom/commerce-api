@@ -117,37 +117,6 @@ class OrderTest {
         }
     }
 
-    @DisplayName("결제 상태 변경 시,")
-    @Nested
-    class Status {
-
-        @Test
-        @DisplayName("결제 정상 처리가 되면, 상태는 PAID로 변경된다")
-        void markAsPaid() {
-            // Arrange
-            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
-
-            // Act
-            order.markPaid();
-
-            // Assert
-            assertThat(order.getStatus()).isEqualTo(PAID);
-        }
-
-        @Test
-        @DisplayName("결제가 오류가 나면, 주문 상태는 PAID_FAILED로 설정된다")
-        void markAsFailed() {
-            // Arrange
-            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
-
-            // Act
-            order.failPaid();
-
-            // Assert
-            assertThat(order.getStatus()).isEqualTo(PAID_FAILED);
-        }
-    }
-
     @DisplayName("할인 적용 시")
     @Nested
     class Discount {
@@ -183,59 +152,4 @@ class OrderTest {
 
     }
 
-    @DisplayName("주문 상태를 변경 할 때, ")
-    @Nested
-    class ValidationFail {
-        @Test
-        @DisplayName("주문 상태가 PENDING일 경우, VALIDATION_FAILED로 변경할 수 있다.")
-        void failValidation_shouldChangeStatus() {
-            // Arrange
-            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
-
-            // Act
-            order.failValidation();
-
-            // Assert
-            assertThat(order.getStatus()).isEqualTo(VALIDATION_FAILED);
-        }
-
-        @Test
-        @DisplayName("ALIDATION_FAILED로 변경 시, 주문 상태가 PENDING이 아닌 경우 CONFLICT 예외가 발생한다")
-        void failValidation_shouldThrowExceptionIfStatusIsNotPending() {
-            // Arrange
-            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
-            order.failPaid(); // 상태를 PAID_FAILED로 변경
-
-            // Act & Assert
-            CoreException exception = assertThrows(CoreException.class, order::failValidation);
-
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
-            assertThat(exception.getMessage()).contains("주문 상태가 올바르지 않습니다.");
-        }
-
-        @Test
-        @DisplayName("PAID로 상태 변경 시, 결제 상태가 PENDING이 아니면 CONFLICT 예외가 발생한다")
-        void throwException_whenMarkPaidIfNotPending() {
-            // Arrange
-            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
-            order.failValidation();
-
-            // Act
-            CoreException exception = assertThrows(CoreException.class, order::markPaid);
-
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
-        }
-
-        @Test
-        @DisplayName("PAID_FAILED로 상태 변경 시, 결제 상태가 PENDING이 아니면 CONFLICT 예외가 발생한다")
-        void markFailed_shouldFailIfNotPending() {
-            // Arrange
-            Order order = Order.create(USER_ID, ORDER_REQUEST_ID);
-            order.failValidation();
-
-            // Act & Assert
-            org.junit.jupiter.api.Assertions.assertThrows(CoreException.class, order::failPaid);
-        }
-
-    }
 }

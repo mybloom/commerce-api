@@ -4,26 +4,31 @@ import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class OrderService {
     private final OrderRepository orderRepository;
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public OrderQuery.CreatedOrder createOrderByRequestId(Long userId, String orderRequestId) {
         return orderRepository.findByOrderRequestId(orderRequestId)
-                .map(OrderQuery.CreatedOrder::existing)
+                .map(order -> {
+                    log.info("기존 주문 발견: orderId={}, orderRequestId={}", order.getId(), orderRequestId);
+                    return OrderQuery.CreatedOrder.existing(order);
+                })
                 .orElseGet(() -> {
+                    log.info("새 주문 생성: userId={}, orderRequestId={}", userId, orderRequestId);
                     Order createdOrder = orderRepository.save(Order.create(userId, orderRequestId));
                     return OrderQuery.CreatedOrder.created(createdOrder);
                 });
-    }
-
-    public void failValidation(final Order order) {
-        order.failValidation();
     }
 
     public Money calculateOrderAmountByAddLines(final Order order, final List<OrderLine> orderLines) {
@@ -42,11 +47,15 @@ public class OrderService {
                 .orElseThrow(() -> new CoreException(ErrorType.FORBIDDEN, "해당 사용자의 주문이 아닙니다."));
     }
 
-    public void finalizeOrderResult(Order order, boolean isPaymentConfirmed) {
-        if (isPaymentConfirmed) {
-            order.markPaid();
-        } else {
-            order.failPaid();
-        }
+    public Order completeOrder(final Order order, final OrderCommand.Complete command) {
+        final Money paymentAmount = command.getOrderAmount().subtract(command.getDiscountAmount());
+        order.complete(
+                command.getOrderLines(),
+                command.getOrderAmount(),
+                command.getDiscountAmount(),
+                paymentAmount
+        );
+
+        return orderRepository.save(order);
     }
 }
