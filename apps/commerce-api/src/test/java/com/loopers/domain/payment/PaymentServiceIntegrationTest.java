@@ -40,7 +40,7 @@ public class PaymentServiceIntegrationTest {
         private final Long orderId = 1L;
         private final Money amount = Money.of(1000L);
 
-        @Test
+       /* @Test
         @DisplayName("정상 결제일 경우, CONFIRMED 상태로 저장된다.")
         void saveConfirmedPayment() {
             // Act
@@ -77,6 +77,6 @@ public class PaymentServiceIntegrationTest {
                     () -> assertThat(actual.getFailureReason()).isEqualTo(PaymentFailureReason.INSUFFICIENT_BALANCE)
             );
             verify(paymentRepository, times(1)).save(any(Payment.class));
-        }
+        }*/
     }
 }

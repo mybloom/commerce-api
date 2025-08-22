@@ -7,6 +7,9 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ProductCommand {
 
+    /**
+     * 주문 상품 정보
+     */
     @Getter
     @Builder(access = AccessLevel.PRIVATE)
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -30,6 +33,37 @@ public final class ProductCommand {
                 return OrderProduct.builder()
                         .productId(productId)
                         .quantity(Quantity.of(quantity))
+                        .build();
+            }
+        }
+    }
+
+    /**
+     * 재고 차감
+     */
+    @Getter
+    @Builder(access = AccessLevel.PRIVATE)
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class DeductStocks {
+        private final List<DeductStock> stocks;
+
+        public static DeductStocks of(List<DeductStock> stocks) {
+            return DeductStocks.builder()
+                    .stocks(stocks)
+                    .build();
+        }
+
+        @Getter
+        @Builder(access = AccessLevel.PRIVATE)
+        @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class DeductStock {
+            private final Long productId;
+            private final Quantity quantity;
+
+            public static DeductStock of(Long productId, Quantity quantity) {
+                return DeductStock.builder()
+                        .productId(productId)
+                        .quantity(quantity)
                         .build();
             }
         }

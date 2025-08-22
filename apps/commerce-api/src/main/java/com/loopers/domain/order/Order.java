@@ -69,13 +69,6 @@ public class Order {
         this.orderLines = orderLines;
     }
 
-    public void addOrderLineByCommand(List<OrderLine> orderLines) {
-        if (orderLines.isEmpty()) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 상품이 없습니다.");
-        }
-        this.orderLines = orderLines;
-    }
-
     public Money calculateOrderAmount() {
         if (orderLines.isEmpty()) {
             throw new CoreException(ErrorType.CONFLICT, "주문 상품이 없습니다.");
@@ -86,27 +79,6 @@ public class Order {
                 .reduce(Money.ZERO, Money::add);
         return totalAmount;
     }
-
-   /* public void failValidation() {
-        if (this.status != OrderStatus.PENDING) {
-            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
-        }
-        this.status = OrderStatus.VALIDATION_FAILED;
-    }
-
-    public void markPaid() {
-        if (this.status != OrderStatus.PENDING) {
-            throw new CoreException(ErrorType.CONFLICT, "주문 상태이 결제 가능한 상태가 아닙니다.");
-        }
-        this.status = OrderStatus.PAID;
-    }
-
-    public void failPaid() {
-        if (this.status != OrderStatus.PENDING) {
-            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
-        }
-        this.status = OrderStatus.PAID_FAILED;
-    }*/
 
     public void applyDiscount(Money discountAmount) {
         this.discountAmount = discountAmount;

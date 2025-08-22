@@ -98,7 +98,7 @@ class OrderServiceIntegrationTest {
             Order order = orderRepository.save(Order.create(USER_ID, UUID.randomUUID().toString()));
 
             // Act
-            Order actual = sut.getUserOrder(USER_ID, order.getId());
+            Order actual = sut.getUserOrderWithLock(USER_ID, order.getId());
 
             // Assert
             assertThat(actual.getId()).isEqualTo(order.getId());
@@ -112,7 +112,7 @@ class OrderServiceIntegrationTest {
 
             // Act & Assert
             CoreException exception = assertThrows(CoreException.class, () ->
-                    sut.getUserOrder(USER_ID, order.getId())
+                    sut.getUserOrderWithLock(USER_ID, order.getId())
             );
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.FORBIDDEN);
         }

@@ -101,26 +101,6 @@ public class ProductService {
         return products;
     }
 
-
-    public List<Product> assertDeductible(final Map<Long, Quantity> commandMap) {
-        final List<Product> products = productRepository.findAllValidWithPessimisticLock(commandMap.keySet().stream().toList());
-
-        // 1. 상품 ID 유효성 검증
-        if (products.size() != commandMap.size()) {
-            throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 상품입니다.");
-        }
-
-        // 2. 재고 검증
-        for (Product product : products) {
-            final Quantity orderQuantity = commandMap.get(product.getId());
-            if (orderQuantity.isGreaterThan(product.getStockQuantity())) {
-                throw new CoreException(ErrorType.CONFLICT, "재고가 부족합니다: " + product.getId());
-            }
-        }
-
-        return products;
-    }
-
     public Money calculateTotalAmount(List<Product> products, ProductCommand.OrderProducts orderProducts) {
         // productId를 키로 하는 수량 맵 생성
         Map<Long, Quantity> quantityMap = orderProducts.getProducts().stream()
@@ -138,7 +118,7 @@ public class ProductService {
                 .reduce(Money.ZERO, Money::add);
     }
 
-    public boolean deductStock(final List<ProductCommandOld.DeductStock> commands) {
+    public boolean deductStockOld(final List<ProductCommandOld.DeductStock> commands) {
         // 1. 재고 검증 (재고 수량 변경 없이)
         for (ProductCommandOld.DeductStock command : commands) {
             Product product = command.product();
@@ -157,4 +137,33 @@ public class ProductService {
         return true;
     }
 
+    public List<Product> deductStock(ProductCommand.DeductStocks command) {
+        // 1. 상품 ID 추출
+        List<Long> commandProductIds = command.getStocks().stream()
+                .map(ProductCommand.DeductStocks.DeductStock::getProductId)
+                .toList();
+
+        // 2. 상품 존재 여부 확인 (비관적 락으로 조회)
+        List<Product> products = productRepository.findAllValidWithPessimisticLock(commandProductIds);
+
+        // 3. 상품 ID 유효성 검증
+        if (products.size() != commandProductIds.size()) {
+            throw new CoreException(ErrorType.NOT_FOUND, "주문 불가능한 상품이 포함되어 있습니다.");
+        }
+
+        // 4. 재고 차감
+        Map<Long, Quantity> productQuntityMap = command.getStocks().stream()
+                .collect(Collectors.toMap(
+                        ProductCommand.DeductStocks.DeductStock::getProductId,
+                        ProductCommand.DeductStocks.DeductStock::getQuantity
+                ));
+
+        for (Product product : products) {
+            Quantity quantity = productQuntityMap.get(product.getId());
+
+            product.deductStock(quantity);
+        }
+
+        return products;
+    }
 }

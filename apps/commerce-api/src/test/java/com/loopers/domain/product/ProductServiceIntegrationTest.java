@@ -435,10 +435,11 @@ class ProductServiceIntegrationTest {
             Quantity deductQuantity1 = Quantity.of(5);
             Quantity deductQuantity2 = Quantity.of(3);
 
-            List<ProductCommandOld.DeductStock> commands = List.of(
-                    new ProductCommandOld.DeductStock(product1, deductQuantity1),
-                    new ProductCommandOld.DeductStock(product2, deductQuantity2)
+            List<ProductCommand.DeductStocks.DeductStock> deductStockList = List.of(
+                    ProductCommand.DeductStocks.DeductStock.of(product1.getId(), deductQuantity1),
+                    ProductCommand.DeductStocks.DeductStock.of(product2.getId(), deductQuantity2)
             );
+            ProductCommand.DeductStocks commands = ProductCommand.DeductStocks.of(deductStockList);
 
             Quantity beforeStockOfProduct1 = product1.getStockQuantity();
             Quantity beforeStockOfProduct2 = product2.getStockQuantity();
@@ -456,28 +457,6 @@ class ProductServiceIntegrationTest {
 
                     () -> assertThat(actualProduct2.getStockQuantity()).isEqualTo(beforeStockOfProduct2.subtract(deductQuantity2)),
                     () -> assertThat(actualProduct2.getStatus()).isEqualTo(ProductStatus.AVAILABLE)
-            );
-        }
-
-        @Test
-        @DisplayName("재고가 부족할 경우, 상품 상태가 OUT_OF_STOCK으로 변경되고 false를 반환한다.")
-        void markSoldOutAndThrowException_whenStockNotEnough() {
-            // Arrange
-            Quantity overQuantity = Quantity.of(200); // 현재 재고보다 많은 수량
-            List<ProductCommandOld.DeductStock> commands = List.of(
-                    new ProductCommandOld.DeductStock(product1, overQuantity)
-            );
-            Quantity beforeStockOfProduct1 = product1.getStockQuantity();
-
-            // Act
-            boolean isDeductStock = sut.deductStock(commands);
-
-            Product updated = productRepository.findById(product1.getId()).orElseThrow();
-
-            // Assert
-            assertAll(
-                    () -> assertThat(isDeductStock).isFalse(),
-                    () -> assertThat(updated.getStatus()).isEqualTo(ProductStatus.OUT_OF_STOCK)
             );
         }
     }

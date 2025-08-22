@@ -1,5 +1,6 @@
 package com.loopers.domain.point;
 
+import com.loopers.domain.BaseEntity;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.payment.PaymentFailureReason;
 import com.loopers.support.error.CoreException;
@@ -11,12 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "point")
-public class Point {
+public class Point extends BaseEntity {
     public static final Money INITIAL_POINT_AMOUNT = Money.ZERO;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "balance", nullable = false))
@@ -64,7 +61,13 @@ public class Point {
             throw new CoreException(ErrorType.BAD_REQUEST, "사용할 포인트는 0 이상이어야 합니다.");
         }
         if (this.amount.isLessThan(paymentAmount)) {
-            throw new CoreException(ErrorType.CONFLICT, PaymentFailureReason.INSUFFICIENT_BALANCE.getMessage());
+            throw new CoreException(
+                    ErrorType.CONFLICT,
+                    String.format(PaymentFailureReason.INSUFFICIENT_POINT.getMessage()
+                                    + " 현재 포인트: %s, 요청 포인트: %s",
+                                  paymentAmount.getAmount(),
+                                  this.amount.getAmount())
+            );
         }
         this.amount = this.amount.subtract(paymentAmount);
     }

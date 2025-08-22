@@ -70,7 +70,8 @@ class PaymentUseCaseConcurrencyTest {
             final long orderId = 1000L + i; // 1001 ~ 1020
             CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
                 try {
-                    PaymentInfo.Pay payInfo = PaymentInfo.Pay.of(USER_ID, orderId, PaymentMethod.POINT.name());
+                    // ✅ 새로운 PaymentInfo.PointPay.of() 사용
+                    PaymentInfo.Pay payInfo = PaymentInfo.PointPay.of(USER_ID, orderId);
                     paymentUseCase.pay(payInfo);
                     return true;
                 } catch (Exception e) {
@@ -99,7 +100,6 @@ class PaymentUseCaseConcurrencyTest {
             softly.assertThat(actual.balance())
                     .as("포인트 차감 후 잔액")
                     .isEqualTo(beforeUserBalance.subtract(Money.of(totalPaymentAmount)));
-
 
             softly.assertThat(stockQuantity.getAmount())
                     .as("재고 차감 수량")
