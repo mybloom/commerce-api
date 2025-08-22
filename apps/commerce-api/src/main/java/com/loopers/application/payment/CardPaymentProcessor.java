@@ -1,9 +1,12 @@
 package com.loopers.application.payment;
 
+import com.loopers.application.pg.PgGateway;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentFailureReason;
 import com.loopers.domain.payment.PaymentMethod;
+import com.loopers.infrastructure.http.PgClientDto;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,42 +20,48 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CardPaymentProcessor implements PaymentProcessor {
 
-//    private final PgClient pgClient;
+    private final PgGateway pgGateway;
 
     //    @Value("${payments.card.return-base-url}") //todo
     private String callbackUrl = "http://localhost:8080/api/v1/payments/card/callback";
+    private final String storeId = "store123"; //ecommerce pg용 상점 아이디
 
     @Override
     public PaymentProcessResult process(PaymentInfo.Pay info, Payment payment, Money amount) {
         final PaymentInfo.CardPay carPayInfo = (PaymentInfo.CardPay) info;
 
         // 1) PG 요청 생성
-        PgClient.PgAuthRequest req = new PgClient.PgAuthRequest(
-                carPayInfo.getOrderId().toString(),
-                amount.getAmount(),
+        PgClientDto.PgAuthRequest pgAuthRequest = new PgClientDto.PgAuthRequest(
+                String.format("%010d", carPayInfo.getOrderId()),
                 carPayInfo.getCardType(),
                 carPayInfo.getCardNumber(),
+                amount.getAmount().toString(),
                 callbackUrl
         );
 
         // 2) PG 호출
-//        PgClient.PgAuthResponse response = pgClient.authorize(req);
-        PgClient.PgAuthResponse response = null;
+        PgClientDto.PgAuthResponse pgAuthResponse = null;
+        try {
+            pgAuthResponse = pgGateway.pgAuthPayment(storeId, pgAuthRequest);
+        } catch (FeignException e) {
+
+        }
 
         // 3) 결과 해석
-        if (response == null) {
+        if (pgAuthResponse == null) {
+            // todo: 재시도 해봐야하는 구간
             log.warn("PG returned null response. orderId={}", info.getOrderId());
             return new PaymentProcessResult.Declined(PaymentFailureReason.PG_COMMUNICATION_ERROR.getMessage());
         }
 
-        if ("SUCCESS".equals(response.meta().result())) {
+        if ("SUCCESS".equals(pgAuthResponse.meta().result())) {
             // 카드: 요청 수립 성공 → Pending (콜백에서 최종 승인/실패 처리)
-            String txId = response.data().transactionKey();
+            String txId = pgAuthResponse.data().transactionKey();
             return new PaymentProcessResult.Pending(txId, buildReturnUrl(carPayInfo.getOrderId()));
         }
 
         // 거절(비재시도) 사유 매핑
-        String message = response.meta().message() + ":" + response.meta().message();
+        String message = pgAuthResponse.meta().message() + ":" + pgAuthResponse.meta().message();
         return new PaymentProcessResult.Declined(message);
     }
 
