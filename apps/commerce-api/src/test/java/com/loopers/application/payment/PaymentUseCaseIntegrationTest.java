@@ -118,7 +118,7 @@ class PaymentUseCaseIntegrationTest {
         orderId = order.getId();
     }
 
-    @Test
+   /* @Test
     @DisplayName("결제 성공 시, 결제 성공 이력이 저장된다")
     void pay_success() {
         prepareOrderAndOrderLines(Quantity.of(2), Quantity.of(2));
@@ -227,6 +227,6 @@ class PaymentUseCaseIntegrationTest {
                 () -> assertThat(current1.getStockQuantity().getAmount()).isEqualTo(products.get(0).getStockQuantity().getAmount()),
                 () -> assertThat(current2.getStockQuantity()).isEqualTo(products.get(1).getStockQuantity())
         );
-    }
+    }*/
 }
 

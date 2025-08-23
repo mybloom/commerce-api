@@ -60,31 +60,25 @@ public class Payment {
         this.createdAt = ZonedDateTime.now();
     }
 
-    public static Payment confirmSuccess(
-            Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus
-    ) {
-        if (orderId == null || paymentMethod == null || amount == null || paymentStatus == null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID, 결제 방법, 결제 금액, 결제 상태는 필수입니다.");
-        }
-        if (amount.getAmount() < 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 금액은 0이상이여야 합니다.");
+    public static Payment createInit(Long orderId, PaymentMethod paymentMethod, Money amount) {
+        if (orderId == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID는 필수입니다.");
         }
 
-        return new Payment(orderId, paymentMethod, amount, paymentStatus);
+        return new Payment(orderId, paymentMethod, amount, PaymentStatus.PENDING);
     }
 
-    public static Payment confirmFailure(
-            Long orderId, PaymentMethod paymentMethod, PaymentStatus paymentStatus,
-            PaymentFailureReason paymentFailureReason
-    ) {
-        if (orderId == null || paymentMethod == null || paymentStatus == null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID, 결제 방법, 결제 금액, 결제 상태는 필수입니다.");
+    public void success() {
+        if(this.paymentStatus != PaymentStatus.PENDING) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제 상태가 PENDING이 아닙니다. 현재 상태: " + this.paymentStatus);
         }
+        this.paymentStatus = PaymentStatus.CONFIRMED;
+    }
 
-        /*if (amount.getAmount() < 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 금액은 0이상이여야 합니다.");
-        }*/
-
-        return new Payment(orderId, paymentMethod, paymentStatus, paymentFailureReason);
+    public void fail() {
+        if(this.paymentStatus != PaymentStatus.PENDING) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제 상태가 PENDING이 아닙니다. 현재 상태: " + this.paymentStatus);
+        }
+        this.paymentStatus = PaymentStatus.FAILED;
     }
 }

@@ -6,8 +6,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import java.util.TimeZone;
+
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
 
+@EnableFeignClients
 @ConfigurationPropertiesScan
 @SpringBootApplication
 @Import(QueryDslConfig.class)

@@ -13,12 +13,12 @@ public class PaymentFailureHandler {
 
     private final PaymentService paymentService;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    /*@Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(Long userId, PaymentInfo.Pay payInfo, PaymentFailureReason paymentFailureReason) {
         paymentService.saveFailure(
                 payInfo.getOrderId(),
                 payInfo.getPaymentMethod(),
                 paymentFailureReason
         );
-    }
+    }*/
 }

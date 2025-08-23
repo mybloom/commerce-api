@@ -103,7 +103,9 @@ public class Product {
 
     public void deductStock(Quantity quantity) {
         if (quantity.isGreaterThan(this.stockQuantity)) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "재고가 부족합니다.");
+            throw new CoreException(ErrorType.CONFLICT,
+                    String.format("상품 [%d]의 재고가 부족합니다. 주문수량: %d, 재고수량: %d",
+                    id, quantity.getAmount(), stockQuantity.getAmount()));
         }
 
         Quantity remainingStock = this.stockQuantity.subtract(quantity);

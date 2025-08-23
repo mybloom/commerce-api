@@ -1,8 +1,13 @@
 package com.loopers.domain.payment;
 
 import com.loopers.domain.commonvo.Money;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @RequiredArgsConstructor
 @Component
@@ -10,28 +15,30 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
 
-    public Long saveSuccess(
-            final Long orderId, final PaymentMethod paymentMethod, final Money amount
-    ) {
-        final Payment payment = paymentRepository.save(
-                Payment.confirmSuccess(orderId, paymentMethod, amount, PaymentStatus.CONFIRMED)
-        );
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Payment createPaymentByOrderId(final Long orderId, final PaymentMethod paymentMethod, final Money amount) {
+        paymentRepository.findByOrderId(orderId)
+                .ifPresent(payment -> {
+                    throw new CoreException(ErrorType.CONFLICT, "이미 결제 요청이 존재합니다. orderId=" + orderId);
+                });
 
-        return payment.getId();
+        return paymentRepository.save(
+                Payment.createInit(orderId, paymentMethod, amount)
+        );
     }
 
-    public Long saveFailure(
-            final Long orderId,
-            final PaymentMethod paymentMethod,
-//            final Money amount,
-            final PaymentFailureReason failureReason
+    public void success(
+            final Long paymentId, final PaymentMethod paymentMethod, final Money amount
     ) {
-        final Payment payment = paymentRepository.save(
-                Payment.confirmFailure(
-                        orderId, paymentMethod,PaymentStatus.CANCELED, failureReason
-                )
-        );
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보가 존재하지 않습니다. paymentId=" + paymentId));
 
-        return payment.getId();
+        payment.success();
     }
+
+    @Transactional
+    public void fail(Payment payment, String reason) {
+        payment.fail();
+    }
+
 }

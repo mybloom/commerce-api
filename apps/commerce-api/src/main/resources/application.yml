@@ -29,6 +29,45 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      pg:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 20
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        slowCallRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenState: true
+        recordExceptions:
+          - feign.FeignException
+          - java.io.IOException
+        ignoreExceptions:
+          - com.loopers.support.error.CoreException
+  retry:
+    instances:
+      pg:
+        maxAttempts: 2                 # 총 2번(최초 + 1회 재시도)
+        waitDuration: 200ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        enableRandomizedWait: true     # 지터
+        retryExceptions:
+          - feign.RetryableException   # 타임아웃/네트워크 계열
+          - feign.FeignException$InternalServerError
+          - feign.FeignException$BadGateway
+          - feign.FeignException$ServiceUnavailable
+        ignoreExceptions:
+          - com.loopers.support.error.CoreException
+  bulkhead:
+    instances:
+      pg:
+        maxConcurrentCalls: 50
+        maxWaitDuration: 0
+
 ---
 spring:
   config:

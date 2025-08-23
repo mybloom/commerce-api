@@ -12,12 +12,12 @@ public class PaymentV1Response {
     public static class PaymentResponse {
 
         private final Long paymentId;
-        private final String paymentStatus;
+//        private final String paymentStatus;
 
-        public static PaymentResponse from(PaymentResult.Pay paymentResult) {
+        public static PaymentResponse from(PaymentResult.Pay result) {
             return PaymentResponse.builder()
-                    .paymentId(paymentResult.getPaymentId())
-                    .paymentStatus(paymentResult.getPaymentStatus().name())
+                    .paymentId(result.paymentId())
+//                    .paymentStatus(result.)
                     .build();
         }
     }
