@@ -39,7 +39,7 @@ public class OrderUseCase {
         final Money orderAmount = productService.calculateTotalAmount(products, productCommand);
         // 3. 쿠폰 유효성 및 사용처리 : 낙관적락 적용
         final Money discountAmount = couponService.applyCouponDiscount(
-                orderInfo.convertToCouponCommand(orderAmount.getAmount())
+                orderInfo.convertToCouponCommand(orderAmount.getAmount(), order.getId())
         );
 
         // 4. 주문 확정

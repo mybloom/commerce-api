@@ -90,7 +90,7 @@ public class Order {
                          Money discountAmount,
                          Money paymentAmount) {
 
-        validateDiscountAmount(totalAmount,discountAmount);
+        validateDiscountAmount(totalAmount, discountAmount);
 
         // 주문 상태 변경
         if (this.status != OrderStatus.PENDING) {
@@ -111,5 +111,19 @@ public class Order {
         if (totalAmount.isLessThan(discountAmount)) {
             throw new CoreException(ErrorType.BAD_REQUEST, "할인 금액이 주문 금액을 초과할 수 없습니다.");
         }
+    }
+
+    public void fail() {
+        if (this.status != OrderStatus.COMPLETED) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
+        }
+        this.status = OrderStatus.FAILED;
+    }
+
+    public void success() {
+        if( this.status != OrderStatus.COMPLETED) {
+            throw new CoreException(ErrorType.CONFLICT, "주문 상태가 올바르지 않습니다.");
+        }
+        this.status = OrderStatus.SUCCESS;
     }
 }

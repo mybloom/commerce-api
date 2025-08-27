@@ -140,7 +140,7 @@ public class PointServiceIntegrationTest {
             Money useAmount = Money.of(300L);
 
             // Act
-            sut.useOrThrow(point, useAmount);
+            sut.use(point, useAmount);
 
             // Assert
             Point actual = pointRepository.findByUserId(userId).orElseThrow();

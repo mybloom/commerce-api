@@ -41,9 +41,14 @@ public class OrderService {
         return order.getPaymentAmount();
     }
 
-    public Order getUserOrderWithLock(Long userId, Long orderId) {
+    public Order getUserOrderWithLinesByUser(Long userId, Long orderId) {
         return orderRepository.findByIdWithOrderLines(orderId)
                 .filter(order -> order.getUserId().equals(userId))
+                .orElseThrow(() -> new CoreException(ErrorType.FORBIDDEN, "해당 사용자의 주문이 아닙니다."));
+    }
+
+    public Order getUserOrderWithLines(Long orderId) {
+        return orderRepository.findByIdWithOrderLines(orderId)
                 .orElseThrow(() -> new CoreException(ErrorType.FORBIDDEN, "해당 사용자의 주문이 아닙니다."));
     }
 
@@ -57,5 +62,17 @@ public class OrderService {
         );
 
         return orderRepository.save(order);
+    }
+
+    public void markFailed(final Long orderId) {
+        Order order = orderRepository.findByIdWithOrderLines(orderId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "주문 정보를 찾을 수 없습니다. orderId=" + orderId));
+        order.fail();
+    }
+
+    public void success(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "주문 정보를 찾을 수 없습니다. orderId=" + orderId));
+        order.success();
     }
 }

@@ -11,17 +11,20 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "payment")
-@Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "payment")
+@Entity
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order_id", nullable = false, updatable = false)
+    @Column(name = "user_id", nullable = false, updatable = false)
+    private Long userId;
+
+    @Column(name = "order_id", nullable = false, updatable = false, unique = true)
     private Long orderId;
 
     @Enumerated(EnumType.STRING)
@@ -34,51 +37,77 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
-    private PaymentStatus paymentStatus;
+    private PaymentStatus status;
 
     @Column(name = "failure_reason", nullable = true)
-    private PaymentFailureReason failureReason;
+//    private PaymentFailureReason failureReason;
+    private String failureReason;
 
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private ZonedDateTime deletedAt;
 
 
-    private Payment(Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus paymentStatus) {
+    private Payment(Long userId, Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus status) {
+        this.userId = userId;
         this.orderId = orderId;
         this.paymentMethod = paymentMethod;
         this.amount = amount;
-        this.paymentStatus = paymentStatus;
+        this.status = status;
         this.createdAt = ZonedDateTime.now();
     }
 
-    private Payment(Long orderId, PaymentMethod paymentMethod, PaymentStatus paymentStatus, PaymentFailureReason failureReason) {
+    private Payment(Long userId, Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus status,
+                    String failureReason) {
+        this.userId = userId;
         this.orderId = orderId;
         this.paymentMethod = paymentMethod;
-        this.paymentStatus = paymentStatus;
+        this.amount = amount;
+        this.status = status;
         this.failureReason = failureReason;
         this.createdAt = ZonedDateTime.now();
     }
 
-    public static Payment createInit(Long orderId, PaymentMethod paymentMethod, Money amount) {
-        if (orderId == null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID는 필수입니다.");
-        }
+    public static Payment createInit(Long userId, Long orderId, PaymentMethod paymentMethod, Money amount) {
+        validateCreate(orderId, paymentMethod, amount);
+        return new Payment(userId, orderId, paymentMethod, amount, PaymentStatus.PENDING);
+    }
 
-        return new Payment(orderId, paymentMethod, amount, PaymentStatus.PENDING);
+    public static Payment createFail(Long userId, Long orderId, PaymentMethod paymentMethod, Money amount, String failureReason) {
+        validateCreate(orderId, paymentMethod, amount);
+        return new Payment(userId, orderId, paymentMethod, amount, PaymentStatus.FAILED, failureReason);
+    }
+
+    public static Payment createSuccess(Long userId, Long orderId, PaymentMethod paymentMethod, Money amount) {
+        validateCreate(orderId, paymentMethod, amount);
+        return new Payment(userId, orderId, paymentMethod, amount, PaymentStatus.SUCCESS);
     }
 
     public void success() {
-        if(this.paymentStatus != PaymentStatus.PENDING) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 상태가 PENDING이 아닙니다. 현재 상태: " + this.paymentStatus);
+        if(this.status != PaymentStatus.PENDING) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제 상태가 PENDING이 아닙니다. 현재 상태: " + this.status);
         }
-        this.paymentStatus = PaymentStatus.CONFIRMED;
+        this.status = PaymentStatus.SUCCESS;
     }
 
-    public void fail() {
-        if(this.paymentStatus != PaymentStatus.PENDING) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 상태가 PENDING이 아닙니다. 현재 상태: " + this.paymentStatus);
+    public void fail(String failureReason) {
+        if(this.status != PaymentStatus.PENDING) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제 상태가 PENDING이 아닙니다. 현재 상태: " + this.status);
         }
-        this.paymentStatus = PaymentStatus.FAILED;
+
+        this.status = PaymentStatus.FAILED;
+        this.failureReason = failureReason;
+    }
+
+    private static void validateCreate(Long orderId, PaymentMethod paymentMethod, Money amount) {
+        if (orderId == null || orderId <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 주문 ID입니다: " + orderId);
+        }
+        if (paymentMethod == null) {
+            throw new IllegalArgumentException("결제 수단은 필수 값입니다.");
+        }
+        if (amount == null || amount.isLessThan(Money.ZERO)) {
+            throw new IllegalArgumentException("결제 금액은 0보다 커야 합니다.");
+        }
     }
 }

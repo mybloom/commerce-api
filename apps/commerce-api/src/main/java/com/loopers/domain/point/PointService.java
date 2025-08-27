@@ -45,7 +45,7 @@ public class PointService {
         }
     }
 
-    public void useOrThrow(Point point, Money paymentAmount) {
+    public void use(Point point, Money paymentAmount) {
         point.use(paymentAmount);
     }
 

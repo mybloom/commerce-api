@@ -1,12 +1,15 @@
 package com.loopers.application.payment;
 
-import com.loopers.application.pg.PgGateway;
-import com.loopers.domain.commonvo.Money;
+import com.loopers.application.payment.dto.PaymentFailureInfo;
+import com.loopers.application.payment.dto.PaymentInfo;
+import com.loopers.application.payment.dto.PaymentResult;
+import com.loopers.domain.order.Order;
 import com.loopers.domain.payment.Payment;
-import com.loopers.domain.payment.PaymentFailureReason;
 import com.loopers.domain.payment.PaymentMethod;
-import com.loopers.infrastructure.http.PgClientDto;
-import feign.FeignException;
+import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.payment.pg.PaymentGateway;
+import com.loopers.domain.payment.pg.PgDto;
+import com.loopers.support.error.pg.PgGatewayException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,49 +23,48 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CardPaymentProcessor implements PaymentProcessor {
 
-    private final PgGateway pgGateway;
+    private final PaymentGateway paymentGateway;
+    private final PaymentService paymentService;
+    private final PaymentFailureHandler failureHandler;
 
-    //    @Value("${payments.card.return-base-url}") //todo
-    private String callbackUrl = "http://localhost:8080/api/v1/payments/card/callback";
-    private final String storeId = "store123"; //ecommerce pg용 상점 아이디
 
+    private final static String callbackUrl = "http://localhost:8080/api/v1/payments/pg/callback";
+    private final static String storeId = "store123"; //ecommerce pg용 상점 아이디
+
+    //todo: final PaymentInfo.Pay info 이거 받는 부분 거슬림. info를 바로 쓸 수도 있음으로..
     @Override
-    public PaymentProcessResult process(PaymentInfo.Pay info, Payment payment, Money amount) {
+    public PaymentResult.Pay process(final PaymentInfo.Pay info, final Order order) {
         final PaymentInfo.CardPay carPayInfo = (PaymentInfo.CardPay) info;
 
-        // 1) PG 요청 생성
-        PgClientDto.PgAuthRequest pgAuthRequest = new PgClientDto.PgAuthRequest(
-                String.format("%010d", carPayInfo.getOrderId()),
+        // PG 요청 생성
+        PgDto.AuthCommand authCommand = PgDto.AuthCommand.of(
+                storeId,
+                carPayInfo.getOrderId(),
                 carPayInfo.getCardType(),
                 carPayInfo.getCardNumber(),
-                amount.getAmount().toString(),
-                callbackUrl
+                order.getPaymentAmount(),
+                buildReturnUrl(carPayInfo.getOrderId()) //todo: pathParam 안써서 안해도 됨
         );
 
-        // 2) PG 호출
-        PgClientDto.PgAuthResponse pgAuthResponse = null;
+        // 1) PG 호출
+        PgDto.AuthQuery pgAuthQuery = null;
         try {
-            pgAuthResponse = pgGateway.pgAuthPayment(storeId, pgAuthRequest);
-        } catch (FeignException e) {
+            pgAuthQuery = paymentGateway.auth(authCommand);
+        } catch (PgGatewayException e) {
+            log.error("PgGatewayException: [{}] {} ({})", e.getResult(), e.getErrorCode(), e.getMessage());
 
+            failureHandler.handleFailedCardPayment(
+                    PaymentFailureInfo.Fail.of(
+                            info, order.getPaymentAmount(), e.getResult() + ":" + e.getMessage()
+                    )
+            );
+            throw e;
         }
 
-        // 3) 결과 해석
-        if (pgAuthResponse == null) {
-            // todo: 재시도 해봐야하는 구간
-            log.warn("PG returned null response. orderId={}", info.getOrderId());
-            return new PaymentProcessResult.Declined(PaymentFailureReason.PG_COMMUNICATION_ERROR.getMessage());
-        }
+        // 2) 결제 정보 저장
+        Payment payment = paymentService.createCardPayment(carPayInfo.convertToCommand(order.getPaymentAmount(), pgAuthQuery.transactionKey()));
 
-        if ("SUCCESS".equals(pgAuthResponse.meta().result())) {
-            // 카드: 요청 수립 성공 → Pending (콜백에서 최종 승인/실패 처리)
-            String txId = pgAuthResponse.data().transactionKey();
-            return new PaymentProcessResult.Pending(txId, buildReturnUrl(carPayInfo.getOrderId()));
-        }
-
-        // 거절(비재시도) 사유 매핑
-        String message = pgAuthResponse.meta().message() + ":" + pgAuthResponse.meta().message();
-        return new PaymentProcessResult.Declined(message);
+        return PaymentResult.Pay.of(payment.getId(), payment.getStatus().name(), info.getOrderId());
     }
 
     /**

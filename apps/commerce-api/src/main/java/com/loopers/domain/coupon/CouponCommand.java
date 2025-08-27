@@ -14,12 +14,14 @@ public final class CouponCommand {
         private final Long userId;
         private final Money orderAmount;
         private final List<Long> userCouponIds;
+        private final Long orderId;
 
-        public static ApplyDiscount of(Long userId, Long amount, List<Long> userCouponIds) {
+        public static ApplyDiscount of(Long userId, Long amount, List<Long> userCouponIds, Long orderId) {
             return ApplyDiscount.builder()
                     .userId(userId)
                     .orderAmount(Money.of(amount))
                     .userCouponIds(userCouponIds)
+                    .orderId(orderId)
                     .build();
         }
     }

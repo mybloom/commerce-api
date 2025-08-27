@@ -35,4 +35,9 @@ public class OrderRepositoryImpl implements OrderRepository {
         return orderJpaRepository.findTotalPaymentAmountByUserId(userId)
                 .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "사용자의 결제 금액을 찾을 수 없습니다. userId: " + userId));
     }
+
+    @Override
+    public Optional<Order> findById(Long orderId) {
+        return orderJpaRepository.findById(orderId);
+    }
 }

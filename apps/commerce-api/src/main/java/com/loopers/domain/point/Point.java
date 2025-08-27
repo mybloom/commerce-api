@@ -57,7 +57,7 @@ public class Point extends BaseEntity {
     }
 
     public void use(Money paymentAmount) {
-        if( paymentAmount == null || paymentAmount.isLessThan(Money.ZERO)) {
+        if (paymentAmount == null || paymentAmount.isLessThan(Money.ZERO)) {
             throw new CoreException(ErrorType.BAD_REQUEST, "사용할 포인트는 0 이상이어야 합니다.");
         }
         if (this.amount.isLessThan(paymentAmount)) {
@@ -65,8 +65,9 @@ public class Point extends BaseEntity {
                     ErrorType.CONFLICT,
                     String.format(PaymentFailureReason.INSUFFICIENT_POINT.getMessage()
                                     + " 현재 포인트: %s, 요청 포인트: %s",
-                                  paymentAmount.getAmount(),
-                                  this.amount.getAmount())
+                            this.amount.getAmount(),
+                            paymentAmount.getAmount()
+                    )
             );
         }
         this.amount = this.amount.subtract(paymentAmount);

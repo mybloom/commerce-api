@@ -1,15 +1,11 @@
 package com.loopers.interfaces.api.payment;
 
-import com.loopers.application.payment.PaymentProcessResult;
-import com.loopers.application.payment.PaymentResult;
+import com.loopers.application.payment.dto.PaymentResult;
 import com.loopers.application.payment.PaymentUseCase;
 import com.loopers.interfaces.api.ApiResponse;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -29,21 +25,20 @@ public class PaymentV1ApiController implements PaymentV1ApiSpec {
         log.info("결제 요청 - userId: {}, orderId: {}, paymentMethod: {}",
                 userId, request.getOrderId(), request.getPaymentMethod());
 
-        var result  = paymentUseCase.pay(request.convertToCommand(userId));
-        var outcome = result.outcome();
+        PaymentResult.Pay result = paymentUseCase.pay(request.convertToCommand(userId));
 
-        if (outcome instanceof PaymentProcessResult.Approved
-                || outcome instanceof PaymentProcessResult.Pending) {
-            return ApiResponse.success(PaymentV1Response.PaymentResponse.from(result));
-        }
-
-        // 실패 : 컨트롤러에서만 CoreException 던지기 (Advice가 409 + ApiResponse.fail 로 변환)
-        if (outcome instanceof PaymentProcessResult.Declined declined) {
-            throw new CoreException(ErrorType.CONFLICT, declined.reason());
-        }
-
-        // 방어적
-        throw new CoreException(ErrorType.INTERNAL_ERROR, "UNKNOWN payment OUTCOME");
+        return ApiResponse.success(
+                PaymentV1Response.PaymentResponse.from(result)
+        );
     }
 
+    @PostMapping("/pg/callback")
+    @Override
+    public void pgCallback(@RequestBody PaymentCallbackDto.ProcessRequest request) {
+        log.info("********PG사 콜백 수신");
+        log.info("orderId:{}, transactionKey: {}, status: {}, reason: {}",
+                request.orderId(), request.transactionKey(), request.status(), request.reason());
+        paymentUseCase.pgConclude(request.convertToCommand());
+        log.info("********PG사 콜백 처리 완료");
+    }
 }
