@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
         url = "http://localhost:8082",
         configuration = FeignClientTimeoutConfig.class
 )
-public interface PgClient {
+public interface PgFeignClient {
 
     @PostMapping("/api/v1/payments")
     PgClientDto.PgAuthResponse requestPayment(@RequestHeader("X-USER-ID") String userId, @RequestBody PgClientDto.PgAuthRequest request);
