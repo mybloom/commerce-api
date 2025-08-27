@@ -1,6 +1,5 @@
 package com.loopers.support.error;
 
-import com.loopers.domain.payment.PaymentFailureReason;
 import lombok.Getter;
 
 @Getter

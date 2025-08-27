@@ -1,11 +1,12 @@
 package com.loopers.application.payment;
 
-import com.loopers.domain.commonvo.Money;
-import com.loopers.domain.payment.Payment;
+import com.loopers.application.payment.dto.PaymentInfo;
+import com.loopers.application.payment.dto.PaymentResult;
+import com.loopers.domain.order.Order;
 import com.loopers.domain.payment.PaymentMethod;
 
 public interface PaymentProcessor {
-    PaymentProcessResult process(PaymentInfo.Pay info, Payment payment, Money payAmount);
+    PaymentResult.Pay process(PaymentInfo.Pay info, Order order);
 
     boolean supports(PaymentMethod paymentMethod);
 }

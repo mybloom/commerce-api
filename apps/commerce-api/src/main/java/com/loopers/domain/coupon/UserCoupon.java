@@ -30,6 +30,10 @@ public class UserCoupon {
     @Column(name = "used", nullable = false)
     private boolean used;
 
+    //todo: used는 없어도 될 듯.
+    @Column(name = "order_id", nullable = true) //발급, 사용 구분 가능 : nullable = true
+    private Long orderId;
+
     @Version
     private Long version;
 
@@ -51,12 +55,14 @@ public class UserCoupon {
                 .build();
     }
 
-    public void markUsed() {
+    public void markUsed(Long orderId) {
         this.used = true;
+        this.orderId = orderId;
     }
 
     public void markRestore() {
         this.used = false;
+        this.orderId = null;
     }
 
     public void validateUsable() {

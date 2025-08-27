@@ -1,5 +1,7 @@
-package com.loopers.application.payment;
+package com.loopers.application.payment.dto;
 
+import com.loopers.domain.commonvo.Money;
+import com.loopers.domain.payment.PaymentCommand;
 import com.loopers.domain.payment.PaymentMethod;
 import lombok.*;
 
@@ -37,6 +39,16 @@ public class PaymentInfo {
                     .cardNumber(cardNumber)
                     .cardType(cardType)
                     .build();
+        }
+
+        public PaymentCommand.SaveCard convertToCommand(Money amount, String transactionKey) {
+            return PaymentCommand.SaveCard.of(
+                    this.getUserId(),
+                    transactionKey,
+                    this.getOrderId(),
+                    amount
+            );
+
         }
 
     }

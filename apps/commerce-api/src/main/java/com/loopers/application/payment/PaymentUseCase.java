@@ -1,57 +1,54 @@
 package com.loopers.application.payment;
 
 
+import com.loopers.application.payment.dto.*;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderService;
-import com.loopers.domain.payment.Payment;
-import com.loopers.domain.payment.PaymentService;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class PaymentUseCase {
     private final OrderService orderService;
-    private final PaymentService paymentService;
-    private final PaymentFailureHandler failureHandler;
 
+    private final CardPaymentCallbackHandler cardPaymentCallbackHandler;
+    private final PaymentFailureHandler failureHandler;
     private final PaymentProcessorFactory paymentProcessorFactory;
 
-    @Transactional
     public PaymentResult.Pay pay(final PaymentInfo.Pay info) {
-        // 1) 기존 결제 정보 조회. 없으면 PENDING 생성
-        Order order = orderService.getUserOrderWithLock(info.getUserId(), info.getOrderId());
-        Payment payment = paymentService.createPaymentByOrderId(
-                info.getOrderId(),
-                info.getPaymentMethod(),
-                order.getPaymentAmount()
-        );
+        // 1) 기존 주문 정보 조회
+        //todo: order를 전달했을 때, 변경 가능성.
+        Order order = orderService.getUserOrderWithLinesByUser(info.getUserId(), info.getOrderId());
 
-        // 2) 수단별 Processor 호출
+        // 2) 결제 처리
         PaymentProcessor processor =
                 paymentProcessorFactory.getProcessor(info.getPaymentMethod());
-        PaymentProcessResult paymentProcessResult = processor.process(info, payment, order.getPaymentAmount());
+        PaymentResult.Pay result = processor.process(info, order);
 
-        // 3) 결과 해석 + 상태 전이 (UseCase 책임)
-        if (paymentProcessResult instanceof PaymentProcessResult.Approved result) {
-            return PaymentResult.Pay.of(payment.getId(),info.getOrderId(), paymentProcessResult);
+        return PaymentResult.Pay.of(result.paymentId(), result.paymentStatus(), info.getOrderId());
+    }
+
+    public void pgConclude(PaymentCallbackInfo.ProcessTransaction info) {
+        // todo: pg요청 : txId로 실제 요청에 대한 콜백이 맞는지 확인
+
+        //1. 성공일 때
+        if (info.status().equals(PgProcessStatus.SUCCESS)) {
+            log.info("********PG 콜백 성공 처리 - orderId: {}, transactionKey: {}", info.orderId(), info.transactionKey());
+            cardPaymentCallbackHandler.success(info);
         }
 
-        if (paymentProcessResult instanceof PaymentProcessResult.Pending result) {
-            return PaymentResult.Pay.of(payment.getId(), info.getOrderId(), paymentProcessResult);
+        //2. 실패일 때
+        if (info.status().equals(PgProcessStatus.FAILED)) {
+            log.info("********PG 콜백 실패 처리 - orderId: {}, transactionKey: {}, reason: {}", info.orderId(), info.transactionKey(), info.reason());
+            failureHandler.handleFailedCardPaymentCallback(
+                    PaymentFailureInfo.CardCallbackFail.of(info)
+            );
         }
 
-        //todo: 실패 처리
-        if (paymentProcessResult instanceof PaymentProcessResult.Declined result) {
-            paymentService.fail(payment, result.reason());
-            return PaymentResult.Pay.of(payment.getId(), info.getOrderId(), paymentProcessResult);
-        }
-
-        throw new CoreException(ErrorType.INTERNAL_ERROR, "!!!Unknown result type: " + paymentProcessResult);
     }
 
 }

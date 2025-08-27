@@ -1,9 +1,9 @@
 package com.loopers.application.payment;
 
+import com.loopers.application.payment.dto.PaymentInfo;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.domain.commonvo.Quantity;
 import com.loopers.domain.order.OrderRepository;
-import com.loopers.domain.payment.PaymentMethod;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.ProductRepository;

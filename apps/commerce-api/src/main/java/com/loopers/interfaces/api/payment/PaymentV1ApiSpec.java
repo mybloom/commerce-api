@@ -32,4 +32,17 @@ public interface PaymentV1ApiSpec {
             @RequestBody(description = "결제 정보")
             PaymentV1Request.Pay request
     );
+
+    @Operation(
+            summary = "PG사 결제 콜백 수신",
+            description = "PG사로부터 결제 결과 콜백을 수신합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "콜백 정상 처리"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
+    })
+    void pgCallback(
+            @RequestBody(description = "PG사 결제 콜백 정보")
+            PaymentCallbackDto.ProcessRequest request
+    );
 }

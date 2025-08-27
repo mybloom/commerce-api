@@ -7,4 +7,8 @@ import java.util.List;
 
 public interface UserCouponJpaRepository extends JpaRepository<UserCoupon,Long> {
     List<UserCoupon> findAllByIdInAndUserId(List<Long> userCouponIds, Long userId);
+
+    List<UserCoupon> findAllByOrderIdAndUserId(Long orderId, Long userId);
+
+    List<UserCoupon> findAllByOrderId(Long orderId);
 }

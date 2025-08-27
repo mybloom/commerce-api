@@ -1,6 +1,8 @@
 package com.loopers.application.payment;
 
-import com.loopers.domain.commonvo.Money;
+import com.loopers.application.payment.dto.PaymentFailureInfo;
+import com.loopers.application.payment.dto.PaymentInfo;
+import com.loopers.application.payment.dto.PaymentResult;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderService;
@@ -26,47 +28,50 @@ import java.util.stream.Collectors;
 public class PointPaymentProcessor implements PaymentProcessor {
 
     private final PointService pointService;
-    private final OrderService orderService;
     private final ProductService productService;
     private final PaymentService paymentService;
-    private final PaymentFailureHandler paymentFailureHandler;
+    private final OrderService orderService;
+    private final PaymentFailureHandler failureHandler;
 
-
-//    @Transactional
+    @Transactional
     @Override
-    public PaymentProcessResult process(final PaymentInfo.Pay info, Payment payment, Money amount) {
-        // 포인트 결제 정보
-        final PaymentInfo.PointPay pointPayInfo = (PaymentInfo.PointPay) info;
-
-        // 1. 결제할 포인트 금액 확인
-        Order order = orderService.getUserOrderWithLock(info.getUserId(), info.getOrderId());
-        List<OrderLine> orderLines = order.getOrderLines();
-
+    public PaymentResult.Pay process(PaymentInfo.Pay info, Order order) {
         try {
-            // 2. 보유 포인트 확인 및 포인트 차감
-            Point point = pointService.findByUserWithLock(info.getUserId());
-            pointService.useOrThrow(point, amount);
-
-            // 3. 재고 차감
-            List<ProductCommand.DeductStocks.DeductStock> deductStocks = orderLines.stream()
-                    .map(orderProduct -> ProductCommand.DeductStocks.DeductStock.of(
-                            orderProduct.getProductId(),
-                            orderProduct.getQuantity()
-                    ))
-                    .collect(Collectors.toList());
-            ProductCommand.DeductStocks deductCommand = ProductCommand.DeductStocks.of(deductStocks);
-            productService.deductStock(deductCommand);
+            return doProcess(info, order);
         } catch (CoreException e) {
-            return new PaymentProcessResult.Declined(e.getMessage());
+            failureHandler.handleFailedPointPayment(
+                    PaymentFailureInfo.Fail.of(info, order.getPaymentAmount(), e.getErrorType() + ":" + e.getMessage())
+            );
+            throw e;
         }
-
-        // 4. 결제 완료
-        paymentService.success(order.getId(), PaymentMethod.POINT, amount);
-
-        return new PaymentProcessResult.Approved(payment.getId().toString());
     }
 
-    @Override
+    public PaymentResult.Pay doProcess(final PaymentInfo.Pay info, Order order) {
+        // 2. 보유 포인트 확인 및 포인트 차감
+        Point point = pointService.findByUserWithLock(info.getUserId());
+        pointService.use(point, order.getPaymentAmount());
+
+        // 3. 재고 차감
+        List<OrderLine> orderLines = order.getOrderLines();
+        List<ProductCommand.DeductStocks.DeductStock> deductStocks = orderLines.stream()
+                .map(orderProduct -> ProductCommand.DeductStocks.DeductStock.of(
+                        orderProduct.getProductId(),
+                        orderProduct.getQuantity()
+                ))
+                .collect(Collectors.toList());
+        ProductCommand.DeductStocks deductCommand = ProductCommand.DeductStocks.of(deductStocks);
+        productService.deductStock(deductCommand);
+
+        // 4. 결제 완료
+        Payment payment = paymentService.createSuccess(info.getUserId(), order.getId(), PaymentMethod.POINT,
+                order.getPaymentAmount());
+
+        //5. 주문 성공 처리
+        orderService.success(order.getId());
+
+        return PaymentResult.Pay.of(payment.getId(), payment.getStatus().name(), payment.getOrderId());
+    }
+
     public boolean supports(PaymentMethod paymentMethod) {
         return paymentMethod == PaymentMethod.POINT;
     }

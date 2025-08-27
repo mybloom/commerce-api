@@ -8,5 +8,7 @@ public interface PaymentRepository {
 
     Optional<Payment> findById(Long paymentId);
 
+    Optional<Payment> findByOrderIdAndUserId(Long orderId, Long userId);
+
     Optional<Payment> findByOrderId(Long orderId);
 }

@@ -11,4 +11,6 @@ public interface OrderRepository {
     Optional<Order> findByIdWithOrderLines(Long id);
 
     Long findTotalPaymentAmountByUserId(Long userId);
+
+    Optional<Order> findById(Long orderId);
 }

@@ -42,8 +42,18 @@ public class CouponService {
         }
 
         // 5. 쿠폰 사용 처리
-        userCoupons.forEach(UserCoupon::markUsed);
+        userCoupons.forEach(userCoupon -> userCoupon.markUsed(command.getOrderId()));
 
         return totalDiscount;
+    }
+
+    public void restoreByUser(Long orderId, Long userId) {
+        List<UserCoupon> userCoupons = userCouponRepository.findAllByOrderIdAndUserId(orderId, userId);
+        userCoupons.forEach(UserCoupon::markRestore);
+    }
+
+    public void restore(Long orderId) {
+        List<UserCoupon> userCoupons = userCouponRepository.findAllByOrderId(orderId);
+        userCoupons.forEach(UserCoupon::markRestore);
     }
 }

@@ -38,8 +38,8 @@ public final class OrderInfo {
             return ProductCommand.OrderProducts.of(commandProducts);
         }
 
-        public CouponCommand.ApplyDiscount convertToCouponCommand(Long orderAmount) {
-            return CouponCommand.ApplyDiscount.of(this.userId, orderAmount, this.userCouponIds);
+        public CouponCommand.ApplyDiscount convertToCouponCommand(Long orderAmount, Long orderId) {
+            return CouponCommand.ApplyDiscount.of(this.userId, orderAmount, this.userCouponIds, orderId);
         }
 
         // 3. private 유틸리티 메서드
