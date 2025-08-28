@@ -23,7 +23,7 @@ public class PointV1ApiController implements PointV1ApiSpec {
         );
     }
 
-    @PostMapping
+    @PostMapping("/charge")
     @Override
     public ApiResponse<PointV1Dto.PointResponse> charge(
             @RequestHeader(name = "X-USER-ID", required = true) Long userId,
