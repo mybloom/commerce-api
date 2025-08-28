@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -19,7 +21,7 @@ public class ProductDetailUseCase {
     private final BrandService brandService;
     private final ProductService productService;
 
-    public ProductQueryResult.CatalogDetailResult findDetail(final Long productId) {
+    public ProductQueryResult.CatalogDetailResult findDetail(final Optional<Long> userId, final Long productId) {
         ProductQuery.ProductDetailQuery productDetailQuery = productService.retrieveOneByCache(productId);
         if(productDetailQuery == null) {
             throw new CoreException(ErrorType.NOT_FOUND, "유효한 상품을 찾을 수 없습니다.");

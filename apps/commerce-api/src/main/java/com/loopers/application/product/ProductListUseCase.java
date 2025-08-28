@@ -35,6 +35,7 @@ public class ProductListUseCase {
     private final ProductListCachePolicy cachePolicy;
 
     public ListViewResult findList(
+            final Optional<Long> userId,
             final Optional<Long> brandId,
             final Optional<ProductSortType> productSortType,
             final Optional<PagingCondition> pagingCondition

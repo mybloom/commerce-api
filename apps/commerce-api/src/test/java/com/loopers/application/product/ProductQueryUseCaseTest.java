@@ -112,7 +112,7 @@ class ProductListUseCaseIntegrationTest {
             Optional<ProductSortType> emptySortType = Optional.empty();
             Optional<PagingCondition> emptyPagingCondition = Optional.empty();
 
-            var actual = sut.findList(Optional.of(brandId), emptySortType, emptyPagingCondition); //todo: 쿼리에 limit 가 없다. count 조회 쿼리도 없고
+            var actual = sut.findList(Optional.empty(), Optional.of(brandId), emptySortType, emptyPagingCondition); //todo: 쿼리에 limit 가 없다. count 조회 쿼리도 없고
             /**
              * select b1_0.id,b1_0.created_at,b1_0.deleted_at,b1_0.description,b1_0.name,b1_0.status,b1_0.updated_at from brand b1_0 where b1_0.id=?
              * Hibernate: select b1_0.id,b1_0.created_at,b1_0.deleted_at,b1_0.description,b1_0.name,b1_0.status,b1_0.updated_at from brand b1_0 where b1_0.id=?
@@ -136,7 +136,7 @@ class ProductListUseCaseIntegrationTest {
             Optional<ProductSortType> productSortType = Optional.of(ProductSortType.LIKES_DESC);
             Optional<PagingCondition> emptyPagingCondition = Optional.empty();
 
-            var result = sut.findList(Optional.of(brandId), productSortType, emptyPagingCondition);
+            var result = sut.findList(Optional.empty(), Optional.of(brandId), productSortType, emptyPagingCondition);
 
             assertAll(
                     () -> assertThat(result.products())
@@ -157,7 +157,7 @@ class ProductListUseCaseIntegrationTest {
             Optional<ProductSortType> emptySortType = Optional.empty();
             Optional<PagingCondition> pagingCondition = Optional.of(new PagingCondition(0, 2));
 
-            var result = sut.findList(Optional.of(brandId), emptySortType, pagingCondition);
+            var result = sut.findList(Optional.empty(), Optional.of(brandId), emptySortType, pagingCondition);
 
             assertAll(
                     () -> assertThat(result.pagination().totalCount()).isEqualTo(3), // 검색 조건에 맞는 전체 상품 수
@@ -175,7 +175,7 @@ class ProductListUseCaseIntegrationTest {
             Optional<ProductSortType> sortType = Optional.of(ProductSortType.LIKES_DESC);
             Optional<PagingCondition> pagingCondition = Optional.of(new PagingCondition(0, 2));
 
-            var result = sut.findList(Optional.of(brandId), sortType, pagingCondition); //todo : 잘됨
+            var result = sut.findList(Optional.empty(), Optional.of(brandId), sortType, pagingCondition); //todo : 잘됨
 
             assertAll(
                     () -> assertThat(result.pagination().totalCount()).isEqualTo(3), // 검색 조건에 맞는 전체 상품 수
@@ -198,7 +198,7 @@ class ProductListUseCaseIntegrationTest {
             Optional<PagingCondition> emptyPagingCondition = Optional.empty();
 
             // act
-            var actual = sut.findList(Optional.of(brandId), emptySortType, emptyPagingCondition);
+            var actual = sut.findList(Optional.empty(), Optional.of(brandId), emptySortType, emptyPagingCondition);
 
             // assert
             assertAll(
@@ -243,7 +243,7 @@ class ProductListUseCaseIntegrationTest {
             Optional<PagingCondition> emptyPagingCondition = Optional.empty();
 
             // act
-            var actual = sut.findList(Optional.of(brandId), emptySortType, emptyPagingCondition);
+            var actual = sut.findList(Optional.empty(), Optional.of(brandId), emptySortType, emptyPagingCondition);
 
             // assert
             assertAll(

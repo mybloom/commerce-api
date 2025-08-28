@@ -27,6 +27,7 @@ public class ProductV1Controller implements ProductV1ApiSpec {
             @Valid @ModelAttribute ProductV1Dto.ListViewRequest request
     ) {
         ListViewResult listViewResult = productListUseCase.findList(
+                Optional.ofNullable(userId),
                 Optional.ofNullable(request.brandId()),
                 Optional.ofNullable(request.sortCondition()),
                 Optional.ofNullable(request.pagingCondition())
@@ -39,7 +40,7 @@ public class ProductV1Controller implements ProductV1ApiSpec {
     public ApiResponse<ProductV1Dto.DetailViewResponse> retrieveDetailView(
             @RequestHeader(name = "X-USER-ID", required = false) Long userId,
             @PathVariable("productId") Long productId) {
-        ProductQueryResult.CatalogDetailResult result = productDetailUseCase.findDetail(productId);
+        ProductQueryResult.CatalogDetailResult result = productDetailUseCase.findDetail(Optional.ofNullable(userId), productId);
         return ApiResponse.success(ProductV1Dto.DetailViewResponse.from(result));
     }
 }

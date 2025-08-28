@@ -61,6 +61,7 @@ class ProductListUseCaseCacheableTest {
         when(productService.retrieveList(pageable)).thenReturn(Page.empty(pageable));
 
         var result = sut.findList(
+                Optional.empty(),
                 Optional.empty(), Optional.ofNullable(ProductSortType.LATEST), Optional.ofNullable(PagingCondition.create(pageNumber, pageSize))
         );
 
@@ -108,6 +109,7 @@ class ProductListUseCaseCacheableTest {
         // when
         var result = sut.findList(
                 Optional.empty(),
+                Optional.empty(),
                 Optional.of(ProductSortType.LATEST),
                 Optional.of(PagingCondition.create(pageNumber, pageSize))
         );
@@ -153,6 +155,7 @@ class ProductListUseCaseCacheableTest {
 
         // when
         var actual = sut.findList(
+                Optional.empty(),
                 Optional.empty(),
                 Optional.of(ProductSortType.LATEST),
                 Optional.of(PagingCondition.create(pageNumber, pageSize))
