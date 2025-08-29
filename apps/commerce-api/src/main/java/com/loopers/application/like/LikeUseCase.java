@@ -3,24 +3,19 @@ package com.loopers.application.like;
 import com.loopers.application.common.PagingCondition;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
-import com.loopers.domain.like.LikeHistory;
-import com.loopers.domain.like.LikeProductService;
-import com.loopers.domain.like.LikeService;
-import com.loopers.domain.like.LikeSortType;
+import com.loopers.domain.like.*;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
 import com.loopers.support.paging.PageableFactory;
 import com.loopers.support.paging.Pagination;
 import com.loopers.support.paging.PagingPolicy;
-import jakarta.transaction.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,42 +27,7 @@ public class LikeUseCase {
     private final ProductService productService;
     private final BrandService brandService;
     private final LikeProductService likeProductService = new LikeProductService();
-
-    @Transactional
-    public LikeResult.LikeRegisterResult register(final Long userId, final Long productId) {
-        Product product = productService.retrieveOne(productId)
-                .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "해당 상품에 좋아요를 할 수 없습니다."));
-
-        try {
-            //좋아요 등록
-            likeService.register(userId, productId);
-        } catch (CoreException e) {
-            // 중복 요청으로 판단
-            return LikeResult.LikeRegisterResult.duplicated(userId, productId);
-        }
-
-        // 좋아요 수 증가
-        productService.increaseLikeCountAtomically(product);
-        return LikeResult.LikeRegisterResult.newCreated(userId, productId);
-    }
-
-    @Transactional
-    public LikeResult.LikeRemoveResult remove(final Long userId, final Long productId) {
-        // 상품 유효성 검사
-        Product product = productService.retrieveOne(productId)
-                .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "해당 상품에 좋아요를 해제 할 수 없습니다."));
-
-        // 좋아요 해제
-        boolean isDeleted = likeService.remove(userId, productId);
-
-        if (!isDeleted) {
-            return LikeResult.LikeRemoveResult.duplicated(userId, productId);
-        }
-
-        productService.decreaseLikeCount(product);
-        return LikeResult.LikeRemoveResult.newProcess(userId, productId);
-    }
-
+    private final ApplicationEventPublisher eventPublisher;
 
     public LikeResult.LikeListResult retrieveLikedProducts(
             final Long userId,
