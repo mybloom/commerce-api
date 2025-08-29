@@ -34,9 +34,6 @@ public class UserCoupon {
     @Column(name = "order_id", nullable = true) //발급, 사용 구분 가능 : nullable = true
     private Long orderId;
 
-    @Version
-    private Long version;
-
     @Column(name = "issued_at", nullable = false)
     private LocalDate issuedAt;
 
