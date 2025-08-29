@@ -27,9 +27,6 @@ public class OrderV1ApiController implements OrderV1ApiSpec {
         OrderInfo.Create info = request.convertToOrderInfo(userId, orderRequestKey);
         OrderResult.OrderRequestResult result = orderUseCase.order(info);
 
-        // 로그 출력
-        log.info("주문 요청 처리 완료: userId={}, orderRequestKey={}, result={}",
-                userId, orderRequestKey, result);
         return ApiResponse.success(OrderV1Response.OrderResponse.from(result));
     }
 }

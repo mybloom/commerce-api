@@ -347,7 +347,7 @@ class ProductServiceIntegrationTest {
                     .getLikeCount().getValue();
 
             // Act
-            sut.increaseLikeCountAtomically(product); //jpql update 쿼리 호출
+            sut.increaseLikeCountAtomically(product.getId()); //jpql update 쿼리 호출
 
             // 영속성 컨텍스트 동기화 및 캐시 초기화
             em.flush();

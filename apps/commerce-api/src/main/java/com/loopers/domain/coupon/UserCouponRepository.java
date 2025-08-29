@@ -13,4 +13,7 @@ public interface UserCouponRepository {
     List<UserCoupon> findAllByOrderIdAndUserId(Long orderId, Long userId);
 
     List<UserCoupon> findAllByOrderId(Long orderId);
+
+    List<UserCoupon> findAllByIdInAndUserIdWithLock(List<Long> userCouponIds, Long userId);
+
 }

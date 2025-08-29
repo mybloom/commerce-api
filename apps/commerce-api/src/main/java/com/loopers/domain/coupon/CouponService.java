@@ -6,6 +6,7 @@ import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class CouponService {
 
     private final UserCouponRepository userCouponRepository;
 
-    public Money applyCouponDiscount(final CouponCommand.ApplyDiscount command) {
+    public Money calculateDiscountAmount(final CouponCommand.ApplyDiscount command) {
         // 쿠폰이 없으면 할인 금액 0 반환
         final List<Long> userCouponIds = command.getUserCouponIds();
         if (userCouponIds == null || command.getUserCouponIds().isEmpty()) {
@@ -41,10 +42,16 @@ public class CouponService {
             throw new CoreException(ErrorType.BAD_REQUEST, "할인 금액이 주문 금액을 초과할 수 없습니다.");
         }
 
-        // 5. 쿠폰 사용 처리
-        userCoupons.forEach(userCoupon -> userCoupon.markUsed(command.getOrderId()));
-
         return totalDiscount;
+    }
+
+    public void applyCoupon(final CouponCommand.ApplyDiscount command) {
+        List<UserCoupon> userCoupons = userCouponRepository.findAllByIdInAndUserIdWithLock(
+                command.getUserCouponIds(), command.getUserId()
+        );
+
+        // 쿠폰 사용 처리
+        userCoupons.forEach(userCoupon -> userCoupon.markUsed(command.getOrderId()));
     }
 
     public void restoreByUser(Long orderId, Long userId) {

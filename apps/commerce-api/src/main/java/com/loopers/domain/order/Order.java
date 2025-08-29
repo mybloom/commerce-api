@@ -1,11 +1,11 @@
 package com.loopers.domain.order;
 
+import com.loopers.domain.BaseEntity;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,11 +17,7 @@ import lombok.*;
 @Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Order {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Order extends BaseEntity {
 
     private Long userId;
 
@@ -49,16 +45,11 @@ public class Order {
     @Builder.Default
     private List<OrderLine> orderLines = new ArrayList<>();
 
-    private ZonedDateTime createdAt;
-    private ZonedDateTime updatedAt;
-    private ZonedDateTime deletedAt;
-
     public static Order create(Long userId, String orderRequestId) {
         return Order.builder()
                 .userId(userId)
                 .status(OrderStatus.PENDING)
                 .orderRequestId(orderRequestId)
-                .createdAt(ZonedDateTime.now())
                 .build();
     }
 

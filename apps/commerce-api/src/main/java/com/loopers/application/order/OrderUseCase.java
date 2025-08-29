@@ -9,7 +9,9 @@ import com.loopers.domain.product.ProductService;
 
 import java.util.List;
 
+import com.loopers.domain.sharedkernel.OrderEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +21,8 @@ public class OrderUseCase {
 
     private final OrderService orderService;
     private final ProductService productService;
-    private final CouponService couponService;
+            private final CouponService couponService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderResult.OrderRequestResult order(OrderInfo.Create orderInfo) {
@@ -37,8 +40,8 @@ public class OrderUseCase {
 
         //상품 총 금액 계산
         final Money orderAmount = productService.calculateTotalAmount(products, productCommand);
-        // 3. 쿠폰 유효성 및 사용처리 : 낙관적락 적용
-        final Money discountAmount = couponService.applyCouponDiscount(
+        // 3. 쿠폰 유효성 및 할인 금액 계산
+        final Money discountAmount = couponService.calculateDiscountAmount(
                 orderInfo.convertToCouponCommand(orderAmount.getAmount(), order.getId())
         );
 
@@ -51,6 +54,15 @@ public class OrderUseCase {
                 discountAmount
         );
         final Order completedOrder = orderService.completeOrder(order, completeCommand);
+
+        // 주문 완료 이벤트 발행
+        OrderEvent.OrderCompleted event = new OrderEvent.OrderCompleted(
+                completedOrder.getId(),
+                orderInfo.getUserId(),
+                orderAmount,
+                orderInfo.getUserCouponIds()
+        );
+        eventPublisher.publishEvent(event);
 
         return OrderResult.OrderRequestResult.completedOrder(completedOrder);
     }

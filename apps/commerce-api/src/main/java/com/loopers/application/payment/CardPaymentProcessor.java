@@ -9,9 +9,11 @@ import com.loopers.domain.payment.PaymentMethod;
 import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.payment.pg.PaymentGateway;
 import com.loopers.domain.payment.pg.PgDto;
+import com.loopers.domain.sharedkernel.PaymentEvent;
 import com.loopers.support.error.pg.PgGatewayException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -26,7 +28,7 @@ public class CardPaymentProcessor implements PaymentProcessor {
     private final PaymentGateway paymentGateway;
     private final PaymentService paymentService;
     private final PaymentFailureHandler failureHandler;
-
+    private final ApplicationEventPublisher eventPublisher;
 
     private final static String callbackUrl = "http://localhost:8080/api/v1/payments/pg/callback";
     private final static String storeId = "store123"; //ecommerce pg용 상점 아이디
@@ -63,6 +65,10 @@ public class CardPaymentProcessor implements PaymentProcessor {
 
         // 2) 결제 정보 저장
         Payment payment = paymentService.createCardPayment(carPayInfo.convertToCommand(order.getPaymentAmount(), pgAuthQuery.transactionKey()));
+
+        // 결제 요청 데이터 전송 이벤트
+        PaymentEvent.PaymentInitiated event = new PaymentEvent.PaymentInitiated(payment.getId(), info.getOrderId());
+        eventPublisher.publishEvent(event);
 
         return PaymentResult.Pay.of(payment.getId(), payment.getStatus().name(), info.getOrderId());
     }

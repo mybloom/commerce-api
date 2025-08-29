@@ -5,8 +5,8 @@ import com.loopers.application.payment.dto.PaymentInfo;
 import com.loopers.application.payment.dto.PaymentResult;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderLine;
-import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.Payment;
+import com.loopers.domain.sharedkernel.PaymentEvent;
 import com.loopers.domain.payment.PaymentMethod;
 import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.point.Point;
@@ -16,6 +16,7 @@ import com.loopers.domain.product.ProductService;
 import com.loopers.support.error.CoreException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +31,8 @@ public class PointPaymentProcessor implements PaymentProcessor {
     private final PointService pointService;
     private final ProductService productService;
     private final PaymentService paymentService;
-    private final OrderService orderService;
     private final PaymentFailureHandler failureHandler;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @Override
@@ -66,8 +67,9 @@ public class PointPaymentProcessor implements PaymentProcessor {
         Payment payment = paymentService.createSuccess(info.getUserId(), order.getId(), PaymentMethod.POINT,
                 order.getPaymentAmount());
 
-        //5. 주문 성공 처리
-        orderService.success(order.getId());
+        //5. 주문 성공 처리(이벤트)
+        PaymentEvent.PaymentCompleted event = new PaymentEvent.PaymentCompleted(payment.getId(), info.getOrderId());
+        eventPublisher.publishEvent(event);
 
         return PaymentResult.Pay.of(payment.getId(), payment.getStatus().name(), payment.getOrderId());
     }

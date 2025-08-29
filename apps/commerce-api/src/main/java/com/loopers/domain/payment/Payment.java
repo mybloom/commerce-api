@@ -1,11 +1,10 @@
 package com.loopers.domain.payment;
 
+import com.loopers.domain.BaseEntity;
 import com.loopers.domain.commonvo.Money;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
-
-import java.time.ZonedDateTime;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -15,11 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "payment")
 @Entity
-public class Payment {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Payment extends BaseEntity {
 
     @Column(name = "user_id", nullable = false, updatable = false)
     private Long userId;
@@ -43,18 +38,12 @@ public class Payment {
 //    private PaymentFailureReason failureReason;
     private String failureReason;
 
-    private ZonedDateTime createdAt;
-    private ZonedDateTime updatedAt;
-    private ZonedDateTime deletedAt;
-
-
     private Payment(Long userId, Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus status) {
         this.userId = userId;
         this.orderId = orderId;
         this.paymentMethod = paymentMethod;
         this.amount = amount;
         this.status = status;
-        this.createdAt = ZonedDateTime.now();
     }
 
     private Payment(Long userId, Long orderId, PaymentMethod paymentMethod, Money amount, PaymentStatus status,
@@ -65,7 +54,6 @@ public class Payment {
         this.amount = amount;
         this.status = status;
         this.failureReason = failureReason;
-        this.createdAt = ZonedDateTime.now();
     }
 
     public static Payment createInit(Long userId, Long orderId, PaymentMethod paymentMethod, Money amount) {
