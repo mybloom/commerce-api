@@ -40,24 +40,26 @@ public class PaymentService {
         payment.fail(failureReason);
     }
 
-    public void createFailedPayment(final PaymentCommand.SaveFail command) {
-        paymentRepository.save(
+    public Payment createFailedPayment(final PaymentCommand.SaveFail command) {
+        return paymentRepository.save(
                 Payment.createFail(command.userId(), command.orderId(), command.paymentMethod(), command.amount(),
                         command.paymentFailureReason())
         );
     }
 
-    public void failViaCallback(final Long orderId, final String transactionalKey, final String failureReason) {
+    public Payment failViaCallback(final Long orderId, final String transactionalKey, final String failureReason) {
         final Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보가 존재하지 않습니다."));
         payment.fail(failureReason);
 
         final CardPayment cardPayment = cardPaymentRepository.findByPaymentIdAndTransactionKey(payment.getId(), transactionalKey)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "카드 결제 정보가 존재하지 않습니다. paymentId=" + payment.getId()));
+
         cardPayment.fail(failureReason);
+        return payment;
     }
 
-    public void completeViaCallback(final Long orderId, final String transactionKey, final String reason) {
+    public Payment completeViaCallback(final Long orderId, final String transactionKey, final String reason) {
         final Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new CoreException(ErrorType.CONFLICT, "결제 정보가 존재하지 않습니다. orderId=" + orderId));
         payment.success();
@@ -65,6 +67,8 @@ public class PaymentService {
         final CardPayment cardPayment = cardPaymentRepository.findByPaymentIdAndTransactionKey(payment.getId(), transactionKey)
                 .orElseThrow(() -> new CoreException(ErrorType.CONFLICT, "카드 결제 정보가 존재하지 않습니다. paymentId=" + payment.getId() + ", transactionKey=" + transactionKey));
         cardPayment.success(reason);
+
+        return payment;
     }
 
     @Transactional
@@ -80,8 +84,8 @@ public class PaymentService {
         return payment;
     }
 
-    public void createFailedCardPayment(PaymentCommand.SaveFail command) {
-        paymentRepository.save(
+    public Payment createFailedCardPayment(PaymentCommand.SaveFail command) {
+        return paymentRepository.save(
                 Payment.createFail(
                         command.userId(), command.orderId(), command.paymentMethod(), command.amount(), command.paymentFailureReason()
                 )

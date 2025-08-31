@@ -24,5 +24,13 @@ public final class CouponCommand {
                     .orderId(orderId)
                     .build();
         }
+
+        public static ApplyDiscount of(Long userId, List<Long> userCouponIds, Long orderId) {
+            return ApplyDiscount.builder()
+                    .userId(userId)
+                    .userCouponIds(userCouponIds)
+                    .orderId(orderId)
+                    .build();
+        }
     }
 }

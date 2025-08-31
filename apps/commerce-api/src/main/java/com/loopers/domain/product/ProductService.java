@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Collectors;
 
@@ -55,12 +56,14 @@ public class ProductService {
         return query;
     }
 
-    public void increaseLikeCountAtomically(final Product product) {
-        int processCount = productRepository.updateLikeCountById(product.getId());
+    @Transactional
+    public void increaseLikeCountAtomically(final Long productId) {
+        int processCount = productRepository.updateLikeCountById(productId);
     }
 
-    public void decreaseLikeCount(final Product product) {
-        productRepository.decreaseLikeCountById(product.getId());
+    @Transactional
+    public void decreaseLikeCount(final Long productId) {
+        productRepository.decreaseLikeCountById(productId);
     }
 
     public List<Product> getProducts(List<Long> productIds) {

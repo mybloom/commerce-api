@@ -4,10 +4,13 @@ import com.loopers.application.payment.dto.PaymentCallbackInfo;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderLine;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.product.ProductCommand;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.sharedkernel.PaymentEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,7 @@ public class CardPaymentCallbackHandler {
     private final ProductService productService;
     private final OrderService orderService;
     private final PaymentService paymentService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void success(PaymentCallbackInfo.ProcessTransaction info){
@@ -38,9 +42,10 @@ public class CardPaymentCallbackHandler {
         productService.deductStock(deductCommand);
 
         //2.결제 완료 처리
-        paymentService.completeViaCallback(info.orderId(), info.transactionKey(), info.reason());
+        Payment payment = paymentService.completeViaCallback(info.orderId(), info.transactionKey(), info.reason());
 
-        //3.주문 성공 처리
-        orderService.success(order.getId());
+        //3.주문 성공 처리(이벤트)
+        PaymentEvent.PaymentCompleted event = new PaymentEvent.PaymentCompleted(payment.getId(), info.orderId());
+        eventPublisher.publishEvent(event);
     }
 }
