@@ -6,6 +6,9 @@ import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.like.*;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.sharedkernel.LikeEvent;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import com.loopers.support.paging.PageableFactory;
 import com.loopers.support.paging.Pagination;
 import com.loopers.support.paging.PagingPolicy;
@@ -14,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -28,6 +32,25 @@ public class LikeUseCase {
     private final BrandService brandService;
     private final LikeProductService likeProductService = new LikeProductService();
     private final ApplicationEventPublisher eventPublisher;
+
+
+    @Transactional
+    public LikeResult.LikeRegisterResult register(final Long userId, final Long productId) {
+        productService.retrieveOne(productId)
+                .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "해당 상품에 좋아요를 할 수 없습니다."));
+
+        //좋아요 등록
+        LikeQuery.LikeRegisterQuery query = likeService.register(userId, productId);
+        if (query.isDuplicatedRequest()) {
+            return LikeResult.LikeRegisterResult.duplicated(userId, productId);
+        }
+
+        // 좋아요 수 증가(비동기)
+        LikeEvent.LikeCountIncreased event = new LikeEvent.LikeCountIncreased(productId);
+        eventPublisher.publishEvent(event);
+
+        return LikeResult.LikeRegisterResult.newCreated(userId, productId);
+    }
 
     public LikeResult.LikeListResult retrieveLikedProducts(
             final Long userId,

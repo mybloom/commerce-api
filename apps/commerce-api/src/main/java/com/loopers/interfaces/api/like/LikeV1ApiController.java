@@ -1,5 +1,7 @@
 package com.loopers.interfaces.api.like;
 
+import com.loopers.application.like.LikeResult;
+import com.loopers.application.like.LikeUseCase;
 import com.loopers.domain.like.LikeQuery;
 import com.loopers.domain.like.LikeService;
 import com.loopers.interfaces.api.ApiResponse;
@@ -12,14 +14,15 @@ import org.springframework.web.bind.annotation.*;
 public class LikeV1ApiController {
 
     private final LikeService likeService;
+    private final LikeUseCase likeUseCase;
 
     @PostMapping("/products/{productId}")
     public ApiResponse<LikeV1Dto.RegisterResponse> register(
             @RequestHeader(name = "X-USER-ID", required = true) final Long userId,
             @PathVariable final Long productId
     ) {
-        LikeQuery.LikeRegisterQuery query = likeService.register(userId, productId);
-        return ApiResponse.success(LikeV1Dto.RegisterResponse.from(query));
+        LikeResult.LikeRegisterResult result = likeUseCase.register(userId, productId);
+        return ApiResponse.success(LikeV1Dto.RegisterResponse.from(result));
     }
 
     @DeleteMapping("/products/{productId}")
