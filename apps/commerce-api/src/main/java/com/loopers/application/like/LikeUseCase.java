@@ -1,6 +1,7 @@
 package com.loopers.application.like;
 
 import com.loopers.application.common.PagingCondition;
+import com.loopers.config.kafka.KafkaTopicsProperties;
 import com.loopers.domain.brand.Brand;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.like.*;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -32,7 +34,8 @@ public class LikeUseCase {
     private final BrandService brandService;
     private final LikeProductService likeProductService = new LikeProductService();
     private final ApplicationEventPublisher eventPublisher;
-
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTopicsProperties topics;
 
     @Transactional
     public LikeResult.LikeRegisterResult register(final Long userId, final Long productId) {
@@ -48,6 +51,9 @@ public class LikeUseCase {
         // 좋아요 수 증가(비동기)
         LikeEvent.LikeCountIncreased event = new LikeEvent.LikeCountIncreased(productId);
         eventPublisher.publishEvent(event);
+
+        //kafka
+        kafkaTemplate.send(topics.getLike(), event);
 
         return LikeResult.LikeRegisterResult.newCreated(userId, productId);
     }
