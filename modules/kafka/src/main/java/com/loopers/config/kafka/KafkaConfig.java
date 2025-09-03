@@ -9,6 +9,8 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.converter.BatchMessagingMessageConverter;
 import org.springframework.kafka.support.converter.ByteArrayJsonMessageConverter;
 
@@ -105,10 +107,12 @@ public class KafkaConfig {
     @Bean(name = "kafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
             ConsumerFactory<String, Object> consumerFactory,
-            ByteArrayJsonMessageConverter converter // yml에서 value-deserializer가 ByteArrayDeserializer 이므로 필요
+            ByteArrayJsonMessageConverter converter, // yml에서 value-deserializer가 ByteArrayDeserializer 이므로 필요
+            DefaultErrorHandler errorHandler
     ) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, Object>();
         factory.setConsumerFactory(consumerFactory);
+        factory.setCommonErrorHandler(errorHandler);
 
         // ★ 단건 모드
         factory.setBatchListener(false);
@@ -128,4 +132,28 @@ public class KafkaConfig {
         factory.setConcurrency(3);
         return factory;
     }
+
+    @Bean
+    public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, Object> template) {
+        // 실패 레코드를 <원본토픽>.DLT 로 보냄
+        var recoverer = new DeadLetterPublishingRecoverer(
+                template, (rec, ex) -> new org.apache.kafka.common.TopicPartition(rec.topic() + ".DLT", rec.partition())
+        );
+        // 0.5초 간격, 2회 재시도(총 3번 시도)
+        var backOff = new org.springframework.util.backoff.FixedBackOff(500L, 2L);
+        var handler = new org.springframework.kafka.listener.DefaultErrorHandler(recoverer, backOff);
+
+        // 재시도 무의미한 예외는 즉시 DLT
+        handler.addNotRetryableExceptions(
+                org.springframework.kafka.support.serializer.DeserializationException.class,
+                org.springframework.messaging.converter.MessageConversionException.class,
+                org.springframework.kafka.support.converter.ConversionException.class,
+                ClassCastException.class
+        );
+
+        /*//todo: 커스텀 예외 등록할 때.. 이 모듈이 streamer모듈을 의존하게 됨
+        handler.addNotRetryableExceptions(ProductMetricsMissingException.class); // ← 이 예외는 즉시 DLT*/
+        return handler;
+    }
+
 }
