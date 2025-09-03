@@ -7,6 +7,7 @@ spring:
       request.timeout.ms: 20000
       retry.backoff.ms: 500
       auto:
+        #Spring Kafka 쪽 설정 키라서 실제 Kafka 브로커의 auto.create.topics.enable 값을 끄는 효과는 없다.
         create.topics.enable: false
         register.schemas: false
         offset.reset: latest
@@ -24,13 +25,18 @@ spring:
     listener:
       ack-mode: manual
 
+# 토픽 설정
+commerce-kafka:
+  topics:
+    like: like-events
+
 ---
 spring.config.activate.on-profile: local, test
 
 spring:
   kafka:
     bootstrap-servers: localhost:19092
-    admin:
+    admin:  #todo: 이게 뭔지.
       properties:
         bootstrap.servers: kafka:9092
 
