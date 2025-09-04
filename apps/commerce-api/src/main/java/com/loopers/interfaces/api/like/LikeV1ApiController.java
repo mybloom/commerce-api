@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/like")
 public class LikeV1ApiController {
 
-    private final LikeService likeService;
     private final LikeUseCase likeUseCase;
 
     @PostMapping("/products/{productId}")
@@ -30,8 +29,7 @@ public class LikeV1ApiController {
             @RequestHeader(name = "X-USER-ID", required = true) final Long userId,
             @PathVariable final Long productId
     ) {
-
-        LikeQuery.LikeRemoveQuery query = likeService.remove(userId, productId);
-        return ApiResponse.success(LikeV1Dto.RemoveResponse.from(query));
+        LikeResult.LikeRemoveResult result = likeUseCase.remove(userId, productId);
+        return ApiResponse.success(LikeV1Dto.RemoveResponse.from(result));
     }
 }

@@ -14,16 +14,22 @@ import com.loopers.support.paging.PageableFactory;
 import com.loopers.support.paging.Pagination;
 import com.loopers.support.paging.PagingPolicy;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -51,11 +57,53 @@ public class LikeUseCase {
         // 좋아요 수 증가(비동기)
         LikeEvent.LikeCountIncreased event = new LikeEvent.LikeCountIncreased(productId);
         eventPublisher.publishEvent(event);
+/*
 
+        // 토픽/키/값 지정
+        ProducerRecord<String, Object> record =
+                new ProducerRecord<>(topics.getLike(), null, event);
+
+        // __TypeId__ 헤더에 FQCN 추가 (오타 방지: 클래스에서 가져오기 권장)
+        String typeId = event.getClass().getName(); // "com.loopers.domain.sharedkernel.LikeEvent$LikeCountIncreased"
+        record.headers().add(new RecordHeader("__TypeId__", typeId.getBytes(StandardCharsets.UTF_8)));
+
+        //kafka -> todo: 이벤트타입이 "도메인 이벤트"가 되어야겠네..그래야 하나의 토픽으로 넣을 수 있쟎아. -> 그렇다면 왜 하나의 토픽으로 넣어야 될까? 내 생각을 정리하자
+        kafkaTemplate.send(record);
+*/
+
+        String typeId = event.getClass().getName();
+
+        Message<LikeEvent.LikeCountIncreased> msg = MessageBuilder
+                .withPayload(event)
+                .setHeader(KafkaHeaders.TOPIC, "like-events")
+                .setHeader("__TypeId__", typeId) // 타입 헤더 직접 지정
+                .build();
+
+        kafkaTemplate.send(msg);
+
+        return LikeResult.LikeRegisterResult.newCreated(userId, productId);
+    }
+
+
+    @Transactional
+    public LikeResult.LikeRemoveResult remove(final Long userId, final Long productId) {
+        // 상품 유효성 검사
+        Product product = productService.retrieveOne(productId)
+                .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "해당 상품에 좋아요를 해제 할 수 없습니다."));
+
+        // 좋아요 해제
+        LikeQuery.LikeRemoveQuery query = likeService.remove(userId, productId);
+        if (query.isDuplicatedRequest()) {
+            return LikeResult.LikeRemoveResult.duplicated(userId, productId);
+        }
+
+        // 좋아요 수 증가(비동기)
+        LikeEvent.LikeCountDecreased event = new LikeEvent.LikeCountDecreased(productId);
+        eventPublisher.publishEvent(event);
         //kafka
         kafkaTemplate.send(topics.getLike(), event);
 
-        return LikeResult.LikeRegisterResult.newCreated(userId, productId);
+        return LikeResult.LikeRemoveResult.newProcess(userId, productId);
     }
 
     public LikeResult.LikeListResult retrieveLikedProducts(

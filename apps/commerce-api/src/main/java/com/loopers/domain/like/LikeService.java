@@ -41,10 +41,6 @@ public class LikeService {
             return LikeQuery.LikeRemoveQuery.alreadyRemoved(userId, productId);
         }
 
-        //좋아요 수 감소(비동기)
-        LikeEvent.LikeCountDecreased event = new LikeEvent.LikeCountDecreased(productId);
-        eventPublisher.publishEvent(event);
-
         return LikeQuery.LikeRemoveQuery.success(userId, productId);
     }
 
