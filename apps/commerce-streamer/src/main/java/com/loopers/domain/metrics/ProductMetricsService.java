@@ -11,8 +11,16 @@ public class ProductMetricsService {
     private final ProductMetricsRepository productMetricsRepository;
 
     @Transactional
-    public void incrementLikeCount(LikeEvent.LikeCountIncreased event) {
+    public void increaseLikeCount(LikeEvent.LikeCountIncreased event) {
         int updatedCount = productMetricsRepository.increaseLikeCountAtomically(event.productId());
+        if (updatedCount == 0) {
+            throw new IllegalStateException("Failed to update like count for productId: " + event.productId());
+        }
+    }
+
+    @Transactional
+    public void decreaseLikeCount(LikeEvent.LikeCountDecreased event) {
+        int updatedCount = productMetricsRepository.decreaseLikeCountAtomically(event.productId());
         if (updatedCount == 0) {
             throw new IllegalStateException("Failed to update like count for productId: " + event.productId());
         }

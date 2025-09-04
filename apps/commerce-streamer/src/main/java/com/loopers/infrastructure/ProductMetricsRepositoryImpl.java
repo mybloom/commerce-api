@@ -17,6 +17,10 @@ public class ProductMetricsRepositoryImpl implements ProductMetricsRepository {
         return productMetricsJpaRepository.increaseLikeCountAtomically(productId);
     }
 
+    public int decreaseLikeCountAtomically(Long productId) {
+        return productMetricsJpaRepository.decreaseLikeCountAtomically(productId);
+    }
+
     @Override
     public Optional<ProductMetrics> findByProductId(Long productId) {
         return productMetricsJpaRepository.findByProductId(productId);

@@ -16,5 +16,8 @@ public interface ProductMetricsJpaRepository extends JpaRepository<ProductMetric
     @Query("UPDATE ProductMetrics p SET p.likeCount = p.likeCount + 1 WHERE p.productId = :productId")
     int increaseLikeCountAtomically(@Param("productId") Long productId);
 
+    @Modifying //(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE ProductMetrics p SET p.likeCount = p.likeCount - 1 WHERE p.productId = :productId")
+    int decreaseLikeCountAtomically(@Param("productId") Long productId);
 
 }

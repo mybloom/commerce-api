@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
@@ -18,15 +20,27 @@ public class LikeCountKafkaConsumer {
     private final KafkaTopicsProperties topics;
     private final ProductMetricsService productMetricsService;
 
-    //    @KafkaListener(topics = "${commerce-kafka.topics.like}")
-    @KafkaListener(topics = "#{@kafkaTopicsProperties.like}") //todo:KafkaTopicsProperties SpEL로 가능
+    @KafkaListener(topics = "#{@kafkaTopicsProperties.like}")
     public void likeCountListener(
             @Payload LikeEvent.LikeCountIncreased event,
+            @Headers MessageHeaders headers,
             ConsumerRecord<String, Object> messages,
             Acknowledgment acknowledgment
     ) {
         log.info("***message:{}", messages);
-        productMetricsService.incrementLikeCount(event);
+        productMetricsService.increaseLikeCount(event);
+        acknowledgment.acknowledge(); // manual ack
+    }
+
+    @KafkaListener(topics = "#{@kafkaTopicsProperties.like}")
+    public void likeCountDecreaseListener(
+            @Payload LikeEvent.LikeCountDecreased event,
+            @Headers MessageHeaders headers,
+            ConsumerRecord<String, Object> messages,
+            Acknowledgment acknowledgment
+    ) {
+        log.info("***message:{}", messages);
+        productMetricsService.decreaseLikeCount(event);
         acknowledgment.acknowledge(); // manual ack
     }
 }
