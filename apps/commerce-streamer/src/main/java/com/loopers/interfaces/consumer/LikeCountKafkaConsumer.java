@@ -3,7 +3,6 @@ package com.loopers.interfaces.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.config.kafka.KafkaTopicsProperties;
 import com.loopers.domain.metrics.ProductMetricsService;
-import com.loopers.domain.sharedkernel.KafkaMessage;
 import com.loopers.domain.sharedkernel.LikeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -25,20 +23,17 @@ public class LikeCountKafkaConsumer {
     private final ObjectMapper objectMapper;
     private final ProductMetricsService productMetricsService;
 
-
     @KafkaHandler
     public void likeCountListener(
-            KafkaMessage<?> event,
-            ConsumerRecord<String, Object> messages,
+            LikeEvent.LikeCountIncreased payload,
+            @Header("messageId") String messageId,
+            @Header("publishedAt") String publishedAt,
+            @Header("version") String version,
             Acknowledgment acknowledgment
     ) {
-        log.info("***message:{}", messages);
-
-        LikeEvent.LikeCountIncreased payload =
-                objectMapper.convertValue(event.payload(), LikeEvent.LikeCountIncreased.class);
-
+        log.info("msgId={}, publishedAt={}, payload={}", messageId, publishedAt, payload);
         productMetricsService.increaseLikeCount(payload);
-        acknowledgment.acknowledge(); // manual ack
+        acknowledgment.acknowledge();
     }
 
     /*@KafkaHandler
