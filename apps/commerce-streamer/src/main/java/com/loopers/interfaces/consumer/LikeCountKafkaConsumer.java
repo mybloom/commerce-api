@@ -1,5 +1,6 @@
 package com.loopers.interfaces.consumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.config.kafka.KafkaTopicsProperties;
 import com.loopers.domain.metrics.ProductMetricsService;
 import com.loopers.domain.sharedkernel.KafkaMessage;
@@ -21,20 +22,22 @@ import org.springframework.stereotype.Component;
 @KafkaListener(topics = "#{@kafkaTopicsProperties.likeEvent}")
 public class LikeCountKafkaConsumer {
     private final KafkaTopicsProperties topics;
+    private final ObjectMapper objectMapper;
     private final ProductMetricsService productMetricsService;
 
 
     @KafkaHandler
     public void likeCountListener(
-//            LikeEvent.LikeCountIncreased event,
-            KafkaMessage<LikeEvent.LikeCountIncreased> event,
+            KafkaMessage<?> event,
             ConsumerRecord<String, Object> messages,
             Acknowledgment acknowledgment
     ) {
         log.info("***message:{}", messages);
 
-        LikeEvent.LikeCountIncreased payload = event.payload();
-        productMetricsService.increaseLikeCount(event.payload());
+        LikeEvent.LikeCountIncreased payload =
+                objectMapper.convertValue(event.payload(), LikeEvent.LikeCountIncreased.class);
+
+        productMetricsService.increaseLikeCount(payload);
         acknowledgment.acknowledge(); // manual ack
     }
 
