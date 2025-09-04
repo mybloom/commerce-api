@@ -1,5 +1,6 @@
 package com.loopers.domain.metrics;
 
+import com.loopers.domain.sharedkernel.LikeEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
