@@ -1,7 +1,8 @@
 package com.loopers.config.kafka;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,10 +10,8 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
-import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.kafka.support.converter.BatchMessagingMessageConverter;
-import org.springframework.kafka.support.converter.ByteArrayJsonMessageConverter;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +35,12 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, Object> producerFactory(KafkaProperties kafkaProperties) {
         Map<String, Object> props = new HashMap<>(kafkaProperties.buildProducerProperties());
+
+        // ★ 변경: 프로듀서 직렬화기를 명시하고 __TypeId__ 헤더 자동 첨부 //todo: 아래 내용 정리하기
+        props.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        props.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true); // __TypeId__ 헤더 ON
+
         return new DefaultKafkaProducerFactory<>(props);
     }
 
@@ -45,6 +50,18 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, Object> consumerFactory(KafkaProperties kafkaProperties) {
         Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties());
+
+        //todo: 아래 내용 정리하기
+        // ★ 변경: ByteArrayDeserializer → JsonDeserializer 로 전환
+        // JsonDeserializer 는 __TypeId__ 헤더를 읽어 타입을 결정하고 DTO로 바로 역직렬화
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+
+        // ★ 추가: 보안/타입결정 설정
+        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, true);                  // 헤더(__TypeId__) 사용
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.loopers.*");             // DTO 패키지 화이트리스트
+        props.put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, false);
+
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
@@ -57,15 +74,6 @@ public class KafkaConfig {
     }
 
     /**
-     * JSON Converter
-     * ByteArrayJsonMessageConverter : Kafka 메시지 바이트(payload)를 Jackson 기반 JSON 직렬화/역직렬화 처리해주는 Converter
-     */
-    @Bean
-    public ByteArrayJsonMessageConverter jsonMessageConverter(ObjectMapper objectMapper) {
-        return new ByteArrayJsonMessageConverter(objectMapper);
-    }
-
-    /**
      * Batch Listener Container Factory
      * https://tommykim.tistory.com/90 : kafka 성능 개선기 (feat. 배치 리스너)
      * @KafkaListener는 기본적으로 단건 메시지를 받도록 설정돼 있다.
@@ -74,8 +82,7 @@ public class KafkaConfig {
      */
     @Bean(name = BATCH_LISTENER)
     public ConcurrentKafkaListenerContainerFactory<String, Object> defaultBatchListenerContainerFactory(
-            KafkaProperties kafkaProperties,
-            ByteArrayJsonMessageConverter converter
+            KafkaProperties kafkaProperties
     ) {
         Map<String, Object> consumerConfig = new HashMap<>(kafkaProperties.buildConsumerProperties());
         consumerConfig.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLLING_SIZE);
@@ -90,7 +97,6 @@ public class KafkaConfig {
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(consumerConfig));
         // manual ack
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
-        factory.setBatchMessageConverter(new BatchMessagingMessageConverter(converter));
         // application에서 몇개의 consumer가 동작하게 끔 할 것인지
         factory.setConcurrency(3);
 
@@ -106,13 +112,12 @@ public class KafkaConfig {
      */
     @Bean(name = "kafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
-            ConsumerFactory<String, Object> consumerFactory,
-            ByteArrayJsonMessageConverter converter, // yml에서 value-deserializer가 ByteArrayDeserializer 이므로 필요
-            DefaultErrorHandler errorHandler
+            ConsumerFactory<String, Object> consumerFactory
+//            DefaultErrorHandler errorHandler
     ) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, Object>();
         factory.setConsumerFactory(consumerFactory);
-        factory.setCommonErrorHandler(errorHandler);
+//        factory.setCommonErrorHandler(errorHandler);
 
         // ★ 단건 모드
         factory.setBatchListener(false);
@@ -120,20 +125,12 @@ public class KafkaConfig {
         // yml: spring.kafka.listener.ack-mode=manual → 단건이면 보통 즉시 커밋이 안전
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
-        // ByteArray → JSON 역직렬화 (메서드 파라미터 타입으로 바인딩)
-        /**
-         * ByteArrayJsonMessageConverter는 Spring Kafka의 RecordMessageConverter 구현체예요.
-         * 이 컨버터는 KafkaConsumer가 읽어온 byte[] value를 Jackson을 이용해 Java 객체로 역직렬화 해줍니다.
-         * 그래서 @KafkaListener 메서드에서 파라미터 타입을 DTO로 선언하면, JSON → DTO 변환이 자동으로 일어나요.
-         */
-        factory.setRecordMessageConverter(converter);
-
         // 필요시 조정
-        factory.setConcurrency(3);
+        factory.setConcurrency(1);
         return factory;
     }
 
-    @Bean
+/*    @Bean
     public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, Object> template) {
         // 실패 레코드를 <원본토픽>.DLT 로 보냄
         var recoverer = new DeadLetterPublishingRecoverer(
@@ -151,9 +148,7 @@ public class KafkaConfig {
                 ClassCastException.class
         );
 
-        /*//todo: 커스텀 예외 등록할 때.. 이 모듈이 streamer모듈을 의존하게 됨
-        handler.addNotRetryableExceptions(ProductMetricsMissingException.class); // ← 이 예외는 즉시 DLT*/
         return handler;
-    }
+    }*/
 
 }

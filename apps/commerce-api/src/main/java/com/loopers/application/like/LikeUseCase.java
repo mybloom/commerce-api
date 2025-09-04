@@ -43,6 +43,8 @@ public class LikeUseCase {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final KafkaTopicsProperties topics;
 
+    private static final String TYPE_ID_HEADER = "__TypeId__";
+
     @Transactional
     public LikeResult.LikeRegisterResult register(final Long userId, final Long productId) {
         productService.retrieveOne(productId)
@@ -79,11 +81,22 @@ public class LikeUseCase {
                 .setHeader("__TypeId__", typeId) // 타입 헤더 직접 지정
                 .build();
 
-        kafkaTemplate.send(msg);
+//        kafkaTemplate.send(msg);
+        kafkaTemplate.send(withTypeHeader(topics.getLike(), event, LikeEvent.LikeCountIncreased.class));
 
         return LikeResult.LikeRegisterResult.newCreated(userId, productId);
     }
 
+
+    private <T> ProducerRecord<String, Object> withTypeHeader(String topic, T value, Class<?> type) {
+        ProducerRecord<String, Object> record = new ProducerRecord<>(topic, value);
+        record.headers().remove(TYPE_ID_HEADER); // 혹시 기존 값이 있으면 제거
+        record.headers().add(
+                TYPE_ID_HEADER,
+                type.getName().getBytes(StandardCharsets.UTF_8)
+        );
+        return record;
+    }
 
     @Transactional
     public LikeResult.LikeRemoveResult remove(final Long userId, final Long productId) {
