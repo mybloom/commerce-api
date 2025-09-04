@@ -10,5 +10,5 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "commerce-kafka.topics")
 public class KafkaTopicsProperties {
-    private String like;
+    private String likeEvent;
 }

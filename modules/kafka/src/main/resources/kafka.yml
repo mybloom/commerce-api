@@ -33,7 +33,7 @@ spring:
 # 토픽 설정
 commerce-kafka:
   topics:
-    like: like-events
+    like-event: like-events
 
 ---
 spring.config.activate.on-profile: local, test

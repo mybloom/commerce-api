@@ -29,6 +29,10 @@ public class LikeService {
 
         final LikeHistory saved = likeHistoryRepository.save(LikeHistory.from(userId, productId));
 
+        // 좋아요 수 증가(비동기)
+        LikeEvent.LikeCountIncreased event = new LikeEvent.LikeCountIncreased(productId);
+        eventPublisher.publishEvent(event);
+
         return LikeQuery.LikeRegisterQuery.success(saved);
     }
 
