@@ -24,6 +24,8 @@ spring:
         enable-auto-commit: false
         # __TypeId__ 헤더를 신뢰하고 해당 클래스로 역직렬화
         spring.json.use.type.headers: true
+        # ErrorHandlingDeserializer 가 위임할 실제 역직렬화기 = JsonDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
 
     listener:
       ack-mode: manual

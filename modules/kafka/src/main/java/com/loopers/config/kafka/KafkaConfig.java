@@ -10,6 +10,8 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
@@ -82,7 +84,8 @@ public class KafkaConfig {
      */
     @Bean(name = BATCH_LISTENER)
     public ConcurrentKafkaListenerContainerFactory<String, Object> defaultBatchListenerContainerFactory(
-            KafkaProperties kafkaProperties
+            KafkaProperties kafkaProperties,
+            DefaultErrorHandler errorHandler
     ) {
         Map<String, Object> consumerConfig = new HashMap<>(kafkaProperties.buildConsumerProperties());
         consumerConfig.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLLING_SIZE);
@@ -97,8 +100,10 @@ public class KafkaConfig {
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(consumerConfig));
         // manual ack
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        factory.setCommonErrorHandler(errorHandler);
+
         // application에서 몇개의 consumer가 동작하게 끔 할 것인지
-        factory.setConcurrency(3);
+        factory.setConcurrency(1);
 
         // 배치 리스닝 활성화
         factory.setBatchListener(true);
@@ -112,17 +117,17 @@ public class KafkaConfig {
      */
     @Bean(name = "kafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
-            ConsumerFactory<String, Object> consumerFactory
-//            DefaultErrorHandler errorHandler
+            ConsumerFactory<String, Object> consumerFactory,
+            DefaultErrorHandler errorHandler
     ) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, Object>();
         factory.setConsumerFactory(consumerFactory);
-//        factory.setCommonErrorHandler(errorHandler);
+        factory.setCommonErrorHandler(errorHandler);
 
         // ★ 단건 모드
         factory.setBatchListener(false);
 
-        // yml: spring.kafka.listener.ack-mode=manual → 단건이면 보통 즉시 커밋이 안전
+        // manual ack
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         // 필요시 조정
@@ -130,7 +135,7 @@ public class KafkaConfig {
         return factory;
     }
 
-/*    @Bean
+    @Bean
     public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, Object> template) {
         // 실패 레코드를 <원본토픽>.DLT 로 보냄
         var recoverer = new DeadLetterPublishingRecoverer(
@@ -149,6 +154,6 @@ public class KafkaConfig {
         );
 
         return handler;
-    }*/
+    }
 
 }
