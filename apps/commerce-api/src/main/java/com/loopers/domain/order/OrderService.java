@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hibernate.Hibernate.map;
+
 @Slf4j
 @RequiredArgsConstructor
 @Component
@@ -40,11 +42,6 @@ public class OrderService {
         return OrderQuery.CreatedOrder.created(createdOrder);
     }
 
-
-    public Money calculateOrderAmountByAddLines(final Order order, final List<OrderLine> orderLines) {
-        order.addOrderLine(orderLines);
-        return order.calculateOrderAmount();
-    }
 
     public Money calculatePaymentAmount(Order order, Money discountAmount) {
         order.applyDiscount(discountAmount);
@@ -102,12 +99,19 @@ public class OrderService {
 
     @Transactional
     public void success(Long orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdWithOrderLines(orderId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "주문 정보를 찾을 수 없습니다. orderId=" + orderId));
         order.success();
 
         //주문 성공 이벤트 발행
-        OrderEvent.OrderSucceeded event = new OrderEvent.OrderSucceeded(order.getId());
+        OrderEvent.OrderSucceeded event = new OrderEvent.OrderSucceeded(
+                order.getId(),
+                order.getOrderLines().stream()
+                        .map(orderLine -> new OrderEvent.OrderSucceeded.Product(
+                                orderLine.getProductId(), orderLine.getQuantity().getAmount())
+                        )
+                        .toList()
+        );
         eventPublisher.publishEvent(event);
     }
 }

@@ -15,7 +15,14 @@ public class OrderEvent {
     ) {
     }
 
-    public record OrderSucceeded(Long orderId) {
+    public record OrderSucceeded(
+            Long orderId,
+            List<Product> products
+    ) {
+        public record Product(
+                Long productId,
+                int quantity
+        ) {}
     }
 
     public record OrderFailed(Long orderId) {

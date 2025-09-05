@@ -5,6 +5,7 @@ import com.loopers.domain.metrics.ProductMetricsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -29,5 +30,10 @@ public class ProductMetricsRepositoryImpl implements ProductMetricsRepository {
     @Override
     public ProductMetrics save(ProductMetrics productMetrics) {
         return productMetricsJpaRepository.save(productMetrics);
+    }
+
+    @Override
+    public Optional<ProductMetrics> findByProductIdAndMetricsDate(Long productId, LocalDate metricsDate) {
+        return productMetricsJpaRepository.findByProductIdAndMetricsDate(productId, metricsDate);
     }
 }

@@ -1,6 +1,6 @@
 package com.loopers.domain.handle;
 
-import com.loopers.domain.audit.EventLogCommand;
+import com.loopers.domain.audit.AuditLogCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,8 +15,8 @@ public class EventHandledService {
     private final EventHandledRepository eventHandledRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public EventHandled checkIdempotency(EventLogCommand.CreateEventLog command) {
-        eventHandledRepository.findByMessageIdWithLock(command.messageId())
+    public EventHandled checkIdempotency(EventHandledCommand.Create command) {
+        eventHandledRepository.findByMessageIdAndHandlerWithLock(command.messageId(), command.handler())
                 .ifPresent(existing -> {
                     if (existing.isSuccess()) {
                         throw new IllegalStateException("Duplicate messageId detected with SUCCESS status: " + command.messageId());
@@ -33,7 +33,12 @@ public class EventHandledService {
         eventHandled.markFailure();
     }
 
-    public void handleSuccess(EventHandled eventHandled) {
-        eventHandled.markSuccess();
+    @Transactional
+    public void handleSuccess(Long eventHandledId) {
+        EventHandled eventHandled1 = eventHandledRepository.findByIdWithLock(eventHandledId)
+                .orElseThrow(
+                        () -> new IllegalStateException("EventHandled not found for eventHandledId: " + eventHandledId)
+                );
+        eventHandled1.markSuccess();
     }
 }

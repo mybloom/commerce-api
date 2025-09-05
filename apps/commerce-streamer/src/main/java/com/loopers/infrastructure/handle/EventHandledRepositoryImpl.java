@@ -13,8 +13,13 @@ public class EventHandledRepositoryImpl implements EventHandledRepository {
     private final EventHandledJpaRepository eventHandledJpaRepository;
 
     @Override
-    public Optional<EventHandled> findByMessageIdWithLock(String messageId) {
-        return eventHandledJpaRepository.findByMessageIdWithLock(messageId);
+    public Optional<EventHandled> findByMessageIdAndHandlerWithLock(String messageId, String handler) {
+        return eventHandledJpaRepository.findByMessageIdAndHandlerWithLock(messageId, handler);
+    }
+
+    @Override
+    public Optional<EventHandled> findByIdWithLock(Long eventHandledId) {
+        return eventHandledJpaRepository.findByIdWithLock(eventHandledId);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.loopers.interfaces.consumer;
 
 import com.loopers.application.audit.AuditUseCase;
-import com.loopers.domain.audit.EventLogCommand;
+import com.loopers.domain.audit.AuditLogCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -47,7 +47,7 @@ public class AuditLogConsumer {
             log.info("AUDIT | topic={}, msgId={}, publishedAt={}, version={}, handler={}, payload={}",
                     topic, messageId, publishedAt, version, handler, record.value().toString());
 
-            EventLogCommand.CreateEventLog command = new EventLogCommand.CreateEventLog(
+            AuditLogCommand.Create command = new AuditLogCommand.Create(
                     messageId,
                     topic,
                     eventType,

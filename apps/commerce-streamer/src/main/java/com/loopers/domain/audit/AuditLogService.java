@@ -13,7 +13,7 @@ public class AuditLogService {
     private final AuditLogRepository auditLogRepository;
     private final EventHandledRepository eventHandledRepository;
 
-    public AuditLog save(final EventLogCommand.CreateEventLog command) {
+    public AuditLog save(final AuditLogCommand.Create command) {
         AuditLog auditLog = AuditLog.create(
                 command.messageId(),
                 command.eventType(),

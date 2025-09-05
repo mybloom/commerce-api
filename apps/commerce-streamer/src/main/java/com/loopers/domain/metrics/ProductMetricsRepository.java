@@ -1,5 +1,6 @@
 package com.loopers.domain.metrics;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 public interface ProductMetricsRepository {
@@ -11,4 +12,5 @@ public interface ProductMetricsRepository {
 
     ProductMetrics save(ProductMetrics productMetrics);
 
+    Optional<ProductMetrics> findByProductIdAndMetricsDate(Long productId, LocalDate metricsDate);
 }

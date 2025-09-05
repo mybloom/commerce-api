@@ -2,14 +2,14 @@ package com.loopers.domain.audit;
 
 import java.time.LocalDateTime;
 
-public class EventLogCommand {
-    public record CreateEventLog(
-            String messageId,
+public class AuditLogCommand {
+    public record Create(
+            String messageId, // UUID
             String topic,
             String eventType,
             Integer partitionNo,
             Long offsetNo,
-            String handler,
+            String handler, // consumer group id
             String payload,
             String keyValue,
             LocalDateTime publishedAt

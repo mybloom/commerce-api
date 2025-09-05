@@ -53,13 +53,6 @@ public class Order extends BaseEntity {
                 .build();
     }
 
-    public void addOrderLine(List<OrderLine> orderLines) {
-        if (orderLines.isEmpty()) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 상품이 없습니다.");
-        }
-        this.orderLines = orderLines;
-    }
-
     public Money calculateOrderAmount() {
         if (orderLines.isEmpty()) {
             throw new CoreException(ErrorType.CONFLICT, "주문 상품이 없습니다.");
@@ -95,9 +88,8 @@ public class Order extends BaseEntity {
         this.paymentAmount = paymentAmount;
 
         // OrderLine 설정
-        //todo: 정리 this.orderLines = orderLines; // OrderLine 리스트를 새로 설정하지 말고, 기존 리스트에 추가하는 방식으로 변경
-        this.orderLines.forEach(orderLines::add);
-
+        this.orderLines.clear();
+        this.orderLines.addAll(orderLines);
     }
 
     private void validateDiscountAmount(Money totalAmount, Money discountAmount) {
