@@ -1,7 +1,8 @@
 package com.loopers.interfaces.consumer;
 
+import com.loopers.domain.audit.EventLogCommand;
+import com.loopers.domain.audit.EventLogQuery;
 import com.loopers.domain.audit.EventLogService;
-import com.loopers.domain.audit.EventLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -21,11 +22,17 @@ public class AuditLogConsumer {
 
     /**
      * like-event, order-event 등 여러 토픽을 하나의 그룹에서 처리
+     * 운영 후 이벤트가 많이 발행되는 이벤트만 분리해도 될 것 같다고 판단.
      */
     @KafkaListener(
-            topics = "#{@kafkaTopicsProperties.likeEvent}",
+            topics = {
+                    "#{@kafkaTopicsProperties.likeEvent}",
+                    "#{@kafkaTopicsProperties.orderEvent}",
+                    "#{@kafkaTopicsProperties.paymentEvent}"
+            },
             groupId = "audit-consumer"
     )
+
     public void consumeAuditLogs(
             ConsumerRecord<String, Object> record,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -40,8 +47,14 @@ public class AuditLogConsumer {
                     topic, messageId, publishedAt, version, record.value().toString());
 
             // DB에 저장 (토픽별로 구분해서 저장 가능)
-            eventLogService.saveLog(
-                    EventLog.ofSuccess(messageId, topic, eventType, record.value().toString(), LocalDateTime.now())
+            EventLogQuery.Save query = eventLogService.saveLog(
+                    new EventLogCommand.CreateEventLog(
+                            messageId,
+                            topic,
+                            eventType,
+                            record.value().toString(),
+                            LocalDateTime.now() // publishedAt,
+                    )
             );
 
             acknowledgment.acknowledge();

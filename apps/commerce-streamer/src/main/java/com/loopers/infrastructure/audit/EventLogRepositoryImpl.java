@@ -5,6 +5,8 @@ import com.loopers.domain.audit.EventLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @RequiredArgsConstructor
 @Repository
 public class EventLogRepositoryImpl implements EventLogRepository {
@@ -13,5 +15,10 @@ public class EventLogRepositoryImpl implements EventLogRepository {
     @Override
     public EventLog save(EventLog entry) {
         return eventLogJpaRepository.save(entry);
+    }
+
+    @Override
+    public Optional<EventLog> findByMessageIdWithLock(String messageId) {
+        return eventLogJpaRepository.findByMessageIdWithLock(messageId);
     }
 }

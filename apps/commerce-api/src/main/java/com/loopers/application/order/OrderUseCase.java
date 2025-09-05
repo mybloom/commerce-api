@@ -29,6 +29,7 @@ public class OrderUseCase {
         // 1. 멱등키 등록 요청(주문 생성 요청) - 기존 주문 존재 할 경우 기존 주문 정보 전달
         final OrderQuery.CreatedOrder createdOrder = orderService.createOrderByRequestId(orderInfo.getUserId(), orderInfo.getOrderRequestKey());
 
+        //todo: Requeres_New 때문에 영속성 컨텍스트에 안들어가있음. order라고 변수명 되어 있으니깐 헷갈리네
         final Order order = createdOrder.order();
         if (!createdOrder.isNewlyCreated()) {
             return OrderResult.OrderRequestResult.alreadyOrder(order);
@@ -47,22 +48,23 @@ public class OrderUseCase {
 
         // 4. 주문 확정
         final OrderCommand.Complete completeCommand = OrderCommand.Complete.of(
+                orderInfo.getUserId(),
                 order.getId(),
                 products,
                 productCommand,
                 orderAmount,
                 discountAmount
         );
-        final Order completedOrder = orderService.completeOrder(order, completeCommand);
+        final Order completedOrder = orderService.completeOrder(completeCommand);
 
-        // 주문 완료 이벤트 발행
+        /*// 주문 완료 이벤트 발행
         OrderEvent.OrderCompleted event = new OrderEvent.OrderCompleted(
                 completedOrder.getId(),
                 orderInfo.getUserId(),
-                orderAmount,
+                orderAmount.getAmount(),
                 orderInfo.getUserCouponIds()
         );
-        eventPublisher.publishEvent(event);
+        eventPublisher.publishEvent(event);*/
 
         return OrderResult.OrderRequestResult.completedOrder(completedOrder);
     }

@@ -34,6 +34,8 @@ spring:
 commerce-kafka:
   topics:
     like-event: like-events
+    order-event: order-events
+    payment-event: payment-events
 
 ---
 spring.config.activate.on-profile: local, test
