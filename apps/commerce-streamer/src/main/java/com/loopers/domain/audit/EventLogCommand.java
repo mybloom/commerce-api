@@ -7,7 +7,11 @@ public class EventLogCommand {
             String messageId,
             String topic,
             String eventType,
+            Integer partitionNo,
+            Long offsetNo,
+            String handler,
             String payload,
+            String keyValue,
             LocalDateTime publishedAt
     ) {
     }
