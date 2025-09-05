@@ -45,6 +45,9 @@ public class LikeService {
             return LikeQuery.LikeRemoveQuery.alreadyRemoved(userId, productId);
         }
 
+        LikeEvent.LikeCountDecreased event = new LikeEvent.LikeCountDecreased(productId);
+        eventPublisher.publishEvent(event);
+
         return LikeQuery.LikeRemoveQuery.success(userId, productId);
     }
 

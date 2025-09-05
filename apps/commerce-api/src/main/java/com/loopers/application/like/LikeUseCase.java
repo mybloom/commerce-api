@@ -6,7 +6,6 @@ import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.like.*;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
-import com.loopers.domain.sharedkernel.LikeEvent;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.support.paging.PageableFactory;
@@ -48,7 +47,7 @@ public class LikeUseCase {
     @Transactional
     public LikeResult.LikeRemoveResult remove(final Long userId, final Long productId) {
         // 상품 유효성 검사
-        Product product = productService.retrieveOne(productId)
+        productService.retrieveOne(productId)
                 .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "해당 상품에 좋아요를 해제 할 수 없습니다."));
 
         // 좋아요 해제
@@ -56,12 +55,6 @@ public class LikeUseCase {
         if (query.isDuplicatedRequest()) {
             return LikeResult.LikeRemoveResult.duplicated(userId, productId);
         }
-
-      /*  // 좋아요 수 증가(비동기)
-        LikeEvent.LikeCountDecreased event = new LikeEvent.LikeCountDecreased(productId);
-        eventPublisher.publishEvent(event);
-        //kafka
-        kafkaTemplate.send(topics.getLike(), event);*/
 
         return LikeResult.LikeRemoveResult.newProcess(userId, productId);
     }

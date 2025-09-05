@@ -35,7 +35,7 @@ public class ProductEventHandler {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onLikeCountIncrease(LikeEvent.LikeCountIncreased  event) {
+    public void onLikeCountIncrease(LikeEvent.LikeCountIncreased event) {
         // 파티션 키는 productId 기준으로 (순서 보장 목적)
         String partitionKey = String.valueOf(event.productId());
         kafkaTemplate.send(
@@ -49,37 +49,23 @@ public class ProductEventHandler {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleLiDecrease(LikeEvent.LikeCountDecreased event) {
+    public void handleLikeDecrease(LikeEvent.LikeCountDecreased event) {
         log.info("좋아요가 해제 되었습니다.productId: {}", event.productId());
         productService.decreaseLikeCount(event.productId());
     }
 
-    private <T> ProducerRecord<String, Object> withTypeHeader(
-            String topic,
-            String key,
-            T value,
-            Class<?> type
-    ) {
-        ProducerRecord<String, Object> record = new ProducerRecord<>(topic, key, value);
 
-        // 혹시 기본 __TypeId__ 헤더가 있으면 제거 후 다시 세팅
-        record.headers().remove(TYPE_ID_HEADER);
-        record.headers().add(
-                TYPE_ID_HEADER,
-                type.getName().getBytes(StandardCharsets.UTF_8)
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onLikeDecrease(LikeEvent.LikeCountDecreased event) {
+        // 파티션 키는 productId 기준으로 (순서 보장 목적)
+        String partitionKey = String.valueOf(event.productId());
+        kafkaTemplate.send(
+                KafkaRecordFactory.withTypeHeader(
+                        topics.getLikeEvent(),
+                        partitionKey,
+                        event
+                )
         );
-
-        return record;
-    }
-
-
-    private <T> ProducerRecord<String, Object> withTypeHeader(String topic, T value, Class<?> type) {
-        ProducerRecord<String, Object> record = new ProducerRecord<>(topic, value);
-        record.headers().remove(TYPE_ID_HEADER); // 혹시 기존 값이 있으면 제거
-        record.headers().add(
-                TYPE_ID_HEADER,
-                type.getName().getBytes(StandardCharsets.UTF_8)
-        );
-        return record;
     }
 }
