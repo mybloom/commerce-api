@@ -17,16 +17,19 @@ public final class OrderCommand {
     @Builder(access = AccessLevel.PRIVATE)
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Complete {
+        private final Long userId;
         private final Long orderId;
         private final List<OrderLine> orderLines;
         private final Money orderAmount;
         private final Money discountAmount;
 
-        public static Complete of(Long orderId,
-                                  List<Product> products,
-                                  ProductCommand.OrderProducts productCommand,
-                                  Money orderAmount,
-                                  Money discountAmount
+        public static Complete of(
+                Long userId,
+                Long orderId,
+                List<Product> products,
+                ProductCommand.OrderProducts productCommand,
+                Money orderAmount,
+                Money discountAmount
         ) {
             // ProductCommand와 Product를 매핑하여 OrderLine 생성 정보 만들기
             Map<Long, Quantity> quantityMap = productCommand.getProducts().stream()
@@ -46,6 +49,7 @@ public final class OrderCommand {
                     .toList();
 
             return Complete.builder()
+                    .userId(userId)
                     .orderId(orderId)
                     .orderLines(orderLines)
                     .orderAmount(orderAmount)

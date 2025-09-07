@@ -1,0 +1,57 @@
+spring:
+  kafka:
+    bootstrap-servers: ${BOOTSTRAP_SERVERS}
+    client-id: ${spring.application.name}
+    properties:
+      spring.json.add.type.headers: false # json serialize off
+      request.timeout.ms: 20000
+      retry.backoff.ms: 500
+      auto:
+        #Spring Kafka 쪽 설정 키라서 실제 Kafka 브로커의 auto.create.topics.enable 값을 끄는 효과는 없다.
+        create.topics.enable: false
+        register.schemas: false
+        offset.reset: latest
+      use.latest.version: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      retries: 3
+    consumer:
+      group-id: loopers-default-consumer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        enable-auto-commit: false
+        # __TypeId__ 헤더를 신뢰하고 해당 클래스로 역직렬화
+        spring.json.use.type.headers: true
+        # ErrorHandlingDeserializer 가 위임할 실제 역직렬화기 = JsonDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+
+    listener:
+      ack-mode: manual
+
+# 토픽 설정
+commerce-kafka:
+  topics:
+    like-event: like-events
+    order-event: order-events
+    payment-event: payment-events
+
+---
+spring.config.activate.on-profile: local, test
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:19092
+    admin:  #todo: 이게 뭔지.
+      properties:
+        bootstrap.servers: kafka:9092
+
+---
+spring.config.activate.on-profile: dev
+
+---
+spring.config.activate.on-profile: qa
+
+---
+spring.config.activate.on-profile: prd

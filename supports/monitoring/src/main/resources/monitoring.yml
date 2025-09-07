@@ -4,8 +4,7 @@ management:
       percentiles-histogram:
         http.server.requests: true
     tags:
-      application:
-        ${spring.application.name}
+      application: ${spring.application.name}
   endpoints:
     web:
       exposure:
@@ -30,8 +29,8 @@ management:
       enabled: true
     readinessState:
       enabled: true
-  server:
-    port: 8081
+#  server:
+#    port: ${management.server.port}
   observations:
     annotations:
       enabled: true

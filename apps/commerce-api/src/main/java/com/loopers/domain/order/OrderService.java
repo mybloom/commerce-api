@@ -11,7 +11,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+
+import static org.hibernate.Hibernate.map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,11 +43,6 @@ public class OrderService {
     }
 
 
-    public Money calculateOrderAmountByAddLines(final Order order, final List<OrderLine> orderLines) {
-        order.addOrderLine(orderLines);
-        return order.calculateOrderAmount();
-    }
-
     public Money calculatePaymentAmount(Order order, Money discountAmount) {
         order.applyDiscount(discountAmount);
         return order.getPaymentAmount();
@@ -61,8 +59,13 @@ public class OrderService {
                 .orElseThrow(() -> new CoreException(ErrorType.FORBIDDEN, "해당 사용자의 주문이 아닙니다."));
     }
 
-    public Order completeOrder(final Order order, final OrderCommand.Complete command) {
+    public Order completeOrder(final OrderCommand.Complete command) {
+//    public Order completeOrder(final Order order, final OrderCommand.Complete command) {
         final Money paymentAmount = command.getOrderAmount().subtract(command.getDiscountAmount());
+
+        Order order = orderRepository.findByIdWithOrderLines(command.getOrderId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "주문 정보를 찾을 수 없습니다. orderId=" + command.getOrderId()));
+
         order.complete(
                 command.getOrderLines(),
                 command.getOrderAmount(),
@@ -70,7 +73,17 @@ public class OrderService {
                 paymentAmount
         );
 
-        return orderRepository.save(order);
+        // 주문 완료 이벤트 발행
+        OrderEvent.OrderCompleted event = new OrderEvent.OrderCompleted(
+                order.getId(),
+                command.getUserId(),
+                order.getTotalAmount().getAmount(),
+                order.getPaymentAmount().getAmount(),
+                Collections.emptyList()// TODO: 쿠폰 ID 리스트 전달하도록 수정
+        );
+        eventPublisher.publishEvent(event);
+
+        return order;
     }
 
     @Transactional
@@ -86,12 +99,19 @@ public class OrderService {
 
     @Transactional
     public void success(Long orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdWithOrderLines(orderId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "주문 정보를 찾을 수 없습니다. orderId=" + orderId));
         order.success();
 
         //주문 성공 이벤트 발행
-        OrderEvent.OrderSucceeded event = new OrderEvent.OrderSucceeded(order.getId());
+        OrderEvent.OrderSucceeded event = new OrderEvent.OrderSucceeded(
+                order.getId(),
+                order.getOrderLines().stream()
+                        .map(orderLine -> new OrderEvent.OrderSucceeded.Product(
+                                orderLine.getProductId(), orderLine.getQuantity().getAmount())
+                        )
+                        .toList()
+        );
         eventPublisher.publishEvent(event);
     }
 }

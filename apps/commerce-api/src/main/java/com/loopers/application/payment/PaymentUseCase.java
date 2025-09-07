@@ -4,6 +4,9 @@ package com.loopers.application.payment;
 import com.loopers.application.payment.dto.*;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.order.OrderStatus;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,9 @@ public class PaymentUseCase {
         // 1) 기존 주문 정보 조회
         //todo: order를 전달했을 때, 변경 가능성.
         Order order = orderService.getUserOrderWithLinesByUser(info.getUserId(), info.getOrderId());
+        if(order.getStatus() != OrderStatus.COMPLETED){
+            throw new CoreException(ErrorType.CONFLICT, "결제 가능한 상태가 아닙니다. 현재 상태: " + order.getStatus());
+        }
 
         // 2) 결제 처리
         PaymentProcessor processor =

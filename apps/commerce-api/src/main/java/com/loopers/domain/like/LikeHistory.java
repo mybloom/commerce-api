@@ -6,7 +6,6 @@ import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,9 +14,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "like_history",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "product_id"})
-)
+@Table(name = "like_history")
 @Entity
 public class LikeHistory extends BaseEntity {
 

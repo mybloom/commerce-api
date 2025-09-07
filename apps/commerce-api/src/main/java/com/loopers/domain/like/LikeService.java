@@ -19,7 +19,6 @@ public class LikeService {
     private final LikeHistoryRepository likeHistoryRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Transactional
     public LikeQuery.LikeRegisterQuery register(Long userId, Long productId) {
         final Optional<LikeHistory> optional = likeHistoryRepository.findByUserIdAndProductId(userId, productId);
 
@@ -28,12 +27,11 @@ public class LikeService {
             return LikeQuery.LikeRegisterQuery.alreadyRegister(optional.get());
         }
 
-        //todo: 저장할 때 상품의 유효성판단이 안되었음. 이벤트 발행시 상품 수 update는 0건 일 것임 -> 문제 없다고 판단하고 그냥 넘어가나?
-        //좋아요 수 증가(비동기)
+        final LikeHistory saved = likeHistoryRepository.save(LikeHistory.from(userId, productId));
+
+        // 좋아요 수 증가(비동기)
         LikeEvent.LikeCountIncreased event = new LikeEvent.LikeCountIncreased(productId);
         eventPublisher.publishEvent(event);
-
-        final LikeHistory saved = likeHistoryRepository.save(LikeHistory.from(userId, productId));
 
         return LikeQuery.LikeRegisterQuery.success(saved);
     }
@@ -47,7 +45,6 @@ public class LikeService {
             return LikeQuery.LikeRemoveQuery.alreadyRemoved(userId, productId);
         }
 
-        //좋아요 수 감소(비동기)
         LikeEvent.LikeCountDecreased event = new LikeEvent.LikeCountDecreased(productId);
         eventPublisher.publishEvent(event);
 
