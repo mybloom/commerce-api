@@ -19,11 +19,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 @KafkaListener(
-        topics = "#{@kafkaTopicsProperties.likeEvent}",
-        groupId = "like-event-metrics-consumers"
+        topics = {
+                "#{@kafkaTopicsProperties.likeEvent}",
+                "#{@kafkaTopicsProperties.orderEvent}"
+        },
+        groupId = "product-metrics-consumers"
 )
-public class LikeEventMetricsConsumer {
-    private static final String HANDLER = "like-event-metrics-consumers";
+public class ProductMetricsConsumer {
+    private static final String HANDLER = "product-metrics-consumers";
 
     private final MetricsUseCase metricsUseCase;
     private final StringRedisTemplate redisTemplate;
