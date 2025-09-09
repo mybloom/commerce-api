@@ -1,8 +1,10 @@
 package com.loopers.domain.handle;
 
-import com.loopers.domain.audit.AuditLogCommand;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,16 +18,11 @@ public class EventHandledService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EventHandled checkIdempotency(EventHandledCommand.Create command) {
-        eventHandledRepository.findByMessageIdAndHandlerWithLock(command.messageId(), command.handler())
-                .ifPresent(existing -> {
-                    if (existing.isSuccess()) {
-                        throw new IllegalStateException("Duplicate messageId detected with SUCCESS status: " + command.messageId());
-                    }else{
-                        log.info("Duplicate messageId detected but status is not SUCCESS. Continuing processing: {}", command.messageId());
-                    }
-                });
-
-        return eventHandledRepository.save(EventHandled.createPending(command.messageId(), command.handler()));
+        try {
+            return eventHandledRepository.save(EventHandled.createPending(command.messageId(), command.handler()));
+        } catch (DataIntegrityViolationException e) {
+            throw new CoreException(ErrorType.CONFLICT, "Duplicate messageId detected: " + command.messageId() + " for handler: " + command.handler());
+        }
     }
 
     @Transactional
