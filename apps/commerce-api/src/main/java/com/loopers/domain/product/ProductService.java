@@ -70,6 +70,10 @@ public class ProductService {
         return productRepository.findAllByIds(productIds);
     }
 
+    public List<ProductListProjection> getProductsWithBrand(List<Long> productIds) {
+        return productRepository.findAllByIdsWithBrand(productIds);
+    }
+
     public List<Product> validateProductsAndStock(ProductCommand.OrderProducts command) {
         // 1. 상품 ID 추출
         List<Long> commandProductIds = command.getProducts().stream()

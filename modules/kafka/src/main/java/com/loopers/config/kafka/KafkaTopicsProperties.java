@@ -13,4 +13,5 @@ public class KafkaTopicsProperties {
     private String likeEvent;
     private String orderEvent;
     private String paymentEvent;
+    private String productMetricsEvent;
 }

@@ -30,4 +30,8 @@ public record PagingCondition(
     public Pageable toPageable(Sort sort) {
         return PageRequest.of(page, size, sort);
     }
+
+    public Pageable toPageable() {
+        return PageRequest.of(page, size);
+    }
 }

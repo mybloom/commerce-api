@@ -1,4 +1,4 @@
-package com.loopers.interfaces.consumer;
+package com.loopers.interfaces.consumer.audit;
 
 import com.loopers.application.audit.AuditUseCase;
 import com.loopers.domain.audit.AuditLogCommand;

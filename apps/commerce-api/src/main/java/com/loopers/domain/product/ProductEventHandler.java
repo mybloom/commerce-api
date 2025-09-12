@@ -1,19 +1,16 @@
 package com.loopers.domain.product;
 
 import com.loopers.config.kafka.KafkaTopicsProperties;
-import com.loopers.domain.sharedkernel.KafkaMessage;
 import com.loopers.domain.sharedkernel.KafkaRecordFactory;
 import com.loopers.domain.sharedkernel.LikeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @RequiredArgsConstructor

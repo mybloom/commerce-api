@@ -24,4 +24,6 @@ public interface ProductRepository {
     int decreaseLikeCountById(Long id);
 
     List<Product> findAllValidWithPessimisticLock(List<Long> productIds);
+
+    List<ProductListProjection> findAllByIdsWithBrand(List<Long> productIds);
 }
