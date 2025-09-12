@@ -37,15 +37,15 @@ public class ProductMetrics {
 
     /** 일별 좋아요 수 */
     @Column(name = "like_count", nullable = false)
-    private long likeCount;
+    private Long likeCount;
 
     /** 일별 판매 수 */
     @Column(name = "purchase_count", nullable = false)
-    private long purchaseCount;
+    private Long purchaseCount;
 
     /** 일별 조회 수 */
     @Column(name = "view_count", nullable = false)
-    private long viewCount;
+    private Long viewCount;
 
     /** 생성 시각 */
     @Column(name = "created_at", nullable = false,
