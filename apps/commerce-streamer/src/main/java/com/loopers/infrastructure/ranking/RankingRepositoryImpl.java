@@ -38,4 +38,13 @@ public class RankingRepositoryImpl implements RankingRepository {
         }
     }
 
+    @Override
+    public Set<ZSetOperations.TypedTuple<String>> findTopN(String key, int n) {
+        return rankingRedisRepository.findTopN(key, n);
+    }
+
+    @Override
+    public Cursor<ZSetOperations.TypedTuple<String>> scan(String key, int count) {
+        return rankingRedisRepository.scan(key, count);
+    }
 }
