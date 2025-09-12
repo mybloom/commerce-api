@@ -24,4 +24,14 @@ public class RankingRedisRepository {
         return size != null ? size : 0L;
     }
 
+    /**
+     * 특정 상품의 순위 조회 (0 = 1위): +1 해서 API에선 "1위, 2위..."로 표현
+     */
+    public Long findRankByDateAndProductId(LocalDate date, Long productId) {
+        String key = RankingKeyUtils.generateRankingKey(date);
+        String member = RankingKeyUtils.generateMemberKey(productId);
+
+        Long rank = readTemplate.opsForZSet().reverseRank(key, member);
+        return rank != null ? rank + 1 : null;
+    }
 }

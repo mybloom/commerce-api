@@ -23,4 +23,7 @@ public class RankingService {
         return rankingItems;
     }
 
+    public Long retrieveRankByDateAndProductId(LocalDate date, Long productId) {
+        return rankingRepository.findRankByDateAndProductId(date, productId);
+    }
 }

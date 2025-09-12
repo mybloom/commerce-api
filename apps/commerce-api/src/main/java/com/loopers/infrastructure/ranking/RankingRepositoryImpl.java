@@ -48,4 +48,8 @@ public class RankingRepositoryImpl implements RankingRepository {
         return new PageImpl<>(items, pageable, total);
     }
 
+    @Override
+    public Long findRankByDateAndProductId(LocalDate date, Long productId) {
+        return rankingRedisRepository.findRankByDateAndProductId(date, productId);
+    }
 }

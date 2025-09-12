@@ -8,4 +8,5 @@ import java.time.LocalDate;
 public interface RankingRepository {
     Page<RankingQuery.RankingItem> findAll(LocalDate date, Pageable pageable);
 
+    Long findRankByDateAndProductId(LocalDate date, Long productId);
 }
