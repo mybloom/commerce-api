@@ -85,6 +85,7 @@ public class KafkaConfig {
     @Bean(name = BATCH_LISTENER)
     public ConcurrentKafkaListenerContainerFactory<String, Object> defaultBatchListenerContainerFactory(
             KafkaProperties kafkaProperties,
+            ConsumerFactory<String, Object> consumerFactory,
             DefaultErrorHandler errorHandler
     ) {
         Map<String, Object> consumerConfig = new HashMap<>(kafkaProperties.buildConsumerProperties());
@@ -97,7 +98,7 @@ public class KafkaConfig {
 
         ConcurrentKafkaListenerContainerFactory<String, Object> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(consumerConfig));
+        factory.setConsumerFactory(consumerFactory);
         // manual ack
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.setCommonErrorHandler(errorHandler);
