@@ -68,4 +68,9 @@ public class ProductRepositoryImpl implements ProductRepository {
     public List<Product> findAllValidWithPessimisticLock(List<Long> productIds) {
         return productJpaRepository.findAllValidWithPessimisticLock(productIds);
     }
+
+    @Override
+    public List<ProductListProjection> findAllByIdsWithBrand(List<Long> productIds) {
+        return productJpaRepository.findAllByIdsWithBrand(productIds);
+    }
 }

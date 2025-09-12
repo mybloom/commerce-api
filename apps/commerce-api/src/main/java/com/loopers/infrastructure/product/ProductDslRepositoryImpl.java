@@ -143,4 +143,26 @@ public class ProductDslRepositoryImpl implements ProductDslRepository {
 
         return count != null && count > 0;
     }
+
+    @Override
+    public List<ProductListProjection> findAllByIdsWithBrand(List<Long> productIds) {
+        return queryFactory
+                .select(Projections.constructor(ProductListProjection.class,
+                        product.id,
+                        product.name,
+                        product.price,
+                        product.likeCount,
+                        product.status,
+                        product.saleStartDate,
+                        product.createdAt,
+                        brand.id,
+                        brand.name
+                ))
+                .from(product)
+                .join(brand).on(product.brandId.eq(brand.id)) // 연관관계 없이 조인
+                .where(
+                        product.id.in(productIds)
+                )
+                .fetch();
+    }
 }
