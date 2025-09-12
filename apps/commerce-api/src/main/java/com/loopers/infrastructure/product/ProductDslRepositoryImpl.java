@@ -10,8 +10,10 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+
 import java.util.List;
 import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,84 +35,84 @@ public class ProductDslRepositoryImpl implements ProductDslRepository {
     @Override
     public Page<ProductListProjection> findAllForListView(Pageable pageable) {
         List<OrderSpecifier<?>> orderSpecifiers = pageable.getSort().stream()
-            .map(order -> getOrderSpecifier(order, product, brand))
-            .collect(Collectors.toList());
+                .map(order -> getOrderSpecifier(order, product, brand))
+                .collect(Collectors.toList());
 
         List<ProductListProjection> content = queryFactory
-            .select(Projections.constructor(ProductListProjection.class,
-                product.id,
-                product.name,
-                product.price,
-                product.likeCount,
-                product.status,
-                product.saleStartDate,
-                product.createdAt,
-                brand.id,
-                brand.name
-            ))
-            .from(product)
-            .join(brand).on(product.brandId.eq(brand.id)) //연관관계 없이 조인
-            .where(
-                brand.status.eq(BrandStatus.ACTIVE)
-                    .and(product.status.eq(ProductStatus.AVAILABLE))
-            )
-            .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .fetch();
+                .select(Projections.constructor(ProductListProjection.class,
+                        product.id,
+                        product.name,
+                        product.price,
+                        product.likeCount,
+                        product.status,
+                        product.saleStartDate,
+                        product.createdAt,
+                        brand.id,
+                        brand.name
+                ))
+                .from(product)
+                .join(brand).on(product.brandId.eq(brand.id)) //연관관계 없이 조인
+                .where(
+                        brand.status.eq(BrandStatus.ACTIVE)
+                                .and(product.status.eq(ProductStatus.AVAILABLE))
+                )
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
 
         Long total = queryFactory
-            .select(product.count())
-            .from(product)
-            .join(brand).on(product.brandId.eq(brand.id))
-            .where(
-                brand.status.eq(BrandStatus.ACTIVE)
-                    .and(product.status.eq(ProductStatus.AVAILABLE))
-            )
-            .fetchOne(); // fetchOne()은 결과가 없으면 null 반환
+                .select(product.count())
+                .from(product)
+                .join(brand).on(product.brandId.eq(brand.id))
+                .where(
+                        brand.status.eq(BrandStatus.ACTIVE)
+                                .and(product.status.eq(ProductStatus.AVAILABLE))
+                )
+                .fetchOne(); // fetchOne()은 결과가 없으면 null 반환
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
     public Page<ProductListProjection> findAllForListViewByBrand(Long brandId, Pageable pageable) {
         List<OrderSpecifier<?>> orderSpecifiers = pageable.getSort().stream()
-            .map(order -> getOrderSpecifier(order, product, brand))
-            .collect(Collectors.toList());
+                .map(order -> getOrderSpecifier(order, product, brand))
+                .collect(Collectors.toList());
 
         List<ProductListProjection> content = queryFactory
-            .select(Projections.constructor(ProductListProjection.class,
-                product.id,
-                product.name,
-                product.price,
-                product.likeCount,
-                product.status,
-                product.saleStartDate,
-                product.createdAt,
-                brand.id,
-                brand.name
-            ))
-            .from(product)
-            .join(brand).on(product.brandId.eq(brand.id))
-            .where(
-                brand.id.eq(brandId)
-                    .and(brand.status.eq(BrandStatus.ACTIVE))
-                    .and(product.status.eq(ProductStatus.AVAILABLE))
-            )
-            .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .fetch();
+                .select(Projections.constructor(ProductListProjection.class,
+                        product.id,
+                        product.name,
+                        product.price,
+                        product.likeCount,
+                        product.status,
+                        product.saleStartDate,
+                        product.createdAt,
+                        brand.id,
+                        brand.name
+                ))
+                .from(product)
+                .join(brand).on(product.brandId.eq(brand.id))
+                .where(
+                        brand.id.eq(brandId)
+                                .and(brand.status.eq(BrandStatus.ACTIVE))
+                                .and(product.status.eq(ProductStatus.AVAILABLE))
+                )
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
 
         Long total = queryFactory
-            .select(product.count())
-            .from(product)
-            .join(brand).on(product.brandId.eq(brand.id))
-            .where(
-                brand.id.eq(brandId)
-                    .and(brand.status.eq(BrandStatus.ACTIVE))
-                    .and(product.status.eq(ProductStatus.AVAILABLE))
-            )
-            .fetchOne();
+                .select(product.count())
+                .from(product)
+                .join(brand).on(product.brandId.eq(brand.id))
+                .where(
+                        brand.id.eq(brandId)
+                                .and(brand.status.eq(BrandStatus.ACTIVE))
+                                .and(product.status.eq(ProductStatus.AVAILABLE))
+                )
+                .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
@@ -123,23 +125,23 @@ public class ProductDslRepositoryImpl implements ProductDslRepository {
         PathBuilder<?> entity = new PathBuilder<>(product.getType(), product.getMetadata());
 
         return new OrderSpecifier<>(
-            order.isAscending() ? Order.ASC : Order.DESC,
-            entity.getComparable(property, Comparable.class)
+                order.isAscending() ? Order.ASC : Order.DESC,
+                entity.getComparable(property, Comparable.class)
         );
     }
 
     @Override
     public boolean existsListViewableByBrandId(Long brandId) {
         Long count = queryFactory
-            .select(product.count())
-            .from(product)
-            .join(brand).on(product.brandId.eq(brand.id))
-            .where(
-                brand.id.eq(brandId),
-                brand.status.eq(BrandStatus.ACTIVE),
-                product.status.eq(ProductStatus.AVAILABLE)
-            )
-            .fetchOne();
+                .select(product.count())
+                .from(product)
+                .join(brand).on(product.brandId.eq(brand.id))
+                .where(
+                        brand.id.eq(brandId),
+                        brand.status.eq(BrandStatus.ACTIVE),
+                        product.status.eq(ProductStatus.AVAILABLE)
+                )
+                .fetchOne();
 
         return count != null && count > 0;
     }
