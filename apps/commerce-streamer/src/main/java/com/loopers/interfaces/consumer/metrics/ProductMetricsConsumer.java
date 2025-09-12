@@ -1,4 +1,4 @@
-package com.loopers.interfaces.consumer;
+package com.loopers.interfaces.consumer.metrics;
 
 import com.loopers.application.metrics.MetricsUseCase;
 import com.loopers.domain.metrics.MetricsCommand;
@@ -7,7 +7,6 @@ import com.loopers.domain.sharedkernel.LikeEvent;
 import com.loopers.domain.sharedkernel.OrderEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -29,7 +28,6 @@ public class ProductMetricsConsumer {
     private static final String HANDLER = "product-metrics-consumers";
 
     private final MetricsUseCase metricsUseCase;
-    private final StringRedisTemplate redisTemplate;
 
     @KafkaHandler
     public void handleLikeIncreased(
