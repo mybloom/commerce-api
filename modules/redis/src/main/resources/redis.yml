@@ -14,6 +14,14 @@ datasource:
       - host: ${REDIS_REPLICA_1_HOST}
         port: ${REDIS_REPLICA_1_PORT}
 
+ranking:
+  weights:
+    like: 0.1
+    order: 0.7
+    view: 0.2
+  ttl: 172800 # 2일(초 단위)
+  carry-over-weight: 0.1 # 이전 점수에서 가져올 비율
+
 ---
 spring.config.activate.on-profile: local, test
 
