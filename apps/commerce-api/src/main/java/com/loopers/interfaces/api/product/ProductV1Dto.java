@@ -101,7 +101,8 @@ public class ProductV1Dto {
         long price,
         int likeCount,
         LocalDateTime createdAt,
-        String productStatus
+        String productStatus,
+        String rank
     ){
         public static DetailViewResponse from(ProductQueryResult.CatalogDetailResult result) {
             return new DetailViewResponse(
@@ -111,7 +112,8 @@ public class ProductV1Dto {
                 result.productPrice(),
                 result.likeCount(),
                 ZonedDateTime.now().toLocalDateTime(), // Assuming createdAt is now, adjust as needed
-                result.productStatus()
+                result.productStatus(),
+                result.rank()!= null ? String.valueOf(result.rank()) : "-" // rank null처리
             );
         }
     }

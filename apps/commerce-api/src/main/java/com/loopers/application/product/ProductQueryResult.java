@@ -52,11 +52,12 @@ public class ProductQueryResult {
             int likeCount,
             String productStatus,
             Long brandId,
-            String brandName
+            String brandName,
+            Long rank // 랭킹 정보
     ) {
 
         //Brand, Product를 받아 CatalogDetailResult 생성하는 정적 메서드
-        public static CatalogDetailResult from(Brand brand, ProductQuery.ProductDetailQuery product) {
+        public static CatalogDetailResult from(Brand brand, ProductQuery.ProductDetailQuery product, Long rank) {
             return new CatalogDetailResult(
                     product.id(),
                     product.name(),
@@ -64,7 +65,8 @@ public class ProductQueryResult {
                     product.likeCount().getValue(),
                     product.status().name(),
                     brand.getId(),
-                    brand.getName()
+                    brand.getName(),
+                    rank
             );
         }
     }
