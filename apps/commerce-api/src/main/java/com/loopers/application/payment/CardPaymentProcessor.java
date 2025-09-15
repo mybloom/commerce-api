@@ -39,7 +39,7 @@ public class CardPaymentProcessor implements PaymentProcessor {
         final PaymentInfo.CardPay carPayInfo = (PaymentInfo.CardPay) info;
 
         // PG 요청 생성
-        PgDto.AuthCommand authCommand = PgDto.AuthCommand.of(
+        final PgDto.AuthCommand authCommand = PgDto.AuthCommand.of(
                 storeId,
                 carPayInfo.getOrderId(),
                 carPayInfo.getCardType(),
@@ -64,10 +64,11 @@ public class CardPaymentProcessor implements PaymentProcessor {
         }
 
         // 2) 결제 정보 저장
-        Payment payment = paymentService.createCardPayment(carPayInfo.convertToCommand(order.getPaymentAmount(), pgAuthQuery.transactionKey()));
+        final Payment payment = paymentService.createCardPayment(carPayInfo.convertToCommand(order.getPaymentAmount(),
+                pgAuthQuery.transactionKey()));
 
         // 결제 요청 데이터 전송 이벤트
-        PaymentEvent.PaymentInitiated event = new PaymentEvent.PaymentInitiated(payment.getId(), info.getOrderId());
+        final PaymentEvent.PaymentInitiated event = new PaymentEvent.PaymentInitiated(payment.getId(), info.getOrderId());
         eventPublisher.publishEvent(event);
 
         return PaymentResult.Pay.of(payment.getId(), payment.getStatus().name(), info.getOrderId());
