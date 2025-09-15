@@ -40,10 +40,12 @@ public class DefaultPointPaymentProcessor implements PointPaymentProcessor {
         try {
             return doProcess(info, order);
         } catch (CoreException e) {
+            //todo: 실패 이벤트 발행 (롤백 이후에 리스너가 처리) : @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+            //원래도 after rollback 이후에 처리 되는 것이긴하다. 이벤트로 처리했을 때 찾아갈 때 불필요한 에너지가 더 든다고 생각.
             failureHandler.handleFailedPointPayment(
                     PaymentFailureInfo.Fail.of(info, order.getPaymentAmount(), e.getErrorType() + ":" + e.getMessage())
             );
-            throw e;
+            throw e; //롤백 유도
         }
     }
 
