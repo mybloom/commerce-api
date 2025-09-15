@@ -55,6 +55,7 @@ public class CardPaymentProcessor implements PaymentProcessor {
         } catch (PgGatewayException e) {
             log.error("PgGatewayException: [{}] {} ({})", e.getResult(), e.getErrorCode(), e.getMessage());
 
+            //todo: PG 요청 실패 이벤트 발행 - transactional 상태가 아님. (@TransacationalEventListener 사용?) -> 결제 실패 핸들러에서 이벤트 발행하도록
             failureHandler.handleFailedCardPayment(
                     PaymentFailureInfo.Fail.of(
                             info, order.getPaymentAmount(), e.getResult() + ":" + e.getMessage()
