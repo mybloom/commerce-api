@@ -30,10 +30,11 @@ public class PaymentUseCase {
             throw new CoreException(ErrorType.CONFLICT, "결제 가능한 상태가 아닙니다. 현재 상태: " + order.getStatus());
         }
 
-        // 2) 결제 처리
-        PaymentProcessor processor =
-                paymentProcessorFactory.getProcessor(info.getPaymentMethod());
-        PaymentResult.Pay result = processor.process(info, order);
+        // 2) 결제 처리 (타입드 프로세서 호출)
+        final PaymentResult.Pay result = switch (info) {
+            case PaymentInfo.CardPay card   -> paymentProcessorFactory.card().process(card, order);
+            case PaymentInfo.PointPay point -> paymentProcessorFactory.point().process(point, order);
+        };
 
         return PaymentResult.Pay.of(result.paymentId(), result.paymentStatus(), info.getOrderId());
     }
