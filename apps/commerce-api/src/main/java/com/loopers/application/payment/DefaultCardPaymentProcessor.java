@@ -1,0 +1,84 @@
+package com.loopers.application.payment;
+
+import com.loopers.application.payment.dto.PaymentFailureInfo;
+import com.loopers.application.payment.dto.PaymentInfo;
+import com.loopers.application.payment.dto.PaymentResult;
+import com.loopers.domain.order.Order;
+import com.loopers.domain.payment.Payment;
+import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.payment.pg.PaymentGateway;
+import com.loopers.domain.payment.pg.PgDto;
+import com.loopers.domain.sharedkernel.PaymentEvent;
+import com.loopers.support.error.pg.PgGatewayException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.Objects;
+
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class DefaultCardPaymentProcessor implements CardPaymentProcessor {
+
+    private final PaymentGateway paymentGateway;
+    private final PaymentService paymentService;
+    private final PaymentFailureHandler failureHandler;
+    private final ApplicationEventPublisher eventPublisher;
+
+    private final static String callbackUrl = "http://localhost:8080/api/v1/payments/pg/callback";
+    private final static String storeId = "store123"; //ecommerce pg용 상점 아이디
+
+    @Override
+    public PaymentResult.Pay process(final PaymentInfo.CardPay info, final Order order) {
+
+        // PG 요청 생성
+        final PgDto.AuthCommand authCommand = PgDto.AuthCommand.of(
+                storeId,
+                info.getOrderId(),
+                info.getCardType(),
+                info.getCardNumber(),
+                order.getPaymentAmount(),
+                buildReturnUrl(info.getOrderId()) //todo: pathParam 안써서 안해도 됨
+        );
+
+        // 1) PG 호출
+        PgDto.AuthQuery pgAuthQuery = null;
+        try {
+            pgAuthQuery = paymentGateway.auth(authCommand);
+        } catch (PgGatewayException e) {
+            log.error("PgGatewayException: [{}] {} ({})", e.getResult(), e.getErrorCode(), e.getMessage());
+
+            //todo: PG 요청 실패 이벤트 발행 - transactional 상태가 아님. (@TransacationalEventListener 사용?) -> 결제 실패 핸들러에서 이벤트 발행하도록
+            failureHandler.handleFailedCardPayment(
+                    PaymentFailureInfo.Fail.of(
+                            info, order.getPaymentAmount(), e.getResult() + ":" + e.getMessage()
+                    )
+            );
+            throw e;
+        }
+
+        // 2) 결제 정보 저장
+        final Payment payment = paymentService.createCardPayment(info.convertToCommand(order.getPaymentAmount(),
+                pgAuthQuery.transactionKey()));
+
+        // 결제 요청 데이터 전송 이벤트
+        final PaymentEvent.PaymentInitiated event = new PaymentEvent.PaymentInitiated(payment.getId(), info.getOrderId());
+        eventPublisher.publishEvent(event);
+
+        return PaymentResult.Pay.of(payment.getId(), payment.getStatus().name(), info.getOrderId());
+    }
+
+    /**
+     * 콜백으로 돌아올 리턴 URL 구성
+     */
+    private String buildReturnUrl(Long orderId) {
+        return UriComponentsBuilder.fromUriString(Objects.requireNonNull(callbackUrl))
+                .queryParam("orderId", orderId)
+                .build()
+                .toUriString();
+    }
+}
