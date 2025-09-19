@@ -23,7 +23,7 @@ public class WeeklyRankingScheduler {
     /**
      * 매 시 1분(예: 10:01, 11:01, 12:01...)에 실행
      */
-    @Scheduled(cron = "0 44 * * * *")
+    @Scheduled(cron = "0 50 * * * *")
     public void runWeeklyRankingJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()

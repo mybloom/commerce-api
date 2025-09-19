@@ -19,9 +19,9 @@ public class WeeklyMetricsScheduler {
     private final JobLauncher jobLauncher;
     private final Job weeklyMetricsJob;
 
-    @Scheduled(cron = "0 30 * * * *") // 매시 10분
+    @Scheduled(cron = "0 52 * * * *") // 매시 10분
     public void runJob() throws Exception {
-        String toDate = LocalDate.of(2025, 7, 9).toString();
+        String toDate = LocalDate.of(2025, 7, 31).toString();
 
         JobParameters jobParameters = new JobParametersBuilder()
                 .addString("toDate", toDate)    // 필수 : job Parameter 설정

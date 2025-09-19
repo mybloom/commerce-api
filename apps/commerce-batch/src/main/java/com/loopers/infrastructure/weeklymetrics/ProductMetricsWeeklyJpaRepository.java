@@ -1,10 +1,15 @@
 package com.loopers.infrastructure.weeklymetrics;
 
 import com.loopers.domain.weeklymetrics.ProductMetricsWeekly;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDate;
+import java.util.List;
 
 public interface ProductMetricsWeeklyJpaRepository extends JpaRepository<ProductMetricsWeekly, Long> {
 
@@ -20,4 +25,6 @@ public interface ProductMetricsWeeklyJpaRepository extends JpaRepository<Product
         updated_at      = NOW()
     """, nativeQuery = true)
     void upsert(@Param("w") ProductMetricsWeekly w);
+
+    Page<ProductMetricsWeekly> findAllByWindowEndIn(List<LocalDate> windowEndDates, Pageable pageable);
 }
