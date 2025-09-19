@@ -42,6 +42,7 @@ out/
 # ---- Build / Generated code ----
 apps/commerce-api/src/main/generated/
 apps/commerce-streamer/src/main/generated/
+apps/commerce-batch/src/main/generated/
 
 # ---- Docker InfluxDB data ----
 docker/influxdb/
