@@ -13,10 +13,12 @@ import java.util.stream.Collectors;
 public class RankingResult {
 
     public record ListView(
+            RankingPeriodType periodType, // 일간 / 주간 / 월간
             List<ListItem> items,
             Pagination pagination
     ) {
-        public static ListView from(List<RankingQuery.RankingItem> rankingItems,
+        public static ListView from(RankingPeriodType periodType,
+                                    List<RankingQuery.RankingItem> rankingItems,
                                     List<ProductListProjection> projections,
                                     Pagination pagination) {
 
@@ -42,11 +44,14 @@ public class RankingResult {
                     })
                     .toList();
 
-            return new ListView(items, pagination);
+            return new ListView(periodType, items, pagination);
         }
 
-        public static ListView empty(int page, int size) {
+        public static ListView empty(RankingPeriodType periodType,
+                                     int page,
+                                     int size) {
             return new ListView(
+                    periodType,
                     List.of(),
                     new Pagination(page, size, 0)
             );

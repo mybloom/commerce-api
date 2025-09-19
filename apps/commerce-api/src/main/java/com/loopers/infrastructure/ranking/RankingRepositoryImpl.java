@@ -1,8 +1,10 @@
 package com.loopers.infrastructure.ranking;
 
 import com.loopers.config.redis.RankingKeyUtils;
+import com.loopers.domain.ranking.MonthlyRankingMv;
 import com.loopers.domain.ranking.RankingQuery;
 import com.loopers.domain.ranking.RankingRepository;
+import com.loopers.domain.ranking.WeeklyRankingMv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -12,15 +14,18 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Repository
 @RequiredArgsConstructor
-public class RankingRepositoryImpl implements RankingRepository {
+public class RankingRepositoryImpl implements RankingRepository{
 
     private final RankingRedisRepository rankingRedisRepository;
+    private final WeeklyRankingMvJpaRepository weeklyRankingMvJpaRepository;
+    private final MonthlyRankingMvJpaRepository monthlyRankingMvJpaRepository;
 
     @Override
-    public Page<RankingQuery.RankingItem> findAll(LocalDate date, Pageable pageable) {
+    public Page<RankingQuery.RankingItem> findDailyAll(LocalDate date, Pageable pageable) {
         // 키 생성
         String key = RankingKeyUtils.generateRankingKey(date);
 
@@ -49,7 +54,50 @@ public class RankingRepositoryImpl implements RankingRepository {
     }
 
     @Override
-    public Long findRankByDateAndProductId(LocalDate date, Long productId) {
-        return rankingRedisRepository.findRankByDateAndProductId(date, productId);
+    public Long findDailyRankByDateAndProductId(LocalDate date, Long productId) {
+        return rankingRedisRepository.findDailyRankByDateAndProductId(date, productId);
+    }
+
+    @Override
+    public Page<RankingQuery.RankingItem> findWeeklyAll(LocalDate date, Pageable pageable) {
+        Page<WeeklyRankingMv> page = weeklyRankingMvJpaRepository
+                .allByAggDateOrderByScoreDescProductIdAsc(date, pageable);
+
+        // Page 번호와 페이지 크기를 이용해서 rank 시작값 계산
+        int startRank = pageable.getPageNumber() * pageable.getPageSize() + 1;
+
+        List<RankingQuery.RankingItem> rankingItems = new ArrayList<>();
+        AtomicInteger counter = new AtomicInteger(startRank);
+
+        for (WeeklyRankingMv entity : page.getContent()) {
+            rankingItems.add(new RankingQuery.RankingItem(
+                    counter.getAndIncrement(),       // rank
+                    entity.getProductId(),           // productId
+                    entity.getScore()               // score
+            ));
+        }
+
+        return new PageImpl<>(rankingItems, pageable, page.getTotalElements());
+    }
+
+    @Override
+    public Page<RankingQuery.RankingItem> findMonthlyAll(LocalDate date, Pageable pageable) {
+        Page<MonthlyRankingMv> page = monthlyRankingMvJpaRepository.allByAggDateOrderByScoreDescProductIdAsc(date, pageable);
+
+        // Page 번호와 페이지 크기를 이용해서 rank 시작값 계산
+        int startRank = pageable.getPageNumber() * pageable.getPageSize() + 1;
+
+        List<RankingQuery.RankingItem> rankingItems = new ArrayList<>();
+        AtomicInteger counter = new AtomicInteger(startRank);
+
+        for (MonthlyRankingMv entity : page.getContent()) {
+            rankingItems.add(new RankingQuery.RankingItem(
+                    counter.getAndIncrement(),       // rank
+                    entity.getProductId(),           // productId
+                    entity.getScore()               // score
+            ));
+        }
+
+        return new PageImpl<>(rankingItems, pageable, page.getTotalElements());
     }
 }
