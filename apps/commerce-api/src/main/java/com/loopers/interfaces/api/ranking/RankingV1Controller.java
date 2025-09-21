@@ -1,6 +1,7 @@
 package com.loopers.interfaces.api.ranking;
 
 import com.loopers.application.common.PagingCondition;
+import com.loopers.application.ranking.RankingPeriodType;
 import com.loopers.application.ranking.RankingResult;
 import com.loopers.application.ranking.RankingUseCase;
 import com.loopers.interfaces.api.ApiResponse;
@@ -16,17 +17,19 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/rankings")
 @RestController
-public class RankingV1Controller implements RankingV1ApiSpec{
+public class RankingV1Controller implements RankingV1ApiSpec {
 
     private final RankingUseCase rankingUseCase;
 
     @GetMapping
     @Override
     public ApiResponse<RankingV1Dto.ListViewResponse> retrieveRanking(
+            @RequestParam(required = true, defaultValue = "DAILY") RankingV1Dto.RankingPeriodType periodType,
             @RequestParam(required = true) @DateTimeFormat(pattern = "yyyyMMdd") LocalDate date,
-            @Valid @ModelAttribute PagingCondition pagingCondition)
-    {
-        RankingResult.ListView result = rankingUseCase.retrieveRanking(date, pagingCondition);
+            @Valid @ModelAttribute PagingCondition pagingCondition) {
+        RankingResult.ListView result = rankingUseCase.retrieveRanking(
+                RankingPeriodType.valueOf(periodType.name()), date, pagingCondition
+        );
         return ApiResponse.success(RankingV1Dto.ListViewResponse.from(result));
     }
 }

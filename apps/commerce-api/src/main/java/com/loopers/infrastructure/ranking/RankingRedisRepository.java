@@ -27,7 +27,7 @@ public class RankingRedisRepository {
     /**
      * 특정 상품의 순위 조회 (0 = 1위): +1 해서 API에선 "1위, 2위..."로 표현
      */
-    public Long findRankByDateAndProductId(LocalDate date, Long productId) {
+    public Long findDailyRankByDateAndProductId(LocalDate date, Long productId) {
         String key = RankingKeyUtils.generateRankingKey(date);
         String member = RankingKeyUtils.generateMemberKey(productId);
 

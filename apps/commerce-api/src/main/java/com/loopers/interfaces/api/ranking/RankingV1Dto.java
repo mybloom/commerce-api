@@ -13,6 +13,7 @@ public class RankingV1Dto {
 
     public record ListViewRequest(
             LocalDate date,  // yyyyMMdd 포맷
+            RankingV1Dto.RankingPeriodType periodType, // 일간 / 주간 / 월간
             @Nullable
             PagingCondition pagingCondition
     ) {
@@ -24,6 +25,7 @@ public class RankingV1Dto {
     }
 
     public record ListViewResponse(
+            RankingV1Dto.RankingPeriodType periodType, // 일간 / 주간 / 월간
             List<RankingItemResponse> rankings,
             PaginationResponse pagination
     ) {
@@ -43,7 +45,10 @@ public class RankingV1Dto {
                     ))
                     .toList();
 
-            return new ListViewResponse(items, PaginationResponse.from(result.pagination()));
+            return new ListViewResponse(
+                    RankingV1Dto.RankingPeriodType.valueOf(result.periodType().name()),
+                    items,
+                    PaginationResponse.from(result.pagination()));
         }
     }
 
@@ -82,5 +87,9 @@ public class RankingV1Dto {
                     pagination.page() >= totalPages - 1
             );
         }
+    }
+
+    public enum RankingPeriodType {
+        DAILY, WEEKLY, MONTHLY
     }
 }

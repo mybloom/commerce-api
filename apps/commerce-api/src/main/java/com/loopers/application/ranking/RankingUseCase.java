@@ -23,13 +23,23 @@ public class RankingUseCase {
     private final ProductService productService;
 
     public RankingResult.ListView retrieveRanking(
-            final LocalDate date, final PagingCondition pagingCondition
+            final RankingPeriodType rankingPeriodType, final LocalDate date, final PagingCondition pagingCondition
     ) {
         // 1) 랭킹 조회
-        Page<RankingQuery.RankingItem> rankingItems = rankingService.retrieve(date, pagingCondition);
+        Page<RankingQuery.RankingItem> rankingItems = Page.empty(pagingCondition.toPageable());
+        if(rankingPeriodType == RankingPeriodType.DAILY) {
+            rankingItems = rankingService.retrieveDaily(date, pagingCondition);
+        }
+        if(rankingPeriodType == RankingPeriodType.WEEKLY) {
+            rankingItems = rankingService.retrieveWeekly(date, pagingCondition);
+        }
+        if(rankingPeriodType == RankingPeriodType.MONTHLY) {
+            rankingItems = rankingService.retrieveMonthly(date, pagingCondition);
+        }
+
 
         if (rankingItems.isEmpty()) {
-            return RankingResult.ListView.empty(pagingCondition.page(), pagingCondition.size());
+            return RankingResult.ListView.empty(rankingPeriodType, pagingCondition.page(), pagingCondition.size());
         }
 
         // 2) productIds 로 상품정보 조회
@@ -41,6 +51,7 @@ public class RankingUseCase {
         // 3) 매핑 후 결과 반환
         int page = rankingItems.getNumber();
         return RankingResult.ListView.from(
+                rankingPeriodType,
                 rankingItems.getContent(),
                 productListProjections,
                 new Pagination(rankingItems.getTotalElements(), page, rankingItems.getSize())

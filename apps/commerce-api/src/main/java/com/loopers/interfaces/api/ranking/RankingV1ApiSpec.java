@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 
@@ -26,6 +27,13 @@ public interface RankingV1ApiSpec {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     ApiResponse<RankingV1Dto.ListViewResponse> retrieveRanking(
+            @Parameter(
+                    name = "periodType",
+                    required = true,
+                    in = ParameterIn.QUERY,
+                    description = "랭킹 구분 (일간, 주간, 월간)"
+            )
+            @RequestParam RankingV1Dto.RankingPeriodType periodType,
             @Parameter(
                     name = "date",
                     required = true,
