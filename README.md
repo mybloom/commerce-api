@@ -3,7 +3,7 @@
 
 ## 설계문서 
 
-- [[주요 작업 리스트]](https://github.com/mybloom/commerce-api/pulls?q=is%3Apr+is%3Aclosed)
+- [**주요 작업 리스트**](https://github.com/mybloom/commerce-api/pulls?q=is%3Apr+is%3Aclosed)
 - [프로젝트 요구사항 명세서](./docs/design/01-requirements.md)
 - [서비스 시퀀스 다이어그램](./docs/design/02-sequence-diagrams.md)
 - [클래스 다이어그램](./docs/design/03-class-diagrams.md)
@@ -17,7 +17,7 @@
 ### 🔹 Architecture & Design
 - [Aggregate 분리를 고민한 이유](https://devstep.tistory.com/141)
 
-### 🔹 Spring Framework `about @Transactional`
+### 🔹 Spring Framework "about @Transactional"
 - [Spring @Transactional 동작, 로그로 확인하기](https://devstep.tistory.com/150)
 - [@Transactional 에 대한 것](https://devstep.tistory.com/143)
 - [@EventListener와 @TransactionalEventListener의 차이](https://devstep.tistory.com/152)
@@ -33,7 +33,7 @@
 
 
 ### 🔹 회고 & WIL
-- [[루퍼스] 10주간 돌아보기](https://devstep.tistory.com/159)
+- [10주간 돌아보기](https://devstep.tistory.com/159)
 - [[WIL] 루퍼스_부트캠프 9주차](https://devstep.tistory.com/158)
 - [[WIL] 부트캠프 8주차](https://devstep.tistory.com/156)
 - [[WIL] 부트캠프 5주차](https://devstep.tistory.com/147)
