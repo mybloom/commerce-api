@@ -17,25 +17,25 @@
 ### 🔹 Architecture & Design
 - [Aggregate 분리를 고민한 이유](https://devstep.tistory.com/141)
 
-### 🔹 Spring Framework
+### 🔹 Spring Framework `about @Transactional`
 - [Spring @Transactional 동작, 로그로 확인하기](https://devstep.tistory.com/150)
-- [Spring에서 Redis 사용하기 (RedisTemplate)](https://devstep.tistory.com/146)
 - [@Transactional 에 대한 것](https://devstep.tistory.com/143)
 - [@EventListener와 @TransactionalEventListener의 차이](https://devstep.tistory.com/152)
 
 ### 🔹 Database
 - [DB 인덱스와 캐시를 이용한 상품 목록 API 성능 개선 보고서](https://devstep.tistory.com/145)
 - [Redis ZSET 을 이용한 랭킹 시스템 개발](https://devstep.tistory.com/157)
+- [Spring에서 Redis 사용하기 (RedisTemplate)](https://devstep.tistory.com/146)
 
 ### 🔹 Batch / Messaging
 - [Kafka 하나의 토픽, 작업 특성에 맞춘 컨슈머 그룹 분리](https://devstep.tistory.com/154)
+- [Spring Application Event 기본 용어와 튜토리얼 코드](https://devstep.tistory.com/155)
 
 
 ### 🔹 회고 & WIL
 - [[루퍼스] 10주간 돌아보기](https://devstep.tistory.com/159)
 - [[WIL] 루퍼스_부트캠프 9주차](https://devstep.tistory.com/158)
 - [[WIL] 부트캠프 8주차](https://devstep.tistory.com/156)
-- [[WIL] 부트캠프 7주차 : Spring Application Event 기본 용어와 튜토리얼 코드](https://devstep.tistory.com/155)
 - [[WIL] 부트캠프 5주차](https://devstep.tistory.com/147)
 - [[WIL] 부트캠프 4주차](https://devstep.tistory.com/144)
 - [[WIL] 부트캠프 3주차](https://devstep.tistory.com/142)
