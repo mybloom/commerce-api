@@ -368,7 +368,7 @@ class ProductServiceIntegrationTest {
             int beforeLikeCount = product.getLikeCount().getValue();
 
             // Act
-            sut.decreaseLikeCount(product);
+            sut.decreaseLikeCount(product.getId());
 
             // 영속성 컨텍스트 동기화 및 캐시 초기화
             em.flush();

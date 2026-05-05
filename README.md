@@ -12,7 +12,8 @@
 ## 📚 작업 기록
 
 ### 🔹 Concept & Test
-- <a href="https://devstep.tistory.com/139" target="_blank" rel="noopener noreferrer">TDD 테스트 코드 작성</a>
+- <a href="https://mybloom.github.io/devnote/test/spring-boot-testing-guide.html" target="_blank" rel="noopener noreferrer">테스트 코드 작성법 정리 
+</a>
 
 ### 🔹 Architecture & Design
 - <a href="https://devstep.tistory.com/141" target="_blank" rel="noopener noreferrer">Aggregate 분리를 고민한 이유</a>
